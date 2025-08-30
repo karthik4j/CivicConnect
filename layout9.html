@@ -1,4 +1,11 @@
-:root {
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CivicConnect</title>
+  <style>
+    :root {
       --primary: #2563eb;     /* Subtle blue */
       --secondary: #38bdf8;   /* Soft cyan */
       --surface: #ffffff;
@@ -9,13 +16,10 @@
     }
 
     body {
-        margin: 0;
-        font-family: Arial, sans-serif;
-        color: var(--text);
-        background: url("images/bg2.png") no-repeat center center fixed;
-        background-size: cover;
-        background-color: rgba(255, 255, 255, 0.7); 
-        background-blend-mode: lighten;  
+      margin: 0;
+      font-family: "Segoe UI", Roboto, Arial, sans-serif;
+      background-color: var(--background);
+      color: var(--text);
     }
 
     header {
@@ -56,9 +60,6 @@
       box-shadow: 0 2px 4px rgba(0,0,0,0.08);
       cursor: pointer;
       transition: transform 0.25s, box-shadow 0.25s, border-color 0.25s;
-      text-decoration: none;   
-      color: inherit;          
-      font-weight: 500;
     }
 
     .card img {
@@ -72,7 +73,6 @@
       transform: translateY(-4px);
       box-shadow: 0 6px 12px rgba(0,0,0,0.15);
       border-color: var(--secondary);
-      color: var(--primary);
     }
 
     footer {
@@ -99,79 +99,59 @@
     footer div:hover {
       color: var(--primary);
     }
-*
-{
-  font-family: Arial, Helvetica, sans-serif;
-}
-hr
-{
-  color:black;
-  width: 100%;
-}
-.main-div
-{
-  display:flex;
-  flex-direction: row;
-}
+  </style>
+</head>
+<body>
+  <header>
+    CivicConnect
+  </header>
 
-.welcome-div
-{
-  flex:2;
-  margin-left:20px;
-} 
-#placeholderforlogin
-{
-  border:solid 1px;
-  height: 50%;
-}
-.login-portal-div
-{
-flex:1;
-display: flex;
-padding: 20px;
-}
-.sign-in-div
-{
-flex:1;
-border:solid 1px;
-display: flex;
-flex-direction: column;
-padding:20px;
-width:100%;
-height: 70%;
-}
-#usersigninbtn
-{
-  margin-top:50px;
-}
-.btnclass
-{
-  border-radius: 12px;
-  padding:10px 24px;
-  color:black;
-}
-.inputclass
-{
-  height:20px;
-  padding:5px 20px;
-}
-.footer-div
-{
-  display:flex;
-  flex:1;
-  flex-direction: row;
-  justify-content:start;
-  align-items: center;
-}
-.footerbtns a
-{
-  text-decoration: none;
-}
-.footerbtns
-{
-  margin:20px;
-}
-a
-{
-  text-decoration: none;
-}
+  <h2>Citizen Support</h2>
+  <div class="grid">
+    <div class="card">
+      <img src="images/new_complaint.png" alt="New Complaint">
+      <p>New Complaint</p>
+    </div>
+    <div class="card">
+      <img src="images/my_complaint.png" alt="My Complaints">
+      <p>My Complaints</p>
+    </div>
+    <div class="card">
+      <img src="images/complaint_status.png" alt="Complaint Status">
+      <p>Complaint Status</p>
+    </div>
+  </div>
+
+  <h2>Report Your Issue</h2>
+  <div class="grid">
+    <div class="card">
+      <img src="images/waste_dump.png" alt="Spot Waste Dump">
+      <p>Spot Waste Dump</p>
+    </div>
+    <div class="card">
+      <img src="images/open_drain.png" alt="Spot Open Drain">
+      <p>Spot Open Drain</p>
+    </div>
+    <div class="card">
+      <img src="images/pothole.png" alt="Spot Pothole">
+      <p>Spot Pothole</p>
+    </div>
+  </div>
+
+  <h2>Know Your City</h2>
+  <div class="grid">
+    <div class="card">Mayor</div>
+    <div class="card">Secretary</div>
+    <div class="card">Councilors</div>
+    <div class="card">Committees</div>
+    <div class="card">Departments</div>
+  </div>
+
+  <footer>
+    <div>Home</div>
+    <div>Notifications</div>
+    <div>Account</div>
+    <div>Help</div>
+  </footer>
+</body>
+</html>
