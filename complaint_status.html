@@ -1,1 +1,119 @@
 <link rel="stylesheet" href="style.css">
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Complaint Status</title>
+  <link rel="stylesheet" href="layout.css"> <!-- your main CSS -->
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f8f9fa;
+      margin: 0;
+      padding: 20px;
+    }
+
+    h1 {
+      text-align: center;
+      color: #1d4ed8;
+      margin-bottom: 20px;
+    }
+
+    .complaints-container {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 20px;
+    }
+
+    .complaint-card {
+      background: #fff;
+      border-radius: 12px;
+      padding: 20px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.08);
+    }
+
+    .complaint-card h2 {
+      font-size: 18px;
+      margin-bottom: 10px;
+      color: #1e293b;
+    }
+
+    .complaint-meta {
+      font-size: 14px;
+      color: #64748b;
+      margin-bottom: 10px;
+    }
+
+    .complaint-meta span {
+      margin-right: 15px;
+      display: inline-flex;
+      align-items: center;
+    }
+
+    .complaint-description {
+      font-size: 14px;
+      margin-bottom: 15px;
+      color: #334155;
+    }
+
+    .tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .tag {
+      padding: 6px 12px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: bold;
+      display: inline-block;
+    }
+
+    .pending { background: #fef3c7; color: #92400e; }
+    .scheduled { background: #dcfce7; color: #166534; }
+    .urgent { background: #fee2e2; color: #991b1b; }
+    .resolved { background: #d1fae5; color: #065f46; }
+    .details { background: #dbeafe; color: #1e40af; cursor: pointer; }
+  </style>
+</head>
+<body>
+  <h1>Complaint Status</h1>
+
+  <div class="complaints-container">
+    <!-- Complaint 1 -->
+    <div class="complaint-card">
+      <h2>Pothole on MG Road</h2>
+      <div class="complaint-meta">
+        <span>📍 MG Road, Sector 4</span>
+        <span>🕒 21 Aug 2025</span>
+      </div>
+      <p class="complaint-description">
+        Deep pothole causing traffic slowdown and two-wheeler skids near the bus stop.
+      </p>
+      <div class="tags">
+        <span class="tag pending">Pending</span>
+        <span class="tag scheduled">Scheduled</span>
+        <span class="tag urgent">Urgent</span>
+      </div>
+    </div>
+
+    <!-- Complaint 2 -->
+    <div class="complaint-card">
+      <h2>Streetlight Not Working</h2>
+      <div class="complaint-meta">
+        <span>📍 5th Cross, Lakshmi Nagar</span>
+        <span>🕒 19 Aug 2025</span>
+      </div>
+      <p class="complaint-description">
+        Multiple lamps are off after 9 PM. Area remains dark and unsafe.
+      </p>
+      <div class="tags">
+        <span class="tag resolved">Resolved</span>
+        <span class="tag details">View Details</span>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
