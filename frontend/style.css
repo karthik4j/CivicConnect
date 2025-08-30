@@ -1,0 +1,101 @@
+:root {
+      --primary: #2563eb;     /* Subtle blue */
+      --secondary: #38bdf8;   /* Soft cyan */
+      --surface: #ffffff;
+      --background: #f4f7fb;  /* Softer background */
+      --text: #1e293b;
+      --muted: #64748b;
+      --card-border: #e2e8f0;
+    }
+
+    body {
+        margin: 0;
+        font-family: Arial, sans-serif;
+        color: var(--text);
+        background: url("images/bg2.png") no-repeat center center fixed;
+        background-size: cover;
+        background-color: rgba(255, 255, 255, 0.7); 
+        background-blend-mode: lighten;  
+    }
+
+    header {
+      background: linear-gradient(135deg, var(--primary), var(--secondary));
+      color: var(--surface);
+      padding: 20px;
+      text-align: center;
+      font-size: 22px;
+      font-weight: bold;
+      letter-spacing: 1px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+    }
+
+    h2 {
+      margin: 25px 20px 12px;
+      font-size: 18px;
+      color: var(--primary);
+      border-left: 4px solid var(--secondary);
+      padding-left: 8px;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+      gap: 15px;
+      padding: 0 20px 20px;
+    }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--card-border);
+      border-radius: 14px;
+      padding: 18px;
+      text-align: center;
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--text);
+      box-shadow: 0 2px 4px rgba(0,0,0,0.08);
+      cursor: pointer;
+      transition: transform 0.25s, box-shadow 0.25s, border-color 0.25s;
+      text-decoration: none;   
+      color: inherit;          
+      font-weight: 500;
+    }
+
+    .card img {
+      width: 50px;
+      height: 50px;
+      object-fit: contain;
+      margin-bottom: 8px;
+    }
+
+    .card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 6px 12px rgba(0,0,0,0.15);
+      border-color: var(--secondary);
+      color: var(--primary);
+    }
+
+    footer {
+      position: fixed;
+      bottom: 0;
+      width: 100%;
+      background: var(--surface);
+      display: flex;
+      justify-content: space-around;
+      padding: 12px 0;
+      border-top: 1px solid var(--card-border);
+      box-shadow: 0 -2px 6px rgba(0,0,0,0.1);
+    }
+
+    footer div {
+      text-align: center;
+      font-size: 13px;
+      color: var(--muted);
+      font-weight: 500;
+      cursor: pointer;
+      transition: color 0.2s ease;
+    }
+
+    footer div:hover {
+      color: var(--primary);
+    }
