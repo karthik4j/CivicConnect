@@ -6,27 +6,31 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>New Complaint - CivicConnect</title>
   <link rel="stylesheet" href="style.css"> <!-- common styles -->
+
   <style>
-    /* Extra styles for this form */
-    .form-container {
-      max-width: 600px;
-      margin: 30px auto;
+    /* Common content box (same size everywhere) */
+    .content-box {
+      max-width: 900px;
+      margin: 40px auto;
       background: #fff;
       padding: 25px;
       border-radius: 12px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
     }
-    .form-container h2 {
+
+    .content-box h2 {
       text-align: center;
       margin-bottom: 20px;
       color: var(--primary);
     }
+
     label {
       display: block;
       margin: 12px 0 6px;
       font-weight: 600;
       color: var(--text);
     }
+
     input[type="text"],
     textarea,
     input[type="file"] {
@@ -37,10 +41,12 @@
       font-size: 14px;
       margin-bottom: 15px;
     }
+
     textarea {
       resize: vertical;
       min-height: 100px;
     }
+
     button {
       background: var(--primary);
       color: white;
@@ -52,32 +58,36 @@
       width: 100%;
       transition: background 0.3s ease;
     }
+
     button:hover {
       background: #1e40af; /* darker blue */
     }
   </style>
 </head>
 <body>
+  <!-- Common Header -->
+  <header>
+    CivicConnect
+  </header>
 
-  <header>New Complaint</header>
+  <!-- Complaint Form Box -->
+  <div class="content-box">
+    <h2>New Complaint</h2>
+    <p style="text-align:center;"><strong>Register any type of complaint</strong></p>
 
-  <div class="form-container">
-    <h2>Submit a New Complaint</h2>
-     <h3>Register any type of complaint</h3>
-    <form action="#" method="post" enctype="multipart/form-data">
-      
-      <label for="desc">Describe the Problem</label>
-      <textarea id="desc" name="description" placeholder="Write your complaint here..." required></textarea>
+    <form>
+      <label for="description">Describe the Problem</label>
+      <textarea id="description" placeholder="Write your complaint here..."></textarea>
 
       <label for="location">Location</label>
-      <input type="text" id="location" name="location" placeholder="Enter location (street, area, landmark)" required>
+      <input type="text" id="location" placeholder="Enter location (street, area, landmark)" />
 
-      <label for="photo">Upload Image (Optional)</label>
-      <input type="file" id="photo" name="photo" accept="image/*">
+      <label for="image">Upload Image (Optional)</label>
+      <input type="file" id="image" />
 
       <button type="submit">Submit Complaint</button>
     </form>
   </div>
-
 </body>
 </html>
+

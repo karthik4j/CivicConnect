@@ -1,1 +1,142 @@
 <link rel="stylesheet" href="style.css">
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Complaint Status - CivicConnect</title>
+  <link rel="stylesheet" href="style.css"> <!-- link to your common CSS -->
+  <style>
+    /* Page Title */
+    .page-title {
+      text-align: center;
+      margin: 20px 0;
+    }
+    .page-title h2 {
+      color: var(--primary);
+      font-size: 24px;
+    }
+
+    /* Complaint Cards Container */
+    .complaint-status {
+      display: flex;
+      justify-content: center;
+      gap: 20px;
+      flex-wrap: wrap;
+      padding: 20px;
+    }
+
+    /* Individual Complaint Card */
+    .complaint-card {
+      background: #fff;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      width: 420px;
+      transition: transform 0.2s ease;
+    }
+    .complaint-card:hover {
+      transform: translateY(-5px);
+    }
+
+    .complaint-card h3 {
+      margin: 0 0 8px;
+      font-size: 18px;
+      color: var(--text-dark);
+      border-left: 4px solid var(--primary);
+      padding-left: 8px;
+    }
+
+    .complaint-meta {
+      font-size: 13px;
+      color: #666;
+      margin-bottom: 12px;
+    }
+
+    .complaint-meta span {
+      display: inline-flex;
+      align-items: center;
+      margin-right: 15px;
+    }
+
+    .complaint-meta i {
+      margin-right: 5px;
+    }
+
+    /* Status Badges */
+    .status-badge {
+      display: inline-block;
+      padding: 6px 12px;
+      border-radius: 20px;
+      font-size: 13px;
+      font-weight: 500;
+      margin-right: 8px;
+    }
+    .pending { background: #fef3c7; color: #92400e; }
+    .scheduled { background: #d1fae5; color: #065f46; }
+    .urgent { background: #fee2e2; color: #991b1b; }
+    .resolved { background: #dcfce7; color: #166534; }
+
+    /* Attractive View Details Button */
+    .details-btn {
+      background: linear-gradient(135deg, #3b82f6, #2563eb);
+      color: white;
+      border: none;
+      padding: 8px 18px;
+      border-radius: 25px;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      box-shadow: 0 3px 6px rgba(0,0,0,0.15);
+    }
+    .details-btn:hover {
+      background: linear-gradient(135deg, #2563eb, #1d4ed8);
+      transform: scale(1.05);
+      box-shadow: 0 6px 12px rgba(0,0,0,0.2);
+    }
+    .details-btn:active {
+      transform: scale(0.97);
+    }
+  </style>
+</head>
+<body>
+  <!-- Common Header -->
+  <header>
+    CivicConnect
+  </header>
+
+  <!-- Page Title -->
+  <section class="page-title">
+    <h2>Complaint Status</h2>
+  </section>
+
+  <!-- Complaint Cards -->
+  <section class="complaint-status">
+    <!-- Complaint 1 -->
+    <div class="complaint-card">
+      <h3>Pothole on MG Road</h3>
+      <div class="complaint-meta">
+        <span>📍 MG Road, Sector 4</span>
+        <span>🕒 21 Aug 2025</span>
+      </div>
+      <p>Deep pothole causing traffic slowdown and two-wheeler skids near the bus stop.</p>
+      <span class="status-badge pending">Pending</span>
+      <span class="status-badge scheduled">Scheduled</span>
+      <span class="status-badge urgent">Urgent</span>
+    </div>
+
+    <!-- Complaint 2 -->
+    <div class="complaint-card">
+      <h3>Streetlight Not Working</h3>
+      <div class="complaint-meta">
+        <span>📍 5th Cross, Lakshmi Nagar</span>
+        <span>🕒 19 Aug 2025</span>
+      </div>
+      <p>Multiple lamps are off after 9 PM. Area remains dark and unsafe.</p>
+      <span class="status-badge resolved">Resolved</span>
+      <button class="details-btn">View Details</button>
+    </div>
+  </section>
+</body>
+</html>

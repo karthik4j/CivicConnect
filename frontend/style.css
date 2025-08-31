@@ -1,101 +1,129 @@
 :root {
-      --primary: #2563eb;     /* Subtle blue */
-      --secondary: #38bdf8;   /* Soft cyan */
-      --surface: #ffffff;
-      --background: #f4f7fb;  /* Softer background */
-      --text: #1e293b;
-      --muted: #64748b;
-      --card-border: #e2e8f0;
-    }
+  --primary: #2563eb;     /* Subtle blue */
+  --secondary: #38bdf8;   /* Soft cyan */
+  --surface: #ffffff;
+  --background: #f4f7fb;  /* Softer background */
+  --text: #1e293b;
+  --muted: #64748b;
+  --card-border: #e2e8f0;
+}
 
-    body {
-        margin: 0;
-        font-family: Arial, sans-serif;
-        color: var(--text);
-        background: url("images/bg2.png") no-repeat center center fixed;
-        background-size: cover;
-        background-color: rgba(255, 255, 255, 0.7); 
-        background-blend-mode: lighten;  
-    }
+/* =================== Base =================== */
+body {
+  margin: 0;
+  font-family: 'Segoe UI', Arial, sans-serif;
+  color: var(--text);
+  background: url("images/bg3.png") no-repeat center center fixed;
+  background-size: cover;
+  background-color: rgba(255, 255, 255, 0.7);
+  background-blend-mode: lighten;
+}
 
-    header {
-      background: linear-gradient(135deg, var(--primary), var(--secondary));
-      color: var(--surface);
-      padding: 20px;
-      text-align: center;
-      font-size: 22px;
-      font-weight: bold;
-      letter-spacing: 1px;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.15);
-    }
+/* =================== Header (CivicConnect) =================== */
+header {
+  background: linear-gradient(90deg, #1D4ED8, #2563eb, #3B82F6);
+  color: white;
+  text-align: center;
+  padding: 20px;
+  font-size: 26px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  border-bottom-left-radius: 16px;
+  border-bottom-right-radius: 16px;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+  text-shadow: 1px 2px 4px rgba(0,0,0,0.25);
+  font-family: 'Poppins', sans-serif;
+  animation: fadeSlide 0.8s ease-out;
+}
 
-    h2 {
-      margin: 25px 20px 12px;
-      font-size: 18px;
-      color: var(--primary);
-      border-left: 4px solid var(--secondary);
-      padding-left: 8px;
-    }
+@keyframes fadeSlide {
+  from { opacity: 0; transform: translateY(-20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
 
-    .grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-      gap: 15px;
-      padding: 0 20px 20px;
-    }
+/* =================== Page Titles =================== */
+.page-title {
+  text-align: center;
+  margin: 25px 0;
+}
 
-    .card {
-      background: var(--surface);
-      border: 1px solid var(--card-border);
-      border-radius: 14px;
-      padding: 18px;
-      text-align: center;
-      font-size: 14px;
-      font-weight: 500;
-      color: var(--text);
-      box-shadow: 0 2px 4px rgba(0,0,0,0.08);
-      cursor: pointer;
-      transition: transform 0.25s, box-shadow 0.25s, border-color 0.25s;
-      text-decoration: none;   
-      color: inherit;          
-      font-weight: 500;
-    }
+.page-title h2 {
+  font-size: 22px;
+  font-weight: bold;
+  color: #1E293B;
+  margin-top: 15px;
+}
 
-    .card img {
-      width: 50px;
-      height: 50px;
-      object-fit: contain;
-      margin-bottom: 8px;
-    }
+/* =================== Section Headings =================== */
+h2 {
+  margin: 25px 20px 12px;
+  font-size: 18px;
+  color: var(--primary);
+  border-left: 4px solid var(--secondary);
+  padding-left: 8px;
+}
 
-    .card:hover {
-      transform: translateY(-4px);
-      box-shadow: 0 6px 12px rgba(0,0,0,0.15);
-      border-color: var(--secondary);
-      color: var(--primary);
-    }
+/* =================== Cards =================== */
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 15px;
+  padding: 0 20px 20px;
+}
 
-    footer {
-      position: fixed;
-      bottom: 0;
-      width: 100%;
-      background: var(--surface);
-      display: flex;
-      justify-content: space-around;
-      padding: 12px 0;
-      border-top: 1px solid var(--card-border);
-      box-shadow: 0 -2px 6px rgba(0,0,0,0.1);
-    }
+.card {
+  background: var(--surface);
+  border: 1px solid var(--card-border);
+  border-radius: 14px;
+  padding: 18px;
+  text-align: center;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text);
+  box-shadow: 0 2px 4px rgba(0,0,0,0.08);
+  cursor: pointer;
+  transition: transform 0.25s, box-shadow 0.25s, border-color 0.25s;
+  text-decoration: none;
+  color: inherit;
+}
 
-    footer div {
-      text-align: center;
-      font-size: 13px;
-      color: var(--muted);
-      font-weight: 500;
-      cursor: pointer;
-      transition: color 0.2s ease;
-    }
+.card img {
+  width: 50px;
+  height: 50px;
+  object-fit: contain;
+  margin-bottom: 8px;
+}
 
-    footer div:hover {
-      color: var(--primary);
-    }
+.card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 6px 12px rgba(0,0,0,0.15);
+  border-color: var(--secondary);
+  color: var(--primary);
+}
+
+/* =================== Footer Navigation =================== */
+footer {
+  position: fixed;
+  bottom: 0;
+  width: 100%;
+  background: var(--surface);
+  display: flex;
+  justify-content: space-around;
+  padding: 12px 0;
+  border-top: 1px solid var(--card-border);
+  box-shadow: 0 -2px 6px rgba(0,0,0,0.1);
+}
+
+footer div {
+  text-align: center;
+  font-size: 13px;
+  color: var(--muted);
+  font-weight: 500;
+  cursor: pointer;
+  transition: color 0.2s ease;
+}
+
+footer div:hover {
+  color: var(--primary);
+}
