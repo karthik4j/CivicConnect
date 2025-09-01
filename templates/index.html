@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="/css/login.css">
     <title>Login</title>
   </head>
 
@@ -9,7 +9,7 @@
       <main class="main-div">
             <div class="welcome-div">
                   <h1>CivicConnect</h1>
-                  <img src="placeholder.jpg" alt="placeholder" id="placeholderforlogin">
+                  <img src="/images/placeholder.jpg" alt="placeholder" id="placeholderforlogin">
             </div>
 
             <div class="login-portal-div">
@@ -21,12 +21,12 @@
                   <h3>Password:</h3>
                   <input id="password-login-page" placeholder="Enter your password:" type="password" class="inputclass">
                   <p></p>
-                  <button id="usersigninbtn" class="btnclass"><a href="home.html">Sign In</a></button>
+                  <button id="usersigninbtn" class="btnclass"><a href="{{ url_for('home') }}">Sign In</a></button>
                   <p></p>
                   <a href="">Forgot password?</a>
                    <hr>
                   <h3>New User</h3>
-                  <button id="userRegBtn" class="btnclass"><a href="home.html">Sign Up</a>
+                  <button id="userRegBtn" class="btnclass"><a href="{{ url_for('home') }}">Sign Up</a>
                   </button>
                 </div>
             </div>
