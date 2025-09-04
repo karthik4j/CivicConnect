@@ -14,20 +14,22 @@
 
             <div class="login-portal-div">
                 <div class="sign-in-div">
-                  <h2>Sign In</h2>
-                  <hr>
-                  <h3>User Name:</h3>
-                  <input id="username-login-page" placeholder="Enter your username: " type="alphanumeric" class="inputclass">
-                  <h3>Password:</h3>
-                  <input id="password-login-page" placeholder="Enter your password:" type="password" class="inputclass">
-                  <p></p>
-                  <button id="usersigninbtn" class="btnclass"><a href="{{ url_for('home') }}">Sign In</a></button>
-                  <p></p>
-                  <a href="">Forgot password?</a>
-                   <hr>
-                  <h3>New User</h3>
-                  <button id="userRegBtn" class="btnclass"><a href="{{ url_for('home') }}">Sign Up</a>
-                  </button>
+                    <form action="{{url_for('login')}}" id="authforms" method="post">
+                      <h2>Sign In</h2>
+                      <hr>
+                      <h3>User Name:</h3>
+                      <input id="username-login-page" placeholder="Enter your username: " type="alphanumeric" class="inputclass" name="usrname">
+                      <h3>Password:</h3>
+                      <input id="password-login-page" placeholder="Enter your password:" type="password" class="inputclass" name="paswd">
+                      <p></p>
+                      <!-- <button id="usersigninbtn" class="btnclass" ><a href="{{ url_for('home') }}">Sign In</a></button> -->
+                      <input type="submit" name="login" value="Sign in" class="btnclass" onclick="setActionForm('login')"> 
+                      <p></p>
+                      <a href="">Forgot password?</a>
+                      <hr>
+                      <h3>New User</h3>
+                      <input type = 'button' value="Register" class="btnclass" onclick="setActionForm('register')">
+                    </form>
                 </div>
             </div>
       </main>
@@ -44,6 +46,21 @@
   </body>
 
   <script>
-     
-  </script>
+ function setActionForm(action)
+  {
+    let form = document.getElementById('authforms')
+    if (action === 'login')
+    {
+      form.action = "{{url_for('login')}}";
+      form.method='post';
+      form.submit();
+    }
+    else if(action == 'register')
+    {
+      form.action = "{{url_for('register')}}";
+      form.method='post';
+      form.submit();
+    }
+  }
+</script>
 </html>
