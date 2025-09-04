@@ -1,0 +1,82 @@
+<link rel="stylesheet" href="style.css">
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>New Complaint - CivicConnect</title>
+  <link rel="stylesheet" href="style.css"> <!-- common styles -->
+  <style>
+    /* Extra styles for this form */
+    .form-container {
+      max-width: 600px;
+      margin: 30px auto;
+      background: #fff;
+      padding: 25px;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    .form-container h2 {
+      text-align: center;
+      margin-bottom: 20px;
+      color: var(--primary);
+    }
+    label {
+      display: block;
+      margin: 12px 0 6px;
+      font-weight: 600;
+      color: var(--text);
+    }
+    input[type="text"],
+    textarea,
+    input[type="file"] {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid var(--card-border);
+      border-radius: 8px;
+      font-size: 14px;
+      margin-bottom: 15px;
+    }
+    textarea {
+      resize: vertical;
+      min-height: 100px;
+    }
+    button {
+      background: var(--primary);
+      color: white;
+      border: none;
+      padding: 12px 20px;
+      font-size: 15px;
+      border-radius: 8px;
+      cursor: pointer;
+      width: 100%;
+      transition: background 0.3s ease;
+    }
+    button:hover {
+      background: #1e40af; /* darker blue */
+    }
+  </style>
+</head>
+<body>
+
+  <header>New Complaint</header>
+
+  <div class="form-container">
+    <h2>Submit a New Complaint</h2>
+    <form action="#" method="post" enctype="multipart/form-data">
+      
+      <label for="desc">Describe the Problem</label>
+      <textarea id="desc" name="description" placeholder="Write your complaint here..." required></textarea>
+
+      <label for="location">Location</label>
+      <input type="text" id="location" name="location" placeholder="Enter location (street, area, landmark)" required>
+
+      <label for="photo">Upload Image (Optional)</label>
+      <input type="file" id="photo" name="photo" accept="image/*">
+
+      <button type="submit">Submit Complaint</button>
+    </form>
+  </div>
+
+</body>
+</html>
