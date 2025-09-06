@@ -6,6 +6,11 @@
   </head>
 
   <body>
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+          <h1>{{messages}}</h1>
+        {% endif %}
+      {% endwith %}
       <main class="main-div">
             <div class="welcome-div">
                   <h1>CivicConnect</h1>

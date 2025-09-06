@@ -1,5 +1,6 @@
-from flask import Flask, render_template, request, redirect, session, url_for
+from flask import Flask, render_template, request, redirect, session, url_for,flash
 from werkzeug.security import generate_password_hash, check_password_hash
+from flask import Flask,make_response
 import uuid
 from flask_session import Session
 import sqlite3
@@ -8,13 +9,29 @@ app = Flask(__name__, template_folder='templates',static_folder='static',static_
 # Database connection
 conn = sqlite3.connect('database.db', check_same_thread=False)
 
+#---------------------------------------------------------------------------- FUNCTIONS ------------------------------------------------------------------------------------------------
 def create_table():
-    res = conn.execute("SELECT name FROM sqlite_master WHERE type='table' AND name=?;", ('user',))
-    table_exists = res.fetchone()
-    if not table_exists:
+    usr_table_chck = conn.execute("SELECT name FROM sqlite_master WHERE type='table' AND name=?;", ('user',))
+    comp_table_chck = conn.execute("SELECT name FROM sqlite_master WHERE type='table' AND name=?;", ('complaints',))
+
+    usr_table_exists = usr_table_chck.fetchone()
+    if not usr_table_exists:
         conn.execute("CREATE TABLE user (id TEXT PRIMARY KEY, username TEXT UNIQUE, password TEXT)")
         conn.commit()
 
+    comp_table_exists = comp_table_chck.fetchone()
+    if not comp_table_exists:
+        conn.execute("CREATE TABLE complaints (comp_id INT PRIMARY KEY,complaint TEXT,summary TEXT,location TEXT,imgsrc TEXT,dof DATE,dor DATE,dept TEXT,status INT,id, FOREIGN KEY(id) REFERENCES user(id))")
+        conn.commit()
+
+def clean_tuple(tup):
+   strings=""
+   strings = ''.join(tup)
+   strings = strings.replace('(',"")
+   strings = strings.replace(')',"")
+   strings = strings.replace(',',"")
+   return strings
+#---------------------------------------------------------------------------- FUNCTIONS ------------------------------------------------------------------------------------------------
 app.secret_key = 'your_secret_key'
 
 # session configuration
@@ -68,9 +85,20 @@ def login():
 
     if row and check_password_hash(row[0], password):
         session['username'] = username
-        return redirect(url_for('home'))
+        res = conn.execute("SELECT id FROM user WHERE username = ?", (username,))
+        logged_in_usr_id = res.fetchone()
+        logged_in_usr_id = clean_tuple(logged_in_usr_id)
+        print("current logged in user is: ", logged_in_usr_id)
+
+        # attach cookie to redirect response
+        resp = redirect(url_for('home'))
+        resp.set_cookie('id', logged_in_usr_id)
+        return resp
+
     else:
+        flash('Invalid Username or password', 'error')
         return redirect(url_for('index'))
+
 
 # register
 @app.route('/register', methods=['POST'])
@@ -92,10 +120,23 @@ def register():
     return redirect(url_for('home'))
 
 # logout
-@app.route('/logout')
+@app.route('/logout',methods=['POST'])
 def logout():
     session.pop('username', None)
-    return redirect(url_for('index'))
+    session.pop('id',None)
+    response = redirect(url_for('index'))
+    response.delete_cookie('id')
+    return response
+
+@app.route('/account-page')
+def account_page():
+   logged_in_usr_id = request.cookies.get('id')
+   return render_template('account-page.html',user_id=logged_in_usr_id)
+
+@app.route('/register-complaint',methods=['POST'])
+def register_complaint():
+   return ""
+   
 
 if __name__ =="__main__":
   create_table()

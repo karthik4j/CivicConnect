@@ -29,7 +29,12 @@
       font-weight: 600;
       color: var(--text);
     }
-
+    select
+    {
+      margin: 12px 6px;
+      margin-bottom: 20px;
+      color :var(--text)
+    }
     input[type="text"],
     textarea,
     input[type="file"] {
@@ -83,10 +88,22 @@
 
       <label for="image">Upload Image (Optional)</label>
       <input type="file" id="image" />
-
+      
+      <label>Department</label>
+      <select>
+        <option>Select a Department</option>
+        <option>Public Works Department</option>
+        <option>Sanitation Department</option>
+        <option>Health Department</option>
+      </select>
+      
       <button type="submit">Submit Complaint</button>
     </form>
   </div>
 </body>
+
+<script>
+
+</script>
 </html>
 

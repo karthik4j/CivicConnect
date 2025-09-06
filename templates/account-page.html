@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html>
+  <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>My Complaints - CivicConnect</title>
+  <link rel="stylesheet" href="/css/style.css"> <!-- common styling -->
+
+  <style>
+    .acc-info-div
+    {
+      max-width: 900px;
+      margin: 30px auto;
+      background: #fff;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      display:flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+    .logout-btn
+    {
+      background: lightcoral;
+      color: white;
+      border: none;
+      padding: 12px 20px;
+      font-size: 15px;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+    .logout-btn:hover
+    {
+      background:red;
+    }
+  </style>
+  </head>
+  <body>
+      <header>CivicConnect</header>
+      <div class="acc-info-div">
+          <h1>Account info</h1>
+          {% block content%}
+            <label>User ID : {{user_id}}</label>
+          {% endblock %}
+          <form method="post" id="log"></form><input type="submit" class="logout-btn" value="Log Out" onclick="logout()"></form>
+      </div>
+  </body>
+  
+  <script>
+      function logout()
+      {
+        let form = document.getElementById('log');
+        console.log('logout done')
+
+        form.action="{{url_for('logout')}}"
+        form.method='post';
+        form.submit()
+      }
+  </script>
+</html>
