@@ -7,7 +7,6 @@
   <link rel="stylesheet" href="css/style.css"> <!-- common styles -->
 
   <style>
-    /* Common content box (same size everywhere) */
     .content-box {
       max-width: 900px;
       margin: 40px auto;
@@ -29,12 +28,12 @@
       font-weight: 600;
       color: var(--text);
     }
-    select
-    {
-      margin: 12px 6px;
-      margin-bottom: 20px;
-      color :var(--text)
+
+    select {
+      margin: 12px 6px 20px;
+      color: var(--text);
     }
+
     input[type="text"],
     textarea,
     input[type="file"] {
@@ -64,46 +63,67 @@
     }
 
     button:hover {
-      background: #1e40af; /* darker blue */
+      background: #1e40af;
     }
   </style>
 </head>
 <body>
-  <!-- Common Header -->
   <header>
     CivicConnect
   </header>
 
-  <!-- Complaint Form Box -->
   <div class="content-box">
     <h2>New Complaint</h2>
     <p style="text-align:center;"><strong>Register any type of complaint</strong></p>
 
-    <form>
+    <form method="post" id="complaint" enctype="multipart/form-data">
       <label for="description">Describe the Problem</label>
-      <textarea id="description" placeholder="Write your complaint here..."></textarea>
+      <textarea id="description" placeholder="Write your complaint here..." name="user_complaint"></textarea>
 
       <label for="location">Location</label>
-      <input type="text" id="location" placeholder="Enter location (street, area, landmark)" />
+      <input type="text" id="location" placeholder="Enter location (street, area, landmark)" name="user_location" />
 
       <label for="image">Upload Image (Optional)</label>
-      <input type="file" id="image" />
+      <input type="file" id="image" accept=".jpg, .jpeg, .png" name="attached_image"/>
       
       <label>Department</label>
-      <select>
-        <option>Select a Department</option>
-        <option>Public Works Department</option>
-        <option>Sanitation Department</option>
-        <option>Health Department</option>
+      <select id="dept-selec" name="select_dept">
+        <option value="">-- Select a Department --</option>
+        <option value="Public Works Department">Public Works Department</option>
+        <option value="Sanitation Department">Sanitation Department</option>
+        <option value="Health Department">Health Department</option>
+        <option value="Water Supply Department">Water Supply Department</option>
+        <option value="Electricity Department">Electricity Department</option>
+        <option value="Parks and Recreation">Parks and Recreation</option>
+        <option value="Traffic Management">Traffic Management</option>
       </select>
       
-      <button type="submit">Submit Complaint</button>
+      <button type="button" onclick="validatForm()">Submit Complaint</button>
     </form>
   </div>
 </body>
 
 <script>
+  function validatForm() {
+    const user_complaint = document.getElementById('description').value.trim();
+    const user_location = document.getElementById('location').value.trim();
+    const attached_file = document.getElementById('image');
+    const complaint_dept = document.getElementById('dept-selec');
 
+    if (user_complaint.length === 0) {
+      alert('Please provide a description of your complaint');
+    } else if (user_location.length === 0) {
+      alert('Please enter your location');
+    } else if (attached_file.files.length === 0) {
+      alert('Please attach a file');
+    } else if (complaint_dept.value === "") {
+      alert('Please select a department');
+    } else {
+      const form = document.getElementById('complaint');
+      form.action = "{{ url_for('register_complaint') }}";
+      form.method = 'post';
+      form.submit();
+    }
+  }
 </script>
 </html>
-
