@@ -49,34 +49,33 @@
     <h2>My Complaints</h2>
     <table>
       <thead>
-        <tr>
-          <th>Complaint ID</th>
-          <th>Complaint</th>
-          <th>Department</th>
-          <th>Status</th>
-        </tr>
-      </thead>
-      <tbody>
-        <!-- Example data -->
-        <tr>
-          <td>101</td>
-          <td>Pothole near City Mall</td>
-          <td>Public Works Department</td>
-          <td>Pending</td>
-        </tr>
-        <tr>
-          <td>102</td>
-          <td>Garbage not collected in Sector 5</td>
-          <td>Sanitation Department</td>
-          <td>In Progress</td>
-        </tr>
-        <tr>
-          <td>103</td>
-          <td>Open drain behind school</td>
-          <td>Health Department</td>
-          <td>Resolved</td>
-        </tr>
-      </tbody>
+    <tr>
+      <th>Complaint ID</th>
+      <th>Complaint</th>
+      <th>Department</th>
+      <th>Status</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for comp in querry %}
+      <tr>
+        <td>{{ comp[0] }}</td>
+        <td>{{ comp[1] }}</td>
+        <td>{{ comp[2] }}</td>
+        <td>
+          {% if comp[3] == 0 %}
+            Pending
+          {% elif comp[3] == 1 %}
+            In Progress
+          {% elif comp[3] == 2 %}
+            Resolved
+          {% else %}
+            Unknown
+          {% endif %}
+        </td>
+      </tr>
+    {% endfor %}
+  </tbody>
     </table>
   </div>
 

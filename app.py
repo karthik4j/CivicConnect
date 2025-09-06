@@ -6,6 +6,7 @@ from flask_session import Session
 import sqlite3,os
 from werkzeug.utils import secure_filename
 from datetime import datetime
+
 app = Flask(__name__, template_folder='templates',static_folder='static',static_url_path='/')
 
 #file management
@@ -34,7 +35,7 @@ def create_table():
 
 def clean_tuple(tup):
    strings=""
-   strings = ''.join(tup)
+   strings = str(tup)
    strings = strings.replace('(',"")
    strings = strings.replace(')',"")
    strings = strings.replace(',',"")
@@ -51,7 +52,8 @@ Session(app)
 
 @app.route('/')
 def index():
-  if "username" in session:
+  logged_in_usr_id = request.cookies.get('id')
+  if "username" in session and logged_in_usr_id:
         return redirect(url_for('home'))
   return render_template('index.html')
 
@@ -67,7 +69,15 @@ def new_complaint():
 
 @app.route('/my_complaints')
 def my_complaints():
-  return render_template('my_complaints.html')
+    logged_in_usr_id = request.cookies.get('id')
+
+    res = conn.execute(
+        'SELECT comp_id, complaint, dept, status FROM complaints WHERE id = ?',
+        (logged_in_usr_id,)
+    )
+    result = res.fetchall()   # e.g., [(10, "My car won't start", 'Traffic Management', 0), ...]
+
+    return render_template('my_complaints.html', querry=result)
 
 @app.route('/complaint_status')
 def complaint_status():
@@ -118,16 +128,26 @@ def register():
 
     res = conn.execute("SELECT username FROM user WHERE username = ?", (username,))
     if res.fetchone():
-        return render_template('index.html', error='User already registered')
+        flash('User already registered')
+        return redirect(url_for('index'))
+    else:
 
-    newid = str(uuid.uuid4())
-    hashed_password = generate_password_hash(password)
+      newid = str(uuid.uuid4())
+      hashed_password = generate_password_hash(password)
 
-    conn.execute("INSERT INTO user (id, username, password) VALUES (?, ?, ?)", (newid, username, hashed_password))
-    conn.commit()
+      conn.execute("INSERT INTO user (id, username, password) VALUES (?, ?, ?)", (newid, username, hashed_password))
+      conn.commit()
+      print("saving new user to db")
 
-    session['username'] = username
-    return redirect(url_for('home'))
+      session['username'] = username
+
+      # attach cookie to redirect response
+      resp = make_response('attach cookie')
+      resp.set_cookie('id', newid)
+      response =redirect(url_for('index'))
+      flash("Account created Successfully")
+      print('account creation')
+      return response
 
 # logout
 @app.route('/logout',methods=['POST'])
@@ -165,7 +185,7 @@ def register_complaint():
     # Format the datetime object to YYYY-MM-DD string
     formatted_date = current_datetime.strftime("%Y-%m-%d")
     logged_in_usr_id = request.cookies.get('id')
-    conn.execute("INSERT INTO complaints (complaint, location, imgsrc, dof, dept, id) VALUES (?, ?, ?, ?, ?, ?)", (users_complaint, users_location, rename,formatted_date,dept,logged_in_usr_id))
+    conn.execute("INSERT INTO complaints (complaint, location, imgsrc, dof, dept, id,status) VALUES (?, ?, ?, ?, ?, ?, ?)", (users_complaint, users_location, rename,formatted_date,dept,logged_in_usr_id,0))
     conn.commit()
     return render_template('message.html', message='Successfully registered complaint')
     
