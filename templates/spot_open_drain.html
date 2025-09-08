@@ -1,0 +1,125 @@
+<link rel="stylesheet" href="style.css">
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Spot Open Drain - CivicConnect</title>
+  <style>
+    /* Blue header */
+    header {
+      background: linear-gradient(90deg, #2563eb, #3b82f6);
+      color: white;
+      text-align: center;
+      padding: 15px;
+      font-size: 22px;
+      font-weight: bold;
+      letter-spacing: 1px;
+    }
+
+    /* Form container */
+    .form-container {
+      max-width: 600px;
+      margin: 30px auto;
+      background: #fff;
+      padding: 25px;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+
+    .form-container h2 {
+      text-align: center;
+      margin-bottom: 10px;
+      color: #2563eb;
+    }
+
+    .form-container p {
+      text-align: center;
+      margin-bottom: 20px;
+      font-weight: 500;
+      color: #444;
+    }
+
+    label {
+      display: block;
+      margin: 12px 0 6px;
+      font-weight: 600;
+      color: #1E293B;
+    }
+
+    input[type="text"],
+    textarea,
+    input[type="file"] {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      font-size: 14px;
+      margin-bottom: 15px;
+    }
+
+    textarea {
+      resize: vertical;
+      min-height: 100px;
+    }
+
+    .fixed-department {
+      background: #f1f5f9;
+      padding: 10px;
+      border-radius: 8px;
+      margin-bottom: 15px;
+      font-weight: 600;
+      color: #2563eb;
+      text-align: center;
+    }
+
+    button {
+      background: #2563eb;
+      color: white;
+      border: none;
+      padding: 12px 20px;
+      font-size: 15px;
+      border-radius: 8px;
+      cursor: pointer;
+      width: 100%;
+      transition: background 0.3s ease;
+    }
+
+    button:hover {
+      background: #1e40af;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Blue Header -->
+  <header>
+    CIVICCONNECT
+  </header>
+
+  <!-- Spot Open Drain Form -->
+  <div class="form-container">
+    <h2>Spot Open Drain</h2>
+    <p><strong>Report open or unsafe drains to ensure public safety</strong></p>
+
+    <form>
+      <label for="description">Describe the Problem</label>
+      <textarea id="description" placeholder="Write details about the open drain..."></textarea>
+
+      <label for="location">Location</label>
+      <input type="text" id="location" placeholder="Enter location (street, area, landmark)" />
+
+      <label for="image">Upload Image (Optional)</label>
+      <input type="file" id="image" />
+
+      <!-- Fixed department -->
+      <div class="fixed-department">
+        This complaint will be forwarded to the <br><strong>Public Works Department</strong>.
+      </div>
+
+      <button type="submit">Submit Report</button>
+    </form>
+  </div>
+
+</body>
+</html>
