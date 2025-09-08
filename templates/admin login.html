@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin Login – Local Problem Reporting</title>
+<style>
+  /* === Reuse Softer Civic Palette === */
+  :root {
+    --bg: #F8FAFC;
+    --surface: #FFFFFF;
+    --primary: #1D4ED8;
+    --primary-2: #3B82F6;
+    --text: #1E293B;
+    --muted: #64748B;
+    --border: #E2E8F0;
+    --shadow: 0 8px 24px rgba(2, 6, 23, .08);
+    --radius: 14px;
+  }
+
+  body {
+    margin: 0;
+    font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+  }
+
+  .login-card {
+    background: var(--surface);
+    padding: 32px;
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    width: 100%;
+    max-width: 400px;
+    text-align: center;
+  }
+
+  .login-card h1 {
+    margin-bottom: 8px;
+    font-size: 1.6rem;
+    color: var(--primary);
+  }
+
+  .login-card p {
+    margin-top: 0;
+    margin-bottom: 20px;
+    font-size: 0.9rem;
+    color: var(--muted);
+  }
+
+  .form-group {
+    margin-bottom: 16px;
+    text-align: left;
+  }
+
+  label {
+    display: block;
+    margin-bottom: 6px;
+    font-size: 0.9rem;
+    color: var(--text);
+  }
+
+  input {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    font-size: 1rem;
+    color: var(--text);
+    background: var(--bg);
+    outline: none;
+  }
+
+  input:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 2px rgba(29, 78, 216, 0.2);
+  }
+
+  .btn {
+    width: 100%;
+    padding: 12px;
+    border: none;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s ease;
+  }
+
+  .btn.primary {
+    background: var(--primary);
+    color: #fff;
+  }
+
+  .btn.primary:hover {
+    background: #163EB5; /* darker shade */
+  }
+
+  .footer-text {
+    margin-top: 18px;
+    font-size: 0.85rem;
+    color: var(--muted);
+  }
+
+  .footer-text a {
+    color: var(--primary);
+    text-decoration: none;
+  }
+
+  .footer-text a:hover {
+    text-decoration: underline;
+  }
+</style>
+</head>
+<body>
+  <div class="login-card">
+    <h1>Admin Login</h1>
+    <p>Sign in to manage reports and oversee community issues.</p>
+    <form action="dashboard.html" method="GET">
+      <div class="form-group">
+        <label for="username">Username</label>
+        <input type="text" id="username" placeholder="Enter admin username" required>
+      </div>
+
+      <div class="form-group">
+        <label for="password">Password</label>
+        <input type="password" id="password" placeholder="Enter password" required>
+      </div>
+
+      <button type="submit" class="btn primary">Login</button>
+    </form>
+    <div class="footer-text">
+      <p>Forgot your password? <a href="#">Reset here</a></p>
+      <p>New Admin? <a href="register.html">Register here</a></p>
+    </div>
+  </div>
+</body>
+</html>
