@@ -1,4 +1,3 @@
-<link rel="stylesheet" href="style.css">
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -8,7 +7,7 @@
   <style>
     /* Blue header */
     header {
-      background: linear-gradient(90deg, #2563eb, #3b82f6); /* gradient blue */
+      background: linear-gradient(90deg, #2563eb, #3b82f6);
       color: white;
       text-align: center;
       padding: 15px;
@@ -49,8 +48,7 @@
 
     input[type="text"],
     textarea,
-    input[type="file"],
-    select {
+    input[type="file"] {
       width: 100%;
       padding: 10px;
       border: 1px solid #ccc;
@@ -62,6 +60,16 @@
     textarea {
       resize: vertical;
       min-height: 100px;
+    }
+
+    .fixed-department {
+      background: #f1f5f9;
+      padding: 10px;
+      border-radius: 8px;
+      margin-bottom: 15px;
+      font-weight: 600;
+      color: #2563eb;
+      text-align: center;
     }
 
     button {
@@ -77,7 +85,7 @@
     }
 
     button:hover {
-      background: #1e40af; /* darker blue */
+      background: #1e40af;
     }
   </style>
 </head>
@@ -103,13 +111,10 @@
       <label for="image">Upload Image (Optional)</label>
       <input type="file" id="image" />
 
-      <label for="department">Department</label>
-      <select id="department">
-        <option>-- Select Department --</option>
-        <option>Sanitation Department</option>
-        <option>Municipal Corporation</option>
-        <option>Waste Management Authority</option>
-      </select>
+      <!-- Fixed department -->
+      <div class="fixed-department">
+        This complaint will be forwarded to the <br><strong>Waste Management Authority</strong>.
+      </div>
 
       <button type="submit">Submit Report</button>
     </form>
