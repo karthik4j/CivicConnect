@@ -83,18 +83,6 @@ def my_complaints():
 def complaint_status():
   return render_template('complaint_status.html')
 
-@app.route('/waste_dump')
-def waste_dump():
-  return render_template('waste_dump.html')
-
-@app.route('/open_drain')
-def open_drain():
-  return render_template('open_drain.html')
-
-@app.route('/pothole')
-def pothole():
-  return render_template('pothole.html')
-
 @app.route('/login', methods=['POST'])
 def login():
     username = request.form['usrname']
@@ -188,7 +176,25 @@ def register_complaint():
     conn.execute("INSERT INTO complaints (complaint, location, imgsrc, dof, dept, id,status) VALUES (?, ?, ?, ?, ?, ?, ?)", (users_complaint, users_location, rename,formatted_date,dept,logged_in_usr_id,0))
     conn.commit()
     return render_template('message.html', message='Successfully registered complaint')
+
+#spot waste dump
+@app.route('/waste_dump')
+def waste_dump():
+    return render_template('spot_waste_dump.html')
+
+#spot open drain
+@app.route('/open_drain')
+def open_drain():
+    return render_template('spot_open_drain.html')
+#spot pothole
+
+@app.route('/pothole')
+def pothole():
+    return render_template('spot_pothole.html')
     
+@app.route('/admin_login')
+def admin_login():
+    return render_template('admin login.html')
 if __name__ =="__main__":
   create_table()
   app.run(host='0.0.0.0',port=5555,debug=True)

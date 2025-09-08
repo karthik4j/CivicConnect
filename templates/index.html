@@ -1,71 +1,62 @@
 <!DOCTYPE html>
-<html>
-  <head>
-    <link rel="stylesheet" href="/css/login.css">
-    <title>Login</title>
-  </head>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login – CivicConnect</title>
+  <link rel="stylesheet" href="/css/login.css">
+</head>
+<body>
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      <div class="flash-msg">{{messages}}</div>
+    {% endif %}
+  {% endwith %}
 
-  <body>
-      {% with messages = get_flashed_messages(with_categories=true) %}
-        {% if messages %}
-          <h1>{{messages}}</h1>
-        {% endif %}
-      {% endwith %}
-      <main class="main-div">
-            <div class="welcome-div">
-                  <h1>CivicConnect</h1>
-                  <img src="/images/placeholder.jpg" alt="placeholder" id="placeholderforlogin">
-            </div>
+  <div class="login-card">
+    <h1>CivicConnect</h1>
+    <p>Sign in to continue to your account.</p>
 
-            <div class="login-portal-div">
-                <div class="sign-in-div">
-                    <form action="{{url_for('login')}}" id="authforms" method="post">
-                      <h2>Sign In</h2>
-                      <hr>
-                      <h3>User Name:</h3>
-                      <input id="username-login-page" placeholder="Enter your username: " type="alphanumeric" class="inputclass" name="usrname">
-                      <h3>Password:</h3>
-                      <input id="password-login-page" placeholder="Enter your password:" type="password" class="inputclass" name="paswd">
-                      <p></p>
-                      <!-- <button id="usersigninbtn" class="btnclass" ><a href="{{ url_for('home') }}">Sign In</a></button> -->
-                      <input type="submit" name="login" value="Sign in" class="btnclass" onclick="setActionForm('login')"> 
-                      <p></p>
-                      <a href="">Forgot password?</a>
-                      <hr>
-                      <h3>New User</h3>
-                      <input type = 'button' value="Register" class="btnclass" onclick="setActionForm('register')">
-                    </form>
-                </div>
-            </div>
-      </main>
+    <form id="authforms" method="post" action="{{ url_for('login') }}">
+      <div class="form-group">
+        <label for="username-login-page">Username</label>
+        <input id="username-login-page" type="text" placeholder="Enter your username" name="usrname" required>
+      </div>
 
-      <footer>
-        <div class="footer-div">
-            <button class="footerbtns"><a href="">About us</a></button>
-            <button class="footerbtns"><a href="">Contact us</a></button>
-            <button class="footerbtns"><a href="">Help</a></button>
-            <button class="footerbtns"><a href="">Privacy Policy</a></button>
-        </div>
+      <div class="form-group">
+        <label for="password-login-page">Password</label>
+        <input id="password-login-page" type="password" placeholder="Enter your password" name="paswd" required>
+      </div>
 
-      </footer>
-  </body>
+      <button type="submit" class="btn primary" onclick="setActionForm('login')">Sign In</button>
+
+      <div class="divider"></div>
+
+      <h3 class="new-user-label">New User</h3>
+      <input type="button" value="Register" class="btn secondary" onclick="setActionForm('register')">
+
+      <div class="footer-text">
+        <p><a href="#">Forgot password?</a></p>
+        {% block content %}
+          <p><a href="{{ url_for('admin_login') }}">Not a user? Admin Login</a></p>
+        {% endblock %}
+      </div>
+    </form>
+  </div>
 
   <script>
- function setActionForm(action)
-  {
-    let form = document.getElementById('authforms')
-    if (action === 'login')
-    {
-      form.action = "{{url_for('login')}}";
-      form.method='post';
-      form.submit();
+    function setActionForm(action) {
+      let form = document.getElementById('authforms');
+      if (action === 'login') {
+        form.action = "{{url_for('login')}}";
+        form.method = 'post';
+        form.submit();
+      } else if (action === 'register') {
+        form.action = "{{url_for('register')}}";
+        form.method = 'post';
+        form.submit();
+      }
     }
-    else if(action == 'register')
-    {
-      form.action = "{{url_for('register')}}";
-      form.method='post';
-      form.submit();
-    }
-  }
-</script>
+  </script>
+</body>
 </html>
