@@ -22,6 +22,7 @@ conn = sqlite3.connect('database.db', check_same_thread=False)
 def create_table():
     usr_table_chck = conn.execute("SELECT name FROM sqlite_master WHERE type='table' AND name=?;", ('user',))
     comp_table_chck = conn.execute("SELECT name FROM sqlite_master WHERE type='table' AND name=?;", ('complaints',))
+    admin_table_chck = conn.execute("SELECT name FROM sqlite_master WHERE type='table' AND name=?;", ('admin',))
 
     usr_table_exists = usr_table_chck.fetchone()
     if not usr_table_exists:
@@ -31,6 +32,11 @@ def create_table():
     comp_table_exists = comp_table_chck.fetchone()
     if not comp_table_exists:
         conn.execute("CREATE TABLE complaints (comp_id INTEGER PRIMARY KEY AUTOINCREMENT,complaint TEXT,summary TEXT,location TEXT,imgsrc TEXT,dof DATE,dor DATE,dept TEXT,status INT,id, FOREIGN KEY(id) REFERENCES user(id))")
+        conn.commit()
+
+    admin_table_exists = admin_table_chck.fetchone()
+    if not admin_table_exists:
+        conn.execute("CREATE TABLE admin (id TEXT PRIMARY KEY, username TEXT UNIQUE, password TEXT, email TEXT UNIQUE,f_name TEXT)")
         conn.commit()
 
 def clean_tuple(tup):
@@ -186,8 +192,8 @@ def waste_dump():
 @app.route('/open_drain')
 def open_drain():
     return render_template('spot_open_drain.html')
-#spot pothole
 
+#spot pothole
 @app.route('/pothole')
 def pothole():
     return render_template('spot_pothole.html')
@@ -195,6 +201,102 @@ def pothole():
 @app.route('/admin_login')
 def admin_login():
     return render_template('admin login.html')
+
+@app.route('/admin_register_page')
+def admin_register_page():
+    return render_template('admin_register.html')
+
+# admin register
+@app.route('/admin_register', methods=['POST'])
+def admin_register():
+    fullname = request.form['fullname']
+    username = request.form['username']
+    email = request.form['email']
+    password = request.form['password']
+    confirm_password = request.form['confirm-password']
+
+    # check password match (extra server-side validation)
+    if password != confirm_password:
+        flash("Passwords do not match")
+        return redirect(url_for('admin_login'))  # render form again
+
+    # check if username already exists
+    res = conn.execute("SELECT username FROM admin WHERE username = ?", (username,))
+    if res.fetchone():
+        flash("Username already taken. Try a different one.")
+        return redirect(url_for('admin_login'))
+
+    # check if email already exists
+    res = conn.execute("SELECT email FROM admin WHERE email = ?", (email,))
+    if res.fetchone():
+        flash("Email already registered. Use a different email.")
+        return redirect(url_for('admin_login'))
+
+    # create new admin
+    newid = str(uuid.uuid4())
+    hashed_password = generate_password_hash(password)
+
+    conn.execute(
+        "INSERT INTO admin (id, username, password, email, f_name) VALUES (?, ?, ?, ?, ?)",
+        (newid, username, hashed_password, email, fullname)
+    )
+    conn.commit()
+
+    # start session
+    session['admin_username'] = username  
+
+    # attach cookie
+    resp = make_response(redirect(url_for('admin_login')))  # redirect after success
+    resp.set_cookie('admin_id', newid)
+
+    flash("Admin account created successfully 🎉")
+    print("New admin saved to db")
+
+    return resp
+
+@app.route('/admin_dashboard')
+def admin_dashboard():
+    return render_template('admin_dashboard.html')
+    
+
+@app.route('/admin_cred_check', methods=['POST'])
+def admin_cred_check():
+    username = request.form['username']
+    password = request.form['password']
+
+    # fetch hashed password for the admin
+    res = conn.execute("SELECT password FROM admin WHERE username = ?", (username,))
+    row = res.fetchone()
+
+    if row and check_password_hash(row[0], password):
+        # store session info
+        session['admin_username'] = username
+
+        # get admin id
+        res = conn.execute("SELECT id FROM admin WHERE username = ?", (username,))
+        logged_in_admin_id = res.fetchone()
+        logged_in_admin_id = clean_tuple(logged_in_admin_id)
+        print("current logged in admin is:", logged_in_admin_id)
+
+        # attach cookie to response
+        resp = redirect(url_for('admin_dashboard'))  # you should have this route
+        resp.set_cookie('admin_id', logged_in_admin_id)
+        return resp
+
+    else:
+        flash('Invalid Admin Username or Password', 'error')
+        return redirect(url_for('admin_login'))  # go back to admin login page
+
+    
+
+@app.route('/admin_logout')
+def admin_logout():
+    session.pop('admin_username', None)
+    session.pop('admin_id',None)
+    response = redirect(url_for('admin_login'))
+    response.delete_cookie('admin_id')
+    return response
+
 if __name__ =="__main__":
   create_table()
   app.run(host='0.0.0.0',port=5555,debug=True)

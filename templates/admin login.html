@@ -120,22 +120,23 @@
   <div class="login-card">
     <h1>Admin Login</h1>
     <p>Sign in to manage reports and oversee community issues.</p>
-    <form action="dashboard.html" method="GET">
-      <div class="form-group">
-        <label for="username">Username</label>
-        <input type="text" id="username" placeholder="Enter admin username" required>
-      </div>
+<form action="{{ url_for('admin_cred_check') }}" method="POST">
+  <div class="form-group">
+    <label for="username">Username</label>
+    <input type="text" id="username" name="username" placeholder="Enter admin username" required>
+  </div>
 
-      <div class="form-group">
-        <label for="password">Password</label>
-        <input type="password" id="password" placeholder="Enter password" required>
-      </div>
+  <div class="form-group">
+    <label for="password">Password</label>
+    <input type="password" id="password" name="password" placeholder="Enter password" required>
+  </div>
 
-      <button type="submit" class="btn primary">Login</button>
-    </form>
+  <button type="submit" class="btn primary">Login</button>
+</form>
+
     <div class="footer-text">
       <p>Forgot your password? <a href="#">Reset here</a></p>
-      <p>New Admin? <a href="register.html">Register here</a></p>
+      <p>New Admin? <a href="{{ url_for('admin_register_page') }}">Register here</a></p>
     </div>
   </div>
 </body>
