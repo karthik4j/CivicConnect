@@ -26,7 +26,7 @@ def create_table():
 
     usr_table_exists = usr_table_chck.fetchone()
     if not usr_table_exists:
-        conn.execute("CREATE TABLE user (id INT PRIMARY KEY, username TEXT UNIQUE, password TEXT)")
+        conn.execute("CREATE TABLE user (id TEXT PRIMARY KEY, username TEXT UNIQUE, password TEXT)")
         conn.commit()
 
     comp_table_exists = comp_table_chck.fetchone()
@@ -254,10 +254,16 @@ def admin_register():
 
     return resp
 
-@app.route('/admin_dashboard')
-def admin_dashboard():
-    return render_template('admin_dashboard.html')
-    
+#route for fetching complaints from the DB (full view)
+@app.route('/admin_view_complaints')
+def admin_view_complaints():
+    #order complaint_id, dof, person's name, status, dept, location
+    res = conn.execute(
+        'SELECT comp_id, dof,id, status,dept,location FROM complaints')
+    result = res.fetchall() 
+    print(result)
+
+    return render_template('admin_complaint_view_page.html', querry=result)    
 
 @app.route('/admin_cred_check', methods=['POST'])
 def admin_cred_check():
@@ -287,6 +293,10 @@ def admin_cred_check():
         flash('Invalid Admin Username or Password', 'error')
         return redirect(url_for('admin_login'))  # go back to admin login page
 
+#admin dashboard 
+@app.route('/admin_dashboard')
+def admin_dashboard():
+    return render_template ('admins_dashboard.html')
     
 
 @app.route('/admin_logout')
@@ -296,6 +306,11 @@ def admin_logout():
     response = redirect(url_for('admin_login'))
     response.delete_cookie('admin_id')
     return response
+
+#@app.route('/fetch_complaints_admin')
+#def fetch_complaints_admin():
+
+
 
 if __name__ =="__main__":
   create_table()
