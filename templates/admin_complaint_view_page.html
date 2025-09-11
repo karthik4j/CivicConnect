@@ -123,18 +123,18 @@
         <td>{{ comp[0] }}</td>
         <td>{{ comp[1] }}</td>
         <td>{{ comp[2] }}</td>
-        <td>{{ comp[3]}}</td>
         <td>
-          {% if comp[4] == 0 %}
+          {% if comp[3] == 0 %}
             Pending
-          {% elif comp[4] == 1 %}
+          {% elif comp[3] == 1 %}
             In Progress
-          {% elif comp[4] == 2 %}
+          {% elif comp[3] == 2 %}
             Resolved
           {% else %}
             Unknown
           {% endif %}
         </td>
+        <td>{{ comp[4]}}</td>
         <td> {{ comp[5] }}</td>
       </tr>
     {% endfor %}
