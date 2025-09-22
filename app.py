@@ -309,7 +309,18 @@ def admin_logout():
 #@app.route('/fetch_complaints_admin')
 #def fetch_complaints_admin():
 
+@app.route('/admin_issue_notifications_page' )
+def admin_issue_notifications_page():
+    return render_template('admin_issue_notifications.html')
 
+@app.route('/update_notifications_admin', methods=['POST'])
+def update_notifications_admin():
+    notification_info = request.form['message']
+    notification_title = request.form['notification_name']
+    notification_priority = request.form['priority']
+    print(notification_info,notification_title,notification_priority)
+    #flash("Message sent",'success')
+    return render_template('admin_issue_notifications.html')
 
 if __name__ =="__main__":
   create_table()
