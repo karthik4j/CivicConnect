@@ -116,6 +116,7 @@
           <th>Status</th>
           <th>Department</th>
           <th>Location</th>
+          <th>Comlaints</th>
         </tr>
 
       {% for comp in querry %}
@@ -136,6 +137,7 @@
         </td>
         <td>{{ comp[4]}}</td>
         <td> {{ comp[5] }}</td>
+        <td> {{ comp[6] }}</td>
       </tr>
     {% endfor %}
       </thead>

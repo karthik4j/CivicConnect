@@ -79,7 +79,7 @@ def my_complaints():
 
     res = conn.execute(
         'SELECT comp_id, complaint, dept, status FROM complaints WHERE id = ?',
-        (logged_in_usr_id,)
+        (logged_in_usr_id.replace("'",""),)
     )
     result = res.fetchall()   # e.g., [(10, "My car won't start", 'Traffic Management', 0), ...]
 
@@ -179,7 +179,7 @@ def register_complaint():
     # Format the datetime object to YYYY-MM-DD string
     formatted_date = current_datetime.strftime("%Y-%m-%d")
     logged_in_usr_id = request.cookies.get('id')
-    conn.execute("INSERT INTO complaints (complaint, location, imgsrc, dof, dept, id,status) VALUES (?, ?, ?, ?, ?, ?, ?)", (users_complaint, users_location, rename,formatted_date,dept,logged_in_usr_id,0))
+    conn.execute("INSERT INTO complaints (complaint, location, imgsrc, dof, dept, id,status) VALUES (?, ?, ?, ?, ?, ?, ?)", (users_complaint, users_location, rename,formatted_date,dept,logged_in_usr_id.replace("'",""),0))
     conn.commit()
     return render_template('message.html', message='Successfully registered complaint')
 
@@ -258,10 +258,9 @@ def admin_register():
 @app.route('/admin_view_complaints')
 def admin_view_complaints():
     #order complaint_id, dof, person's name, status, dept, location
-    res = conn.execute(
-        'SELECT comp_id, dof,id, status,dept,location FROM complaints')
+    res = conn.execute('SELECT c.comp_id, c.dof, u.username, c.status, c.dept, c.location, c.complaint FROM complaints c JOIN user u ON c.id = u.id')
     result = res.fetchall() 
-    print(result)
+   # print(result)
 
     return render_template('admin_complaint_view_page.html', querry=result)    
 
