@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Complaints – Admin Panel</title>
+  <style>
+    :root {
+      --primary: #2563eb;
+      --primary-dark: #1e40af;
+      --text: #1E293B;
+    }
+
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+      background: #F8FAFC;
+      color: var(--text);
+    }
+
+    header {
+      background: var(--primary);
+      color: #fff;
+      padding: 16px 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    header h1 {
+      margin: 0;
+      font-size: 1.3rem;
+    }
+
+    nav a {
+      color: #fff;
+      margin-left: 20px;
+      text-decoration: none;
+      font-weight: 600;
+    }
+
+    nav a:hover {
+      text-decoration: underline;
+    }
+
+    /* Form container */
+    .form-container {
+      max-width: 600px;
+      margin: 30px auto;
+      background: #fff;
+      padding: 25px;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+
+    .form-container h2 {
+      text-align: center;
+      margin-bottom: 10px;
+      color: var(--primary);
+    }
+
+    .form-container p {
+      text-align: center;
+      margin-bottom: 20px;
+      font-weight: 500;
+      color: #444;
+    }
+
+    label {
+      display: block;
+      margin: 12px 0 6px;
+      font-weight: 600;
+      color: var(--text);
+    }
+
+    input[type="text"],
+    textarea,
+    select {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      font-size: 14px;
+      margin-bottom: 15px;
+    }
+
+    textarea {
+      resize: vertical;
+      min-height: 100px;
+    }
+
+    button {
+      background: var(--primary);
+      color: white;
+      border: none;
+      padding: 12px 20px;
+      font-size: 15px;
+      border-radius: 8px;
+      cursor: pointer;
+      width: 100%;
+      transition: background 0.3s ease;
+    }
+
+    button:hover {
+      background: var(--primary-dark);
+    }
+  </style>
+</head>
+
+<body>
+  <!-- Keep header as it is -->
+  <header>
+    <h1>CivicConnect</h1>
+    <nav>
+      <a href="{{url_for('admin_dashboard')}}">Dashboard</a>
+      <a href="{{ url_for('admin_issue_notifications_page') }}">Issue Notifications</a>
+      <a href="{{ url_for('admin_view_complaints') }}">Complaints</a>
+      <a href="{{ url_for('admin_logout') }}">Logout</a>
+    </nav>
+  </header>
+
+  <!-- Restyled form -->
+  <div class="form-container">
+    <h2>Issue Notifications</h2>
+    <p><strong>Send important messages and alerts to citizens</strong></p>
+
+    <form method="post" id="admin_notification">
+      <label for="message">Notification Message</label>
+      <textarea name="message" id="message" placeholder="Enter what you want to convey"></textarea>
+
+      <label for="notification_name">Notification Title</label>
+      <input type="text" name="notification_name" id="notification_name" placeholder="Enter title here">
+
+      <label for="priority">Priority</label>
+      <select id="priority" name="priority">
+        <option value="">-- Select Priority --</option>
+        <option value="high">High</option>
+        <option value="medium">Medium</option>
+        <option value="low">Low</option>
+      </select>
+
+      <button type="button"  onclick="OnSub()">Send Notification</button>
+    </form>
+  </div>
+</body>
+
+<script>
+  function OnSub()
+  {  
+  const msg = document.getElementById('message').value;
+   const title = document.getElementById('notification_name').value;
+   const priority = document.getElementById('priority').value;
+   const form = document.getElementById('admin_notification');
+    if(msg.length === 0)
+   {
+    alert('Please provide a valid message')
+   }
+   else if(title.length===0)
+   {
+    alert('Please provide a valid title')
+   }
+   else if(priority.length === 0)
+   {
+    alert('Please assgin a valid priority.')
+   }
+   else
+   {
+      form.action = "{{ url_for('update_notifications_admin') }}";
+      form.method = 'post';
+      form.submit();
+    //  alert("Message sent successfully.")
+   }
+  }
+   
+</script>
+</html>

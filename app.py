@@ -24,6 +24,8 @@ def create_table():
     comp_table_chck = conn.execute("SELECT name FROM sqlite_master WHERE type='table' AND name=?;", ('complaints',))
     admin_table_chck = conn.execute("SELECT name FROM sqlite_master WHERE type='table' AND name=?;", ('admin',))
 
+    messages_table_chck = conn.execute("SELECT name FROM sqlite_master WHERE type='table' AND name=?;", ('messages',))
+
     usr_table_exists = usr_table_chck.fetchone()
     if not usr_table_exists:
         conn.execute("CREATE TABLE user (id TEXT PRIMARY KEY, username TEXT UNIQUE, password TEXT)")
@@ -36,7 +38,13 @@ def create_table():
 
     admin_table_exists = admin_table_chck.fetchone()
     if not admin_table_exists:
-        conn.execute("CREATE TABLE admin (id TEXT PRIMARY KEY, username TEXT UNIQUE, password TEXT, email TEXT UNIQUE,f_name TEXT)")
+        conn.execute("CREATE TABLE admin (id TEXT PRIMARY KEY, username TEXT UNIQUE, password TEXT, email TEXT UNIQUE,f_name TEXT,dept TEXT)")
+        conn.commit()
+
+
+    message_table_exists = messages_table_chck.fetchone()
+    if not message_table_exists:
+        conn.execute("CREATE TABLE messages(msg_id INTEGER PRIMARY KEY AUTOINCREMENT, msg TEXT,priority TEXT,msg_title TEXT,issue_date DATE, issued_by TEXT, dept TEXT)")
         conn.commit()
 
 def clean_tuple(tup):
@@ -45,9 +53,19 @@ def clean_tuple(tup):
    strings = strings.replace('(',"")
    strings = strings.replace(')',"")
    strings = strings.replace(',',"")
+   strings = strings.replace("'","")
    return strings
 
+#returns the current data in a formatted string
+def get_formatted_date():
 
+    current_datetime = datetime.now()
+    # Format the datetime object to YYYY-MM-DD string
+    formatted_date = current_datetime.strftime("%Y-%m-%d")
+    return formatted_date
+
+def get_admin_cred():
+    return "nothin"
 #---------------------------------------------------------------------------- FUNCTIONS ------------------------------------------------------------------------------------------------
 app.secret_key = 'your_secret_key'
 
@@ -175,9 +193,8 @@ def register_complaint():
         # Save file with extension preserved
         photo.save(os.path.join(app.config['UPLOAD_FOLDER'], rename))
 
-    current_datetime = datetime.now()
-    # Format the datetime object to YYYY-MM-DD string
-    formatted_date = current_datetime.strftime("%Y-%m-%d")
+    formatted_date = get_formatted_date()
+
     logged_in_usr_id = request.cookies.get('id')
     conn.execute("INSERT INTO complaints (complaint, location, imgsrc, dof, dept, id,status) VALUES (?, ?, ?, ?, ?, ?, ?)", (users_complaint, users_location, rename,formatted_date,dept,logged_in_usr_id.replace("'",""),0))
     conn.commit()
@@ -214,6 +231,7 @@ def admin_register():
     email = request.form['email']
     password = request.form['password']
     confirm_password = request.form['confirm-password']
+    admin_dept = request.form['department']
 
     # check password match (extra server-side validation)
     if password != confirm_password:
@@ -237,8 +255,8 @@ def admin_register():
     hashed_password = generate_password_hash(password)
 
     conn.execute(
-        "INSERT INTO admin (id, username, password, email, f_name) VALUES (?, ?, ?, ?, ?)",
-        (newid, username, hashed_password, email, fullname)
+        "INSERT INTO admin (id, username, password, email, f_name,dept) VALUES (?, ?, ?, ?, ?, ?)",
+        (newid, username, hashed_password, email, fullname, admin_dept)
     )
     conn.commit()
 
@@ -248,6 +266,7 @@ def admin_register():
     # attach cookie
     resp = make_response(redirect(url_for('admin_login')))  # redirect after success
     resp.set_cookie('admin_id', newid)
+    resp.set_cookie('dept',admin_dept)
 
     flash("Admin account created successfully 🎉")
     print("New admin saved to db")
@@ -283,9 +302,16 @@ def admin_cred_check():
         logged_in_admin_id = clean_tuple(logged_in_admin_id)
         print("current logged in admin is:", logged_in_admin_id)
 
+        # get dept id
+        res = conn.execute("SELECT dept FROM admin WHERE username = ?", (username,))
+        logged_in_admin_dept = res.fetchone()
+        logged_in_admin_dept = clean_tuple(logged_in_admin_dept)
+        print("current dept:", logged_in_admin_dept)
+
         # attach cookie to response
         resp = redirect(url_for('admin_dashboard'))  # you should have this route
         resp.set_cookie('admin_id', logged_in_admin_id)
+        resp.set_cookie('dept',logged_in_admin_dept)
         return resp
 
     else:
@@ -304,6 +330,7 @@ def admin_logout():
     session.pop('admin_id',None)
     response = redirect(url_for('admin_login'))
     response.delete_cookie('admin_id')
+    response.delete_cookie('dept')
     return response
 
 #@app.route('/fetch_complaints_admin')
@@ -318,7 +345,17 @@ def update_notifications_admin():
     notification_info = request.form['message']
     notification_title = request.form['notification_name']
     notification_priority = request.form['priority']
-    print(notification_info,notification_title,notification_priority)
+    
+    #print(notification_info,notification_title,notification_priority)
+
+    to_day = get_formatted_date()
+    adm_id = request.cookies.get('admin_id')
+    adm_dept = request.cookies.get('dept')
+
+    conn.execute("INSERT INTO messages (msg , priority, msg_title, issue_date, issued_by, dept) VALUES (?, ?, ?, ?, ?, ?)",(notification_info,notification_priority,notification_title,to_day,adm_id,adm_dept))
+    conn.commit()
+
+    
     #flash("Message sent",'success')
     return render_template('admin_issue_notifications.html')
 
