@@ -84,7 +84,7 @@ def index():
 @app.route('/home')
 def home():
       if "username" in session:
-        return render_template("layout10.html", username=session['username'])
+        return render_template("user_dashboard.html", username=session['username'])
       return render_template('index.html')
 
 @app.route('/new_complaint')
@@ -358,6 +358,13 @@ def update_notifications_admin():
     
     #flash("Message sent",'success')
     return render_template('admin_issue_notifications.html')
+
+@app.route('/get_notifications_all')
+def get_notifications_all():
+    res = conn.execute('SELECT m.msg_id, m.msg, m.issue_date, a.username, m.dept FROM messages m JOIN admin a ON m.issued_by = a.id')
+    result = res.fetchall() 
+    #print(result)
+    return render_template('notifications_user.html',querry=result)
 
 if __name__ =="__main__":
   create_table()
