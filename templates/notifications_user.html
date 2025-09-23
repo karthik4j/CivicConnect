@@ -12,10 +12,13 @@
     }
 
     body {
+      padding: 0px;
       margin: 0;
       font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
       background: #F8FAFC;
       color: var(--text);
+      display: flex;
+      flex-direction: column;
     }
 
     header {
@@ -39,57 +42,69 @@
       font-weight: 600;
     }
 
-    nav a:hover {
-      text-decoration: underline;
-    }
-
-    .table-container {
-      margin: 30px auto;
-      background: #fff;
-      padding: 25px;
-      border-radius: 12px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-      width: 90%;
-      max-width: 1000px;
-      overflow-x: auto;
-    }
-
-    .table-container h2 {
-      text-align: center;
-      margin-bottom: 10px;
-      color: var(--primary);
-    }
-
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      font-size: 14px;
-      text-align: center;
-    }
-
-    thead {
-      background: var(--primary);
-      color: #fff;
-    }
-
-    th, td {
-      padding: 12px 15px;
-      border: 1px solid #ddd;
-    }
-
-    tr:nth-child(even) {
-      background: #f9fafb;
-    }
-
-    tr:hover {
-      background: #f1f5f9;
-    }
-
     main {
+      flex:1;
       display: flex;
       flex-direction: column;
       justify-content: center;
       align-items: center;
+    }
+
+    .card {
+      margin-top: 20px;
+      width:500px;
+      height:auto;
+      background-color: white;
+      border-radius: 20px;
+      border:1px solid #E2E8F0;
+      box-shadow: 0px 4px 12px rgba(0,0,0,0.15); /* box shadow */
+      transition: transform 0.2s ease-in-out;
+    }
+
+    .card:hover {
+      transform: translateY(-4px); /* little hover lift */
+    }
+
+    .card-header {
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .card-header h4,h3 {
+      margin-left: 20px;
+      margin-right: 20px;
+    }
+
+    .card-main {
+      margin-left: 20px;
+      margin-right: 20px;
+    }
+
+    .card-footer {
+      display: flex;
+      flex-direction: row;
+      justify-content: space-between;
+      align-items: center;
+      margin-left: 20px;
+      margin-right: 20px;
+    }
+
+    /* Priority styles */
+    .High {
+      color: #DC2626; /* Red */
+      font-weight: bold;
+    }
+
+    .Medium {
+      color: #D97706; /* Amber/Orange */
+      font-weight: bold;
+    }
+
+    .Low {
+      color: #16A34A; /* Green */
+      font-weight: bold;
     }
   </style>
 </head>
@@ -104,30 +119,31 @@
   </header>
 
   <main>
-    <h1>Notifications</h1>
-    <div class="table-container">
-      <table>
-        <thead>
-          <tr>
-            <th>SL. No</th>
-            <th>Message</th>
-            <th>Issued By</th>
-            <th>Department</th>
-            <th>Date</th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for comp in querry %}
-          <tr>
-            <td>{{ comp[0] }}</td>
-            <td>{{ comp[1] }}</td>
-            <td>{{ comp[2] }}</td>
-            <td>{{ comp[3] }}</td>
-            <td>{{ comp[4] }}</td>
-          </tr>
-          {% endfor %}
-        </tbody>
-      </table>
+    <div class="card-lists">
+      {% for msg in querry %}
+          <div class="card">
+            <div class="card-header">
+              <h3>{{ msg[1] }}</h3> <!-- Title/Message -->
+              <h4 class="
+                  {% if msg[2] == 'High' %} High
+                  {% elif msg[2] == 'Medium' %} Medium
+                  {% else %} Low
+                  {% endif %}
+              ">
+                {{ msg[2] }} <!-- Priority -->
+              </h4>
+            </div>
+
+            <div class="card-main"> <!-- Actual message -->
+              <p>{{ msg[1] }}</p>
+            </div>
+
+            <div class="card-footer">
+              <h4>Issued By: {{ msg[3] }} ({{ msg[4] }})</h4> <!-- Person & Dept -->
+              <h4>{{ msg[5] }}</h4> <!-- Date -->
+            </div>
+          </div>
+      {% endfor %}
     </div>
   </main>
 </body>

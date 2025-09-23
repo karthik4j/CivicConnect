@@ -361,11 +361,7 @@ def update_notifications_admin():
 
 @app.route('/get_notifications_all')
 def get_notifications_all():
-<<<<<<< HEAD
-    res = conn.execute('SELECT m.msg_id, m.msg, a.username, m.dept,  m.issue_date FROM messages m JOIN admin a ON m.issued_by = a.id')
-=======
-    res = conn.execute('SELECT m.msg_id, m.msg, m.issue_date, a.username, m.dept FROM messages m JOIN admin a ON m.issued_by = a.id')
->>>>>>> 96d3defd279ab814855e910fde6208f0ae2d15cb
+    res = conn.execute('SELECT m.msg_id, m.msg, m.priority, a.username, m.dept, m.issue_date FROM messages m JOIN admin a ON m.issued_by = a.id;')
     result = res.fetchall() 
     #print(result)
     return render_template('notifications_user.html',querry=result)
