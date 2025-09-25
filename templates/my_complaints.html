@@ -39,6 +39,12 @@
     table tr:hover {
       background: #e0f2fe; /* light cyan hover */
     }
+
+    .question
+    {
+        color: var(--primary);
+        font-size: 18px;
+    }
   </style>
 </head>
 <body>
@@ -46,38 +52,47 @@
   <header>CivicConnect</header>
 
   <div class="complaints-container">
-    <h2>My Complaints</h2>
-    <table>
-      <thead>
-    <tr>
-      <th>Complaint ID</th>
-      <th>Complaint</th>
-      <th>Department</th>
-      <th>Status</th>
-    </tr>
-  </thead>
-  <tbody>
-    {% for comp in querry %}
-      <tr>
-        <td>{{ comp[0] }}</td>
-        <td>{{ comp[1] }}</td>
-        <td>{{ comp[2] }}</td>
-        <td>
-          {% if comp[3] == 0 %}
-            Pending
-          {% elif comp[3] == 1 %}
-            In Progress
-          {% elif comp[3] == 2 %}
-            Resolved
-          {% else %}
-            Unknown
-          {% endif %}
-        </td>
-      </tr>
-    {% endfor %}
-  </tbody>
-    </table>
-  </div>
+    {% if querry %}
+        <h2>My Complaints</h2>
+        <table>
+          <thead>
+        <tr>
+          <th>Complaint ID</th>
+          <th>Complaint</th>
+          <th>Department</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for comp in querry %}
+          <tr>
+            <td>{{ comp[0] }}</td>
+            <td>{{ comp[1] }}</td>
+            <td>{{ comp[2] }}</td>
+            <td>
+              {% if comp[3] == 0 %}
+                Pending
+              {% elif comp[3] == 1 %}
+                In Progress
+              {% elif comp[3] == 2 %}
+                Resolved
+              {% else %}
+                Unknown
+              {% endif %}
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="ask-user">
+        <h1>No registered complaints</h1>
+        <h2 class="question">Would you like to register?</h2>
+    </div>
+       
+    {% endif %}
+
 
 </body>
 </html>
