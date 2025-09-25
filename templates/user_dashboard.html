@@ -96,8 +96,8 @@
   <header>
     <h1>🏛️ CivicConnect</h1>
     <nav>
-      <a href="#">Home</a>
-      <a href="#">Notifications</a>
+      <a href="{{url_for('home')}}">Home</a>
+      <a href="{{url_for('get_notifications_all')}}">Notifications</a>
       <a href="{{ url_for('account_page') }}">Account</a>
       <a href="#">Help</a>
     </nav>
