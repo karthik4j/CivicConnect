@@ -120,30 +120,34 @@
 
   <main>
     <div class="card-lists">
-      {% for msg in querry %}
-          <div class="card">
-            <div class="card-header">
-              <h3>{{ msg[0] }}</h3> <!-- Title/Message -->
-              <h4 class="
-                  {% if msg[2] == 'High' %} High
-                  {% elif msg[2] == 'Medium' %} Medium
-                  {% else %} Low
-                  {% endif %}
-              ">
-                {{ msg[2] }} <!-- Priority -->
-              </h4>
-            </div>
+      {% if querry %}
+        {% for msg in querry %}
+            <div class="card">
+              <div class="card-header">
+                <h3>{{ msg[0] }}</h3> <!-- Title/Message -->
+                <h4 class="
+                    {% if msg[2] == 'High' %} High
+                    {% elif msg[2] == 'Medium' %} Medium
+                    {% else %} Low
+                    {% endif %}
+                ">
+                  {{ msg[2] }} <!-- Priority -->
+                </h4>
+              </div>
 
-            <div class="card-main"> <!-- Actual message -->
-              <p>{{ msg[1] }}</p>
-            </div>
+              <div class="card-main"> <!-- Actual message -->
+                <p>{{ msg[1] }}</p>
+              </div>
 
-            <div class="card-footer">
-              <h4>Issued By: {{ msg[3] }} ({{ msg[4] }})</h4> <!-- Person & Dept -->
-              <h4>{{ msg[5] }}</h4> <!-- Date -->
+              <div class="card-footer">
+                <h4>Issued By: {{ msg[3] }} ({{ msg[4] }})</h4> <!-- Person & Dept -->
+                <h4>{{ msg[5] }}</h4> <!-- Date -->
+              </div>
             </div>
-          </div>
-      {% endfor %}
+        {% endfor %}
+      {% else %}
+            <h1>No new messages</h1>
+      {% endif %}
     </div>
   </main>
 </body>

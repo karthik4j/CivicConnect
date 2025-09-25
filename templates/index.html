@@ -32,11 +32,12 @@
 
       <div class="divider"></div>
 
-      <h3 class="new-user-label">New User</h3>
-      <input type="button" value="Register" class="btn secondary" onclick="setActionForm('register')">
+      <h3 class="new-user-label">New User?</h3>
+      <!-- <input type="button" value="Register" class="btn secondary" onclick="setActionForm('register')"> -->
+      <input type="button" value="Register" class="btn secondary" onclick="launch_reg_page()">
 
       <div class="footer-text">
-        <p><a href="#">Forgot password?</a></p>
+       <!-- <p><a href="#">Forgot password?</a></p> --> 
         {% block content %}
           <p><a href="{{ url_for('admin_login') }}">Not a user? Admin Login</a></p>
         {% endblock %}
@@ -56,6 +57,12 @@
         form.method = 'post';
         form.submit();
       }
+    }
+
+    function launch_reg_page()
+    {
+      
+      location.href="{{url_for('user_reg_page')}}"
     }
   </script>
 </body>

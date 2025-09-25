@@ -28,7 +28,7 @@ def create_table():
 
     usr_table_exists = usr_table_chck.fetchone()
     if not usr_table_exists:
-        conn.execute("CREATE TABLE user (id TEXT PRIMARY KEY, username TEXT UNIQUE, password TEXT)")
+        conn.execute("CREATE TABLE user (id TEXT PRIMARY KEY, username TEXT UNIQUE, f_name TEXT,fullname TEXT, l_name TEXT, email TEXT,ph_no INT,DOC DATE, password TEXT)")
         conn.commit()
 
     comp_table_exists = comp_table_chck.fetchone()
@@ -64,8 +64,6 @@ def get_formatted_date():
     formatted_date = current_datetime.strftime("%Y-%m-%d")
     return formatted_date
 
-def get_admin_cred():
-    return "nothin"
 #---------------------------------------------------------------------------- FUNCTIONS ------------------------------------------------------------------------------------------------
 app.secret_key = 'your_secret_key'
 
@@ -135,31 +133,35 @@ def login():
 # register
 @app.route('/register', methods=['POST'])
 def register():
-    username = request.form['usrname']
-    password = request.form['paswd']
+    data = request.get_json()
+    username = data.get('usrname')
+    password = data.get('paswd')
+    f_name = data.get('fname')
+    l_name = data.get('lname')
+    ph_no = data.get('phone')
+
+    full_name = f_name + " " + l_name
+    to_day = get_formatted_date()
 
     res = conn.execute("SELECT username FROM user WHERE username = ?", (username,))
     if res.fetchone():
-        flash('User already registered')
-        return redirect(url_for('index'))
+        return "User already registered", 400
     else:
+        newid = str(uuid.uuid4())
+        hashed_password = generate_password_hash(password)
 
-      newid = str(uuid.uuid4())
-      hashed_password = generate_password_hash(password)
+        conn.execute("INSERT INTO user (id, username, f_name, l_name, fullname, DOC, ph_no, password) VALUES (?, ?, ?, ?, ?, ?, ?, ?)", 
+                     (newid, username, f_name, l_name, full_name, to_day, ph_no, hashed_password))
+        conn.commit()
 
-      conn.execute("INSERT INTO user (id, username, password) VALUES (?, ?, ?)", (newid, username, hashed_password))
-      conn.commit()
-      print("saving new user to db")
+        session['username'] = username
+        resp = make_response("Account created Successfully")
+        resp.set_cookie('id', newid)
+        return resp
 
-      session['username'] = username
-
-      # attach cookie to redirect response
-      resp = make_response('attach cookie')
-      resp.set_cookie('id', newid)
-      response =redirect(url_for('index'))
-      flash("Account created Successfully")
-      print('account creation')
-      return response
+@app.route('/user_reg_page')
+def user_reg_page():
+    return render_template('user-registration-page.html')
 
 # logout
 @app.route('/logout',methods=['POST'])
@@ -173,6 +175,11 @@ def logout():
 @app.route('/account-page')
 def account_page():
    logged_in_usr_id = request.cookies.get('id')
+   res = conn.execute("SELECT username FROM user WHERE id = ?", (logged_in_usr_id,))
+   res = res.fetchone()
+   user_name = clean_tuple(res)
+   print(user_name)
+   
    return render_template('account-page.html',user_id=logged_in_usr_id)
 
 @app.route('/register-complaint', methods=['POST'])
