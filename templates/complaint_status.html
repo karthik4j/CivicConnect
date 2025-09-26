@@ -1,10 +1,12 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Complaint Status - CivicConnect</title>
-  <link rel="stylesheet" href="/css/style.css"> <!-- link to your common CSS -->
+
+
+
+{% extends "header-template.html" %}
+
+{% block title %}Complaints – Admin Panel{% endblock %}
+
+{% block styles %}
+
   <style>
     /* Page Title */
     .page-title {
@@ -98,12 +100,9 @@
       transform: scale(0.97);
     }
   </style>
-</head>
-<body>
-  <!-- Common Header -->
-  <header>
-    CivicConnect
-  </header>
+{% endblock %}
+
+{% block content %}
 
   <!-- Page Title -->
   <section class="page-title">
@@ -137,5 +136,4 @@
       <button class="details-btn">View Details</button>
     </div>
   </section>
-</body>
-</html>
+{% endblock %}
