@@ -175,12 +175,17 @@ def logout():
 @app.route('/account-page')
 def account_page():
    logged_in_usr_id = request.cookies.get('id')
-   res = conn.execute("SELECT username FROM user WHERE id = ?", (logged_in_usr_id,))
+   res = conn.execute("SELECT username, fullname, ph_no , DOC  FROM user WHERE id = ?", (logged_in_usr_id,))
    res = res.fetchone()
-   user_name = clean_tuple(res)
-   print(user_name)
+   res = clean_tuple(res).split()
+   print(res)
    
-   return render_template('account-page.html',user_id=logged_in_usr_id)
+   usr_name = res[0]
+   fullname = res[1] +" "+ res[2]
+   ph_no = res[3]
+   DateOfCreation = res[4]
+   
+   return render_template('account-page.html',user_id=logged_in_usr_id,user_name=usr_name, reg_name=fullname, ph_no=ph_no,DOC=DateOfCreation)
 
 @app.route('/register-complaint', methods=['POST'])
 def register_complaint():

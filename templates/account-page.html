@@ -17,8 +17,16 @@
       box-shadow: 0 2px 8px rgba(0,0,0,0.1);
       display:flex;
       flex-direction: column;
-      align-items: center;
+      align-items: left;
       justify-content: center;
+    }
+    .acc-info-div label
+    {
+      line-height: 30px;
+    }
+    .acc-info-div h1
+    {
+      text-align: center;
     }
     .logout-btn
     {
@@ -34,6 +42,7 @@
     {
       background:red;
     }
+    
   </style>
   </head>
   <body>
@@ -41,6 +50,10 @@
       <div class="acc-info-div">
           <h1>Account info</h1>
           {% block content%}
+            <label>User name: {{user_name}}</label>
+            <label>Registered name: {{reg_name}}</label>
+            <label>Phone number: {{ph_no}}</label>
+            <label>Account created on: {{DOC}}</label>
             <label>User ID : {{user_id}}</label>
           {% endblock %}
           <form method="post" id="log"></form><input type="submit" class="logout-btn" value="Log Out" onclick="logout()"></form>

@@ -1,0 +1,14 @@
+#ignore the env files (important)
+.env
+
+#flask_sessions
+flask_sessions
+
+#uploads (these are user generated data (no need to track them))
+uploads
+
+#database (we really don't this to be public)
+database.db
+
+#VSCode Workspace file
+civicConnect.code-workspace
