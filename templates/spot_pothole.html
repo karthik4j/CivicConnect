@@ -1,23 +1,10 @@
-<link rel="stylesheet" href="style.css">
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Spot Pothole - CivicConnect</title>
-  <style>
-    /* Blue header */
-    header {
-      background: linear-gradient(90deg, #2563eb, #3b82f6);
-      color: white;
-      text-align: center;
-      padding: 15px;
-      font-size: 22px;
-      font-weight: bold;
-      letter-spacing: 1px;
-    }
+{% extends "header-template.html" %}
 
-    /* Form container */
+{% block title %}Complaints – Admin Panel{% endblock %}
+
+{% block styles %}
+<style>
+     /* Form container */
     .form-container {
       max-width: 600px;
       margin: 30px auto;
@@ -88,17 +75,11 @@
     button:hover {
       background: #1e40af;
     }
-  </style>
-</head>
-<body>
+</style>
+{% endblock %}
 
-  <!-- Blue Header -->
-  <header>
-    CIVICCONNECT
-  </header>
-
-  <!-- Spot Pothole Form -->
-  <div class="form-container">
+{% block content %}
+<div class="form-container">
     <h2>Spot Pothole</h2>
     <p><strong>Report potholes to improve road safety and traffic flow</strong></p>
 
@@ -120,6 +101,5 @@
       <button type="submit">Submit Report</button>
     </form>
   </div>
+{% endblock %}
 
-</body>
-</html>
