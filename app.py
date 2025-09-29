@@ -251,11 +251,11 @@ def pothole():
     
 @app.route('/admin_login')
 def admin_login():
-    return render_template('admin login.html')
+    return render_template('admin/admin login.html')
 
 @app.route('/admin_register_page')
 def admin_register_page():
-    return render_template('admin_register.html')
+    return render_template('admin/admin_register.html')
 
 # admin register
 @app.route('/admin_register', methods=['POST'])
@@ -315,7 +315,7 @@ def admin_view_complaints():
     result = res.fetchall() 
    # print(result)
 
-    return render_template('admin_complaint_view_page.html', querry=result)    
+    return render_template('admin/admin_complaint_view_page.html', querry=result)    
 
 @app.route('/admin_cred_check', methods=['POST'])
 def admin_cred_check():
@@ -355,10 +355,24 @@ def admin_cred_check():
 #admin dashboard 
 @app.route('/admin_dashboard')
 def admin_dashboard():
-    return render_template ('admins_dashboard.html')
+    return render_template ('admin/admins_dashboard.html')
     
+@app.route('/admin_my_account')
+def admin_my_account():
+   logged_in_usr_id = request.cookies.get('admin_id')
+   res = conn.execute("SELECT username, f_name, dept FROM admin WHERE id = ?", (logged_in_usr_id,))
+   res = res.fetchone()
+   res = clean_tuple(res).split()
+   print(res)
+   
+   usr_name = res[0]
+   fullname =res[1]
+   dept = res[2]
+   
+   return render_template('admin/admin_view_account.html',user_id=logged_in_usr_id,user_name=usr_name, reg_name=fullname,dept=dept)
 
-@app.route('/admin_logout')
+
+@app.route('/admin_logout',methods=['POST','GET'])
 def admin_logout():
     session.pop('admin_username', None)
     session.pop('admin_id',None)
@@ -372,7 +386,7 @@ def admin_logout():
 
 @app.route('/admin_issue_notifications_page' )
 def admin_issue_notifications_page():
-    return render_template('admin_issue_notifications.html')
+    return render_template('admin/admin_issue_notifications.html')
 
 @app.route('/update_notifications_admin', methods=['POST'])
 def update_notifications_admin():
@@ -399,6 +413,12 @@ def get_notifications_all():
     result = res.fetchall() 
     print(result)
     return render_template('notifications_user.html',querry=result)
+
+@app.route('/admin_view_complaints/detail/<id>')
+def view_detailed_complaints(id):
+    return render_template('admin/detailed_complaint_admin.html', comp_id=id)
+
+
 
 if __name__ =="__main__":
   create_table()

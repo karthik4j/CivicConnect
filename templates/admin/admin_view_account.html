@@ -1,0 +1,56 @@
+{% extends "admin/admin_header.html" %}
+
+{% block title %}My Complaints – CivicConnect{% endblock %}
+
+{% block styles %}
+<style>
+  .acc-info-div {
+    max-width: 900px;
+    margin: 30px auto;
+    background: #fff;
+    padding: 20px;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    display: flex;
+    flex-direction: column;
+  }
+
+  .acc-info-div h1 { text-align: center; }
+  .acc-info-div label { line-height: 30px; }
+
+  .logout-btn {
+    background: lightcoral;
+    color: #fff;
+    border: none;
+    padding: 12px 20px;
+    font-size: 15px;
+    border-radius: 8px;
+    cursor: pointer;
+  }
+  .logout-btn:hover { background: red; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="acc-info-div">
+  <h1>Account info</h1>
+  <label>User name: {{user_name}}</label>
+  <label>Registered name: {{reg_name}}</label>
+  <label>Department: {{dept}}</label>
+  <label>Phone number: {{ph_no}}</label>
+  <label>Account created on: {{DOC}}</label>
+  <label>User ID : {{user_id}}</label>
+
+  <form method="post" id="log"></form>
+  <input type="submit" class="logout-btn" value="Log Out" onclick="logout()">
+</div>
+
+<script>
+  function logout() {
+    let form = document.getElementById('log');
+    form.action = "{{url_for('admin_logout')}}";
+    form.method = 'post';
+    form.submit();
+  }
+</script>
+{% endblock %}

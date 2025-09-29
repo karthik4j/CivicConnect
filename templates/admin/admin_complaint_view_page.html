@@ -1,0 +1,159 @@
+{% extends "admin/admin_header.html" %}
+
+{% block title %}Complaints – Admin Panel{% endblock %}
+
+{% block styles %}
+<style>
+  .card {
+    margin-top: 20px;
+    width: 500px;
+    background: var(--surface);
+    border-radius: 20px;
+    border: 1px solid var(--border);
+    box-shadow: 0px 4px 12px rgba(0,0,0,0.15);
+    transition: transform 0.2s ease-in-out;
+  }
+  .card:hover { transform: translateY(-4px); }
+
+  .card-header, .card-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin: 0 20px;
+  }
+
+  .card-main { margin: 0 20px; }
+
+  .card-header h4, .card-header h3 { margin: 0 20px; }
+
+  /* Priority styles */
+  .High   { color: #DC2626; font-weight: bold; }
+  .Medium { color: #D97706; font-weight: bold; }
+  .Low    { color: #16A34A; font-weight: bold; }
+
+
+  :root {
+    --bg: #F8FAFC;
+    --surface: #FFFFFF;
+    --primary: #1D4ED8;
+    --primary-2: #3B82F6;
+    --text: #1E293B;
+    --muted: #64748B;
+    --border: #E2E8F0;
+    --shadow: 0 6px 20px rgba(2, 6, 23, .08);
+    --radius: 12px;
+
+    /* Status Colors */
+    --success: #16A34A;
+    --warning: #FACC15;
+    --danger:  #DC2626;
+  }
+
+  body {
+    margin: 0;
+    font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+  }
+
+   nav a {
+    color: #fff;
+    margin-left: 20px;
+    text-decoration: none;
+    font-weight: 600;
+  }
+
+  nav a:hover { text-decoration: underline; }
+
+  .container {
+    max-width: 1100px;
+    margin: 24px auto;
+    padding: 0 16px;
+  }
+
+  h2 {
+    margin-bottom: 16px;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    background: var(--surface);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    overflow: hidden;
+  }
+
+  th, td {
+    padding: 12px;
+    text-align: left;
+    border-bottom: 1px solid var(--border);
+  }
+
+  th {
+    background: var(--primary-2);
+    color: #fff;
+    font-weight: 600;
+  }
+
+  tr:last-child td {
+    border-bottom: none;
+  }
+
+  .status {
+    padding: 4px 10px;
+    border-radius: 999px;
+    font-size: 0.8rem;
+    font-weight: 600;
+  }
+
+ 
+</style>
+{% endblock %}
+
+{% block content %}
+   <main class="container">
+    <h2>All Complaints</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Complaint ID</th>
+          <th>Date Filed</th>
+          <th>Filed By</th>
+          <th>Status</th>
+          <th>Department</th>
+          <th>Location</th>
+          <th>Comlaints</th>
+          <th>View Complaint</th>
+        </tr>
+
+      {% for comp in querry %}
+      <tr>
+        <td>{{ comp[0] }}</td>
+        <td>{{ comp[1] }}</td>
+        <td>{{ comp[2] }}</td>
+        <td>
+          {% if comp[3] == 0 %}
+            Pending
+          {% elif comp[3] == 1 %}
+            In Progress
+          {% elif comp[3] == 2 %}
+            Resolved
+          {% else %}
+            Unknown
+          {% endif %}
+        </td>
+        <td>{{ comp[4]}}</td>
+        <td> {{ comp[5] }}</td>
+        <td> {{ comp[6] }}</td>
+        <td><a href="{{ url_for('view_detailed_complaints', id=comp[0]) }}">View</a></td>
+
+      </tr>
+    {% endfor %}
+      </thead>
+      <tbody>
+        <!-- Complaints will be added dynamically here -->
+      </tbody>
+    </table>
+  </main>
+{% endblock %}
