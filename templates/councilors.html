@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Councilors – CivicConnect</title>
+  <link rel="stylesheet" href="/css/style.css">
+  <style>
+    .container { max-width: 900px; margin: 24px auto; padding: 20px; background: var(--surface); border-radius: var(--radius); box-shadow: var(--shadow); }
+    h2 { color: var(--primary); margin-bottom: 10px; }
+    ul { margin: 10px 0; padding-left: 20px; }
+    li { margin: 6px 0; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>🏛️ CivicConnect</h1>
+    <nav>
+      <a href="{{ url_for('home') }}">Home</a>
+      <a href="{{ url_for('get_notifications_all') }}">Notifications</a>
+      <a href="{{ url_for('account_page') }}">Account</a>
+      <a href="#">Help</a>
+      <a href="{{ url_for('logout') }}">Logout</a>
+    </nav>
+  </header>
+
+  <main class="container">
+    <h2>Councilors</h2>
+    <ul>
+      <li><strong>Ward 1:</strong> Alice Johnson – +91 90000 11111</li>
+      <li><strong>Ward 2:</strong> Ravi Kumar – +91 90000 22222</li>
+      <li><strong>Ward 3:</strong> Fatima Noor – +91 90000 33333</li>
+    </ul>
+  </main>
+</body>
+</html>
