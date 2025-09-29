@@ -4,9 +4,53 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>New Complaint - CivicConnect</title>
-  <link rel="stylesheet" href="css/style.css"> <!-- common styles -->
 
   <style>
+    :root {
+      --bg: #F8FAFC;
+      --surface: #FFFFFF;
+      --primary: #1D4ED8;
+      --primary-2: #3B82F6;
+      --text: #1E293B;
+      --muted: #64748B;
+      --border: #E2E8F0;
+      --shadow: 0 6px 20px rgba(2, 6, 23, .08);
+      --radius: 12px;
+    }
+
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+    }
+
+    header {
+      background: var(--primary);
+      color: #fff;
+      padding: 16px 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: var(--shadow);
+    }
+
+    header h1 {
+      margin: 0;
+      font-size: 1.4rem;
+    }
+
+    nav a {
+      color: #fff;
+      margin-left: 20px;
+      text-decoration: none;
+      font-weight: 600;
+    }
+
+    nav a:hover {
+      text-decoration: underline;
+    }
+
     .content-box {
       max-width: 900px;
       margin: 40px auto;
@@ -39,7 +83,7 @@
     input[type="file"] {
       width: 100%;
       padding: 10px;
-      border: 1px solid var(--card-border);
+      border: 1px solid var(--border);
       border-radius: 8px;
       font-size: 14px;
       margin-bottom: 15px;
@@ -68,6 +112,7 @@
   </style>
 </head>
 <body>
+  <!-- Header -->
   <header>
     <h1>🏛️ CivicConnect</h1>
     <nav>
@@ -78,6 +123,7 @@
     </nav>
   </header>
 
+  <!-- Complaint Form -->
   <div class="content-box">
     <h2>New Complaint</h2>
     <p style="text-align:center;"><strong>Register any type of complaint</strong></p>
@@ -107,29 +153,27 @@
       <button type="button" onclick="validatForm()">Submit Complaint</button>
     </form>
   </div>
-</body>
 
-<script>
-  function validatForm() {
-    const user_complaint = document.getElementById('description').value.trim();
-    const user_location = document.getElementById('location').value.trim();
-    const attached_file = document.getElementById('image');
-    const complaint_dept = document.getElementById('dept-selec');
+  <script>
+    function validatForm() {
+      const user_complaint = document.getElementById('description').value.trim();
+      const user_location = document.getElementById('location').value.trim();
+      const attached_file = document.getElementById('image');
+      const complaint_dept = document.getElementById('dept-selec');
 
-    if (user_complaint.length === 0) {
-      alert('Please provide a description of your complaint');
-    } else if (user_location.length === 0) {
-      alert('Please enter your location');
-    } else if (attached_file.files.length === 0) {
-      alert('Please attach a file');
-    } else if (complaint_dept.value === "") {
-      alert('Please select a department');
-    } else {
-      const form = document.getElementById('complaint');
-      form.action = "{{ url_for('register_complaint') }}";
-      form.method = 'post';
-      form.submit();
+      if (user_complaint.length === 0) {
+        alert('Please provide a description of your complaint');
+      } else if (user_location.length === 0) {
+        alert('Please enter your location');
+      } else if (complaint_dept.value === "") {
+        alert('Please select a department');
+      } else {
+        const form = document.getElementById('complaint');
+        form.action = "{{ url_for('register_complaint') }}";
+        form.method = 'post';
+        form.submit();
+      }
     }
-  }
-</script>
+  </script>
+</body>
 </html>
