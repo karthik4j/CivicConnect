@@ -85,6 +85,28 @@ def home():
         return render_template("user_dashboard.html", username=session['username'])
       return render_template('index.html')
 
+
+@app.route('/mayor')
+def mayor_page():
+    return render_template('mayor.html')
+
+@app.route('/secretary')
+def secretary_page():
+    return render_template('secretary.html')
+
+@app.route('/councilors')
+def councilors_page():
+    return render_template('councilors.html')
+
+@app.route('/committees')
+def committees_page():
+    return render_template('committees.html')
+
+@app.route('/departments')
+def departments_page():
+    return render_template('departments.html')
+
+
 @app.route('/new_complaint')
 def new_complaint():
   return render_template('new_complaint.html')
@@ -382,23 +404,3 @@ if __name__ =="__main__":
   create_table()
   app.run(host='0.0.0.0',port=5555,debug=True)
 
-
-@app.route('/mayor')
-def mayor_page():
-    return render_template('mayor.html')
-
-@app.route('/secretary')
-def secretary_page():
-    return render_template('secretary.html')
-
-@app.route('/councilors')
-def councilors_page():
-    return render_template('councilors.html')
-
-@app.route('/committees')
-def committees_page():
-    return render_template('committees.html')
-
-@app.route('/departments')
-def departments_page():
-    return render_template('departments.html')
