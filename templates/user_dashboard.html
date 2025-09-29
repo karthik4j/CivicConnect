@@ -137,13 +137,14 @@
     </div>
 
     <h2>Know Your City</h2>
-    <div class="grid">
-      <div class="card">Mayor</div>
-      <div class="card">Secretary</div>
-      <div class="card">Councilors</div>
-      <div class="card">Committees</div>
-      <div class="card">Departments</div>
-    </div>
+<div class="grid">
+  <a href="{{ url_for('mayor_page') }}" class="card">Mayor</a>
+  <a href="{{ url_for('secretary_page') }}" class="card">Secretary</a>
+  <a href="{{ url_for('councilors_page') }}" class="card">Councilors</a>
+  <a href="{{ url_for('committees_page') }}" class="card">Committees</a>
+  <a href="{{ url_for('departments_page') }}" class="card">Departments</a>
+</div>
+
   </main>
 </body>
 </html>
