@@ -38,7 +38,7 @@ def create_table():
 
     admin_table_exists = admin_table_chck.fetchone()
     if not admin_table_exists:
-        conn.execute("CREATE TABLE admin (id TEXT PRIMARY KEY, username TEXT UNIQUE, password TEXT, email TEXT UNIQUE,f_name TEXT,dept TEXT)")
+        conn.execute("CREATE TABLE admin(id TEXT PRIMARY KEY, username TEXT UNIQUE, f_name TEXT, l_name TEXT, fullname TEXT, dept TEXT, email TEXT UNIQUE, password TEXT, DOC DATE, ph_no INT)")
         conn.commit()
 
 
@@ -260,12 +260,17 @@ def admin_register_page():
 # admin register
 @app.route('/admin_register', methods=['POST'])
 def admin_register():
-    fullname = request.form['fullname']
+    f_name = request.form['fname']
+    l_name = request.form['lname']
     username = request.form['username']
+    admin_dept = request.form['department']
     email = request.form['email']
+    ph_no = request.form['ph_no']
     password = request.form['password']
     confirm_password = request.form['confirm-password']
-    admin_dept = request.form['department']
+
+    fullname = f_name + " " + l_name
+    to_day = get_formatted_date()
 
     # check password match (extra server-side validation)
     if password != confirm_password:
@@ -289,9 +294,11 @@ def admin_register():
     hashed_password = generate_password_hash(password)
 
     conn.execute(
-        "INSERT INTO admin (id, username, password, email, f_name,dept) VALUES (?, ?, ?, ?, ?, ?)",
-        (newid, username, hashed_password, email, fullname, admin_dept)
+       "INSERT INTO admin (id, username, f_name, l_name, fullname, dept, email, password, DOC, ph_no ) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+    (newid, username, f_name, l_name, fullname, admin_dept, email, hashed_password, to_day, ph_no)
     )
+
+    
     conn.commit()
 
     # start session
@@ -357,19 +364,24 @@ def admin_cred_check():
 def admin_dashboard():
     return render_template ('admin/admins_dashboard.html')
     
+#view details of admin account by an admin themslef
 @app.route('/admin_my_account')
 def admin_my_account():
    logged_in_usr_id = request.cookies.get('admin_id')
-   res = conn.execute("SELECT username, f_name, dept FROM admin WHERE id = ?", (logged_in_usr_id,))
+   res = conn.execute("SELECT username, fullname, dept, email, ph_no, DOC FROM admin WHERE id = ?", (logged_in_usr_id,))
    res = res.fetchone()
    res = clean_tuple(res).split()
-   print(res)
+ #  print(res)
    
    usr_name = res[0]
-   fullname =res[1]
-   dept = res[2]
-   
-   return render_template('admin/admin_view_account.html',user_id=logged_in_usr_id,user_name=usr_name, reg_name=fullname,dept=dept)
+    #this is becasue the split function separates the name into two. so we have to add it again to fix this issue
+   fullname =res[1] + " " + res[2]
+   dept=res[3]
+   email =res[4]
+   ph_no = res[5]
+   DOC = res[6]
+
+   return render_template('admin/admin_view_account.html',user_id=logged_in_usr_id,user_name=usr_name, reg_name=fullname,dept=dept,e_mail=email,ph_no=ph_no,DOC=DOC)
 
 
 @app.route('/admin_logout',methods=['POST','GET'])

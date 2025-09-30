@@ -36,6 +36,7 @@
     width: 100%;
     max-width: 420px;
     text-align: center;
+    margin-top:15%;
   }
 
   .register-card h1 {
@@ -47,6 +48,7 @@
   .form-group {
     margin-bottom: 16px;
     text-align: left;
+    margin-right:5%
   }
 
   label {
@@ -114,15 +116,22 @@
     margin-bottom: 10px;
     display: none;
   }
+  
 </style>
 </head>
 <body>
   <div class="register-card">
     <h1>Admin Registration</h1>
    <form id="registerForm" action="{{ url_for('admin_register') }}" method="POST">
+
   <div class="form-group">
-    <label for="fullname">Full Name</label>
-    <input type="text" id="fullname" name="fullname" placeholder="Enter full name" required>
+    <label for="fname">First Name</label>
+    <input type="text" id="fname" name="fname" placeholder="Enter first name" required>
+  </div>
+
+  <div class="form-group">
+    <label for="lname">Last Name</label>
+    <input type="text" id="lname" name="lname" placeholder="Enter last name" required>
   </div>
 
   <div class="form-group">
@@ -138,6 +147,11 @@
   <div class="form-group">
     <label for="email">Email</label>
     <input type="email" id="email" name="email" placeholder="Enter email address" required>
+  </div>
+
+  <div class="form-group">
+    <label for="ph_no">Phone number: </label>
+    <input type="ph_no" id="ph_no" name="ph_no" placeholder="Enter Phone number" required>
   </div>
 
   <div class="form-group">
