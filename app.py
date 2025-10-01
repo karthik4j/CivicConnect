@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, session, url_for,flash
+from flask import Flask, render_template, request, redirect, session, url_for,flash, jsonify
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask import Flask,make_response
 import uuid
@@ -35,6 +35,7 @@ def create_table():
 
     comp_table_exists = comp_table_chck.fetchone()
     if not comp_table_exists:
+        #here ID maps to the id of the user who filed the complaint.
         conn.execute("CREATE TABLE complaints (comp_id INTEGER PRIMARY KEY AUTOINCREMENT,complaint TEXT,summary TEXT,location TEXT,imgsrc TEXT,dof DATE,dor DATE,dept TEXT,status INT,id, FOREIGN KEY(id) REFERENCES user(id))")
         conn.commit()
 
@@ -430,7 +431,7 @@ def update_notifications_admin():
 def get_notifications_all():
     res = conn.execute('SELECT m.msg_title, m.msg, m.priority, a.username, m.dept, m.issue_date FROM messages m JOIN admin a ON m.issued_by = a.id;')
     result = res.fetchall() 
-    print(result)
+    #print(result)
     return render_template('notifications_user.html',querry=result)
 
 @app.route('/admin_view_complaints/detail/<id>')
@@ -439,7 +440,7 @@ def view_detailed_complaints(id):
     res = conn.execute("""SELECT u.fullname, c.complaint, c.location, c.status, c.imgsrc AS src, c.dof FROM user u JOIN complaints c ON u.id = c.id WHERE c.comp_id = ?;""",(id,))
 
     res = res.fetchone()
-    print(res)
+    #print(res)
     complainant = res[0]
     complaint = res[1]
     location = res[2]
@@ -464,6 +465,44 @@ def uploaded_file(filename):
     return send_from_directory(os.path.join(app.root_path, 'uploads'), filename)
 
 
+@app.route('/update_enquiry_status', methods=['POST'])
+def update_enquiry_status():
+    if request.is_json:
+        data = request.get_json()
+        
+        # Extract the values from the received JSON data
+        comp_id = data.get('comp_id')
+        new_status = data.get('status')
+        message = data.get('message')
+        
+        #getting the Admin's ID so that we can use it as a reference for the SQL querry call
+        logged_in_adm_id = request.cookies.get('admin_id')
+
+        #fetching the user's ID 
+        res = conn.execute("SELECT id FROM complaints WHERE comp_id = ?",(int(comp_id),))
+        res = res.fetchone()
+        user_id = clean_tuple(res)
+        #print("ID of user: ",res," ID of Admin: ",logged_in_usr_id)
+        to_day =get_formatted_date()
+
+        # Print the received values to the terminal
+        #print(f"Received update for Complaint ID: {comp_id}")
+        #print(f"New Status: {new_status}")
+        #print(f"Message: '{message}'")
+
+        #need to perform two update operations
+        # 1 Update the compalints page with the new status
+        cur = conn.execute("UPDATE complaints SET status = ? WHERE comp_id = ?",(new_status, comp_id))
+
+        # 2 Update the message page with the change. (insert operation)
+        cur = conn.execute("INSERT INTO resolution (comp_id, admin_id, user_id, status, msg, date_of_change) VALUES(?, ?, ?, ?, ?, ?)",(comp_id, logged_in_adm_id, user_id, new_status, message, to_day))
+        conn.commit()
+
+        # Return a success response
+        return jsonify({'message': 'Status and message received successfully', 'status_received': new_status}), 200
+    
+    # Handle non-JSON requests
+    return jsonify({'error': 'Request must be JSON'}), 400
 
 if __name__ =="__main__":
   create_table()
