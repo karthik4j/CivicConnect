@@ -6,6 +6,7 @@ from flask_session import Session
 import sqlite3,os
 from werkzeug.utils import secure_filename
 from datetime import datetime
+from flask import send_from_directory
 
 app = Flask(__name__, template_folder='templates',static_folder='static',static_url_path='/')
 
@@ -23,6 +24,7 @@ def create_table():
     usr_table_chck = conn.execute("SELECT name FROM sqlite_master WHERE type='table' AND name=?;", ('user',))
     comp_table_chck = conn.execute("SELECT name FROM sqlite_master WHERE type='table' AND name=?;", ('complaints',))
     admin_table_chck = conn.execute("SELECT name FROM sqlite_master WHERE type='table' AND name=?;", ('admin',))
+    resolution_table_chck = conn.execute("SELECT name FROM sqlite_master WHERE type='table' AND name=?;", ('resolution',))
 
     messages_table_chck = conn.execute("SELECT name FROM sqlite_master WHERE type='table' AND name=?;", ('messages',))
 
@@ -46,6 +48,11 @@ def create_table():
     if not message_table_exists:
         conn.execute("CREATE TABLE messages(msg_id INTEGER PRIMARY KEY AUTOINCREMENT, msg TEXT,priority TEXT,msg_title TEXT,issue_date DATE, issued_by TEXT, dept TEXT)")
         conn.commit()
+
+
+    resolution_table_exists = resolution_table_chck.fetchone()
+    if not resolution_table_exists:
+        conn.execute("""CREATE TABLE IF NOT EXISTS resolution (resolution_id INTEGER PRIMARY KEY AUTOINCREMENT, comp_id INTEGER, admin_id TEXT, user_id TEXT, status INT, msg TEXT, date_of_change DATE, FOREIGN KEY(comp_id) REFERENCES complaints(comp_id) FOREIGN KEY(admin_id) REFERENCES admin(id), FOREIGN KEY(user_id) REFERENCES user(id))""")
 
 def clean_tuple(tup):
    strings=""
@@ -428,7 +435,33 @@ def get_notifications_all():
 
 @app.route('/admin_view_complaints/detail/<id>')
 def view_detailed_complaints(id):
-    return render_template('admin/detailed_complaint_admin.html', comp_id=id)
+
+    res = conn.execute("""SELECT u.fullname, c.complaint, c.location, c.status, c.imgsrc AS src, c.dof FROM user u JOIN complaints c ON u.id = c.id WHERE c.comp_id = ?;""",(id,))
+
+    res = res.fetchone()
+    print(res)
+    complainant = res[0]
+    complaint = res[1]
+    location = res[2]
+    status = res[3]
+    src= res[4]
+    DOF = res[5]
+   
+    return render_template('admin/detailed_complaint_admin.html',comp_id=id,name=complainant,location=location,status=status,src=src,DOF=DOF,complaint=complaint)
+
+
+@app.route('/admin_view_complaints/show_image/<path:filename>')
+def admin_show_image(filename):
+    return render_template('admin/show_image.html', filename=filename)
+
+
+@app.route('/update_complaint_status', methods=['POST'])
+def update_complaint_status():
+    return render_template('url_for("admin_")')
+
+@app.route('/uploads/<path:filename>')
+def uploaded_file(filename):
+    return send_from_directory(os.path.join(app.root_path, 'uploads'), filename)
 
 
 
