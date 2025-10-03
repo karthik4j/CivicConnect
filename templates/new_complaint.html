@@ -83,7 +83,8 @@
 
   input[type="text"],
   textarea,
-  select {
+  select,
+  input[type="file"] {
     width: 100%;
     padding: 12px 14px;
     border: 1px solid var(--border);
@@ -95,7 +96,8 @@
 
   input[type="text"]:focus,
   textarea:focus,
-  select:focus {
+  select:focus,
+  input[type="file"]:focus {
     border-color: var(--primary);
     box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
   }
@@ -103,29 +105,6 @@
   textarea {
     resize: vertical;
     min-height: 120px;
-  }
-
-  /* File Upload */
-  .file-upload input[type="file"] {
-    display: none;
-  }
-  .file-label {
-    display: inline-block;
-    width: 100%;
-    text-align: center;
-    padding: 12px;
-    background: #f8fafc;
-    border: 1px dashed var(--border);
-    border-radius: 8px;
-    cursor: pointer;
-    font-size: 14px;
-    font-weight: 500;
-    color: var(--muted);
-    transition: all 0.3s;
-  }
-  .file-label:hover {
-    background: #e0e7ff;
-    color: var(--primary);
   }
 
   /* Submit Button */
@@ -170,10 +149,7 @@
 
     <div class="form-group">
       <label for="image">Upload Image (Optional)</label>
-      <div class="file-upload">
-        <input type="file" id="image" accept=".jpg, .jpeg, .png" name="attached_image"/>
-        <label for="image" class="file-label">📁 Choose a file...</label>
-      </div>
+      <input type="file" id="image" accept=".jpg, .jpeg, .png" name="attached_image"/>
     </div>
     
     <div class="form-group">
