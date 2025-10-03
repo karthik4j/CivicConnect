@@ -7,6 +7,9 @@ import sqlite3,os
 from werkzeug.utils import secure_filename
 from datetime import datetime
 from flask import send_from_directory
+from transformers import pipeline
+summarizer = pipeline("summarization", model="t5-base", tokenizer="t5-base")
+import threading
 
 app = Flask(__name__, template_folder='templates',static_folder='static',static_url_path='/')
 
@@ -71,6 +74,14 @@ def get_formatted_date():
     # Format the datetime object to YYYY-MM-DD string
     formatted_date = current_datetime.strftime("%Y-%m-%d")
     return formatted_date
+
+
+def start_summary(word,id):
+    summary = summarizer(word, max_length=300, min_length=20, do_sample=False)[0]['summary_text']
+
+    res = conn.execute("UPDATE complaints SET summary = ? WHERE imgsrc = ?",(summary,id))
+    conn.commit()
+    
 
 #---------------------------------------------------------------------------- FUNCTIONS ------------------------------------------------------------------------------------------------
 app.secret_key = 'your_secret_key'
@@ -240,6 +251,12 @@ def register_complaint():
     logged_in_usr_id = request.cookies.get('id')
     conn.execute("INSERT INTO complaints (complaint, location, imgsrc, dof, dept, id,status) VALUES (?, ?, ?, ?, ?, ?, ?)", (users_complaint, users_location, rename,formatted_date,dept,logged_in_usr_id.replace("'",""),0))
     conn.commit()
+
+    #function to start summary
+    #sumarrized_comp = start_summary(users_complaint)
+    thread1 = threading.Thread(target=start_summary, args=(users_complaint,rename))
+    thread1.start()
+
     return render_template('message.html', message='Successfully registered complaint')
 
 #spot waste dump
