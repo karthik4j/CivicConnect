@@ -1,0 +1,53 @@
+{% extends "admin/admin_header.html" %}
+
+{% block title %}Image{% endblock %}
+{% block styles %}
+<style>
+  .card {
+    margin-top: 20px;
+    width: 500px;
+    background: var(--surface);
+    border-radius: 20px;
+    border: 1px solid var(--border);
+    box-shadow: 0px 4px 12px rgba(0,0,0,0.15);
+    transition: transform 0.2s ease-in-out;
+  }
+  .card:hover { transform: translateY(-4px); }
+
+  .card-header, .card-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin: 0 20px;
+  }
+
+  .card-main { margin: 0 20px; }
+
+  .card-header h4, .card-header h3 { margin: 0 20px; }
+
+  /* Priority styles */
+  .High   { color: #DC2626; font-weight: bold; }
+  .Medium { color: #D97706; font-weight: bold; }
+  .Low    { color: #16A34A; font-weight: bold; }
+  
+  img
+  {
+    max-width: 500px;
+    max-height: 700px;
+  }
+  div
+  {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div>
+    <h1>Image:</h1>
+    <img src="{{ url_for('uploaded_file', filename=filename) }}" alt="Complaint photo">
+</div>
+{% endblock %}

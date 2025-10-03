@@ -30,9 +30,179 @@
   .High   { color: #DC2626; font-weight: bold; }
   .Medium { color: #D97706; font-weight: bold; }
   .Low    { color: #16A34A; font-weight: bold; }
+  
+
+  .container
+  {
+    padding: 2%;
+    /*border: black solid 2px;*/
+    min-height: 83vh;
+    min-width: 83vh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .info-header,.sel-header
+  {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .comp-header,.loc-header
+  {
+    border:solid 2px;
+    border-color:  var(--primary);
+    width: 100%;
+    min-height: 100px;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    padding-left: 20px;
+  }
+
+  .loc-header
+  {
+    border-color: black;
+    min-height: 50px;
+  }
+
+  .sel-header
+  {
+    justify-content:start;
+  }
+
+  .sel-header select
+  {
+    margin-left:20px;
+  }
+
+  textarea
+  {
+    min-height: 100px;
+  }
+
+  .save-and-exit
+  {
+    margin-top: 20px;
+    background-color: greenyellow;
+    width:200px;
+    height: 50px;
+    border-radius: 10px;
+    border:black solid 1px;
+    font-weight: bold;
+    color:black;
+  }
 </style>
 {% endblock %}
 
 {% block content %}
-      <h1>This is complaint ID: {{comp_id}}</h1>
+  <div class="container">
+        <div class="info-header">
+                <h1>This is complaint ID: {{comp_id}}</h1>
+                <h1>Date of Filing {{DOF}}</h1>
+        </div>
+
+        <div class="info-header">
+                <h2>Complainant: {{name}}</h2>
+                <a href="{{ url_for('admin_show_image', filename=src) }}" target="_blank">View photo</a>
+        </div>
+
+        <h2>Complaint :</h2>
+        <div class="comp-header">
+              {{complaint}}
+        </div>
+
+        <h2>Location: </h2>
+        <div class="loc-header">
+            {{location}}
+        </div>
+
+        <div class="sel-header">
+          <h2>Status</h2>
+          <select id="statusSelect">
+              <!-- Options will be inserted dynamically -->
+          </select>
+        </div>
+
+        <h2>Message:</h2>
+        <textarea placeholder="Write a Message (if required)" id="messageToSend">{% if message|length > 0 %}{{ message }}{% endif %}</textarea>
+        <button class="save-and-exit" onclick="saveState()">Save</button>
+  </div>    
+<script>
+  // Pass the status value from Jinja into JS
+  const currentStatus = {{ status | tojson }};
+  const complaintId = {{ comp_id | tojson }}; // Include comp_id
+
+  console.log(currentStatus); // console.log({{status}}) is not valid JS after render
+  // Mapping of status codes to text
+  const statusMap = {
+  0: "Pending",
+  1: "In Progress",
+  2: "Resolved"
+  };
+
+  const select = document.getElementById("statusSelect");
+
+  let validStatus = false;
+
+  // Build the <option> elements
+  for (const [value, label] of Object.entries(statusMap)) {
+  const option = document.createElement("option");
+  option.value = value;
+  option.textContent = label;
+
+  if (parseInt(value) === currentStatus) {
+    option.selected = true;
+    validStatus = true;
+  }
+
+  select.appendChild(option);
+}
+
+  // If the current status isn't in the map, add "Unknown"
+  if (!validStatus) {
+    const unknownOption = document.createElement("option");
+    unknownOption.value = currentStatus;
+    unknownOption.textContent = "Unknown";
+    unknownOption.selected = true;
+    select.appendChild(unknownOption);
+  }
+
+
+  function saveState()
+  {
+    const newStatus = document.getElementById("statusSelect").value;
+    const mesg = document.getElementById('messageToSend').value.trim(); // Trim whitespace
+
+      // Prepare data to send
+      const data = {
+          'comp_id': complaintId,
+          'status': newStatus,
+          'message': mesg
+      };
+
+      // Send data to Flask route using fetch API
+      fetch('/update_enquiry_status', {
+          method: 'POST', // Use POST method for state change
+          headers: {
+              'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(data), // Convert JS object to JSON string
+      })
+      .then(response => response.json()) // Assuming Flask returns JSON
+      .then(data => {
+          // Handle response from server (e.g., show success message)
+          console.log('Success:', data);
+          alert('Complaint status updated successfully!'); // Simple confirmation
+      })
+      .catch((error) => {
+          // Handle errors (e.g., network issues)
+          console.error('Error:', error);
+          alert('Error updating complaint status.');
+      });
+  }
+</script>
+
 {% endblock %}

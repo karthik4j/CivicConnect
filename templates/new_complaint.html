@@ -20,7 +20,7 @@
 
     body {
       margin: 0;
-      font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+      font-family: "Segoe UI", Roboto, sans-serif;
       background: var(--bg);
       color: var(--text);
     }
@@ -45,69 +45,116 @@
       margin-left: 20px;
       text-decoration: none;
       font-weight: 600;
+      font-size: 0.95rem;
     }
 
     nav a:hover {
       text-decoration: underline;
     }
 
+    /* Complaint Form Box */
     .content-box {
-      max-width: 900px;
+      max-width: 700px;
       margin: 40px auto;
-      background: #fff;
-      padding: 25px;
-      border-radius: 12px;
-      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
+      background: var(--surface);
+      padding: 30px 40px;
+      border-radius: var(--radius);
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
     }
 
     .content-box h2 {
       text-align: center;
-      margin-bottom: 20px;
+      margin-bottom: 8px;
       color: var(--primary);
+      font-size: 1.6rem;
+    }
+
+    .content-box p {
+      text-align: center;
+      margin-bottom: 25px;
+      color: var(--muted);
+      font-size: 0.95rem;
     }
 
     label {
       display: block;
-      margin: 12px 0 6px;
+      margin-bottom: 6px;
       font-weight: 600;
-      color: var(--text);
-    }
-
-    select {
-      margin: 12px 6px 20px;
       color: var(--text);
     }
 
     input[type="text"],
     textarea,
-    input[type="file"] {
+    select {
       width: 100%;
-      padding: 10px;
+      padding: 12px 14px;
       border: 1px solid var(--border);
       border-radius: 8px;
       font-size: 14px;
-      margin-bottom: 15px;
+      margin-bottom: 18px;
+      outline: none;
+      transition: border 0.2s, box-shadow 0.2s;
+    }
+
+    input[type="text"]:focus,
+    textarea:focus,
+    select:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
     }
 
     textarea {
       resize: vertical;
-      min-height: 100px;
+      min-height: 120px;
     }
 
+    /* File Upload (custom style) */
+    .file-upload {
+      position: relative;
+      margin-bottom: 18px;
+    }
+    .file-upload input[type="file"] {
+      display: none;
+    }
+    .file-label {
+      display: inline-block;
+      padding: 10px 16px;
+      background: #f1f5f9;
+      border: 1px dashed var(--border);
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--muted);
+      transition: all 0.3s;
+    }
+    .file-label:hover {
+      background: #e0e7ff;
+      color: var(--primary);
+    }
+
+    /* Submit Button */
     button {
-      background: var(--primary);
+      background: linear-gradient(135deg, var(--primary-2), var(--primary));
       color: white;
       border: none;
-      padding: 12px 20px;
-      font-size: 15px;
+      padding: 14px;
+      font-size: 16px;
+      font-weight: 600;
       border-radius: 8px;
       cursor: pointer;
       width: 100%;
-      transition: background 0.3s ease;
+      transition: transform 0.2s, box-shadow 0.3s ease;
+      box-shadow: 0 4px 10px rgba(37, 99, 235, 0.25);
     }
 
     button:hover {
-      background: #1e40af;
+      transform: translateY(-2px);
+      box-shadow: 0 6px 14px rgba(29, 78, 216, 0.35);
+    }
+
+    button:active {
+      transform: scale(0.98);
     }
   </style>
 </head>
@@ -126,7 +173,7 @@
   <!-- Complaint Form -->
   <div class="content-box">
     <h2>New Complaint</h2>
-    <p style="text-align:center;"><strong>Register any type of complaint</strong></p>
+    <p>Register any type of complaint</p>
 
     <form method="post" id="complaint" enctype="multipart/form-data">
       <label for="description">Describe the Problem</label>
@@ -136,7 +183,10 @@
       <input type="text" id="location" placeholder="Enter location (street, area, landmark)" name="user_location" />
 
       <label for="image">Upload Image (Optional)</label>
-      <input type="file" id="image" accept=".jpg, .jpeg, .png" name="attached_image"/>
+      <div class="file-upload">
+        <input type="file" id="image" accept=".jpg, .jpeg, .png" name="attached_image"/>
+        <label for="image" class="file-label">📁 Choose a file...</label>
+      </div>
       
       <label>Department</label>
       <select id="dept-selec" name="select_dept">
@@ -158,7 +208,6 @@
     function validatForm() {
       const user_complaint = document.getElementById('description').value.trim();
       const user_location = document.getElementById('location').value.trim();
-      const attached_file = document.getElementById('image');
       const complaint_dept = document.getElementById('dept-selec');
 
       if (user_complaint.length === 0) {
