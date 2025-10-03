@@ -100,7 +100,7 @@
 {% block content %}
   <div class="container">
         <div class="info-header">
-                <h1>This is complaint ID: {{comp_id}}</h1>
+                <h1>Complaint ID: {{comp_id}}</h1>
                 <h1>Date of Filing {{DOF}}</h1>
         </div>
 
@@ -110,7 +110,12 @@
         </div>
 
         <h2>Complaint :</h2>
-        <div class="comp-header">
+        <div class="sel-header" style="margin-bottom: 20px;">
+            <label>Original</label><input type="radio" id="radioBtn" name="radioBtn" value="org" onclick="updade_complaint(1)" checked>
+            &nbsp;&nbsp;&nbsp;&nbsp;
+            <label>Summary</label><input type="radio" id="radioBtn" name="radioBtn" value="sum" onclick="updade_complaint(2)">
+        </div>
+        <div class="comp-header" id="complaintbox">
               {{complaint}}
         </div>
 
@@ -131,11 +136,24 @@
         <button class="save-and-exit" onclick="saveState()">Save</button>
   </div>    
 <script>
+  
+  const originalComplaint = {{ complaint | tojson }};
+  const summaryComplaint  = {{ summary   | tojson }};
+
+  function updade_complaint(val) {
+    var summaryBox = document.getElementById('complaintbox');
+    if (val === 1) {
+      summaryBox.textContent = originalComplaint;
+    } else if (val === 2) {
+      summaryBox.textContent = summaryComplaint?summaryComplaint:"No summmary available for this one";
+    }
+  }
+
   // Pass the status value from Jinja into JS
   const currentStatus = {{ status | tojson }};
   const complaintId = {{ comp_id | tojson }}; // Include comp_id
 
-  console.log(currentStatus); // console.log({{status}}) is not valid JS after render
+  
   // Mapping of status codes to text
   const statusMap = {
   0: "Pending",

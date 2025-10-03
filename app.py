@@ -454,7 +454,7 @@ def get_notifications_all():
 @app.route('/admin_view_complaints/detail/<id>')
 def view_detailed_complaints(id):
 
-    res = conn.execute("""SELECT u.fullname, c.complaint, c.location, c.status, c.imgsrc AS src, c.dof FROM user u JOIN complaints c ON u.id = c.id WHERE c.comp_id = ?;""",(id,))
+    res = conn.execute("""SELECT u.fullname, c.complaint, c.location, c.status, c.imgsrc AS src, c.dof, c.summary FROM user u JOIN complaints c ON u.id = c.id WHERE c.comp_id = ?;""",(id,))
 
     res = res.fetchone()
     #print(res)
@@ -464,8 +464,9 @@ def view_detailed_complaints(id):
     status = res[3]
     src= res[4]
     DOF = res[5]
+    summarized_one = res[6]
    
-    return render_template('admin/detailed_complaint_admin.html',comp_id=id,name=complainant,location=location,status=status,src=src,DOF=DOF,complaint=complaint)
+    return render_template('admin/detailed_complaint_admin.html',comp_id=id,name=complainant,location=location,status=status,src=src,DOF=DOF,complaint=complaint,summary = summarized_one)
 
 
 @app.route('/admin_view_complaints/show_image/<path:filename>')
