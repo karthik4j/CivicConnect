@@ -1,193 +1,182 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>New Complaint - CivicConnect</title>
+<style>
+  :root {
+    --bg: #F8FAFC;
+    --surface: #FFFFFF;
+    --primary: #1D4ED8;
+    --primary-2: #3B82F6;
+    --text: #1E293B;
+    --muted: #64748B;
+    --border: #E2E8F0;
+    --shadow: 0 6px 20px rgba(2, 6, 23, .08);
+    --radius: 12px;
+  }
 
-  <style>
-    :root {
-      --bg: #F8FAFC;
-      --surface: #FFFFFF;
-      --primary: #1D4ED8;
-      --primary-2: #3B82F6;
-      --text: #1E293B;
-      --muted: #64748B;
-      --border: #E2E8F0;
-      --shadow: 0 6px 20px rgba(2, 6, 23, .08);
-      --radius: 12px;
-    }
+  body {
+    margin: 0;
+    font-family: "Segoe UI", Roboto, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+  }
 
-    body {
-      margin: 0;
-      font-family: "Segoe UI", Roboto, sans-serif;
-      background: var(--bg);
-      color: var(--text);
-    }
+  header {
+    background: var(--primary);
+    color: #fff;
+    padding: 16px 24px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: var(--shadow);
+  }
 
-    header {
-      background: var(--primary);
-      color: #fff;
-      padding: 16px 24px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      box-shadow: var(--shadow);
-    }
+  header h1 {
+    margin: 0;
+    font-size: 1.4rem;
+  }
 
-    header h1 {
-      margin: 0;
-      font-size: 1.4rem;
-    }
+  nav a {
+    color: #fff;
+    margin-left: 20px;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 0.95rem;
+  }
 
-    nav a {
-      color: #fff;
-      margin-left: 20px;
-      text-decoration: none;
-      font-weight: 600;
-      font-size: 0.95rem;
-    }
+  nav a:hover {
+    text-decoration: underline;
+  }
 
-    nav a:hover {
-      text-decoration: underline;
-    }
+  /* Complaint Form Box */
+  .content-box {
+    max-width: 700px;
+    margin: 40px auto;
+    background: var(--surface);
+    padding: 40px;
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+  }
 
-    /* Complaint Form Box */
-    .content-box {
-      max-width: 700px;
-      margin: 40px auto;
-      background: var(--surface);
-      padding: 30px 40px;
-      border-radius: var(--radius);
-      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
-    }
+  .content-box h2 {
+    text-align: center;
+    margin-bottom: 6px;
+    color: var(--primary);
+    font-size: 1.6rem;
+  }
 
-    .content-box h2 {
-      text-align: center;
-      margin-bottom: 8px;
-      color: var(--primary);
-      font-size: 1.6rem;
-    }
+  .content-box p {
+    text-align: center;
+    margin-bottom: 30px;
+    color: var(--muted);
+    font-size: 0.95rem;
+  }
 
-    .content-box p {
-      text-align: center;
-      margin-bottom: 25px;
-      color: var(--muted);
-      font-size: 0.95rem;
-    }
+  /* Form Groups */
+  .form-group {
+    margin-bottom: 22px;
+  }
 
-    label {
-      display: block;
-      margin-bottom: 6px;
-      font-weight: 600;
-      color: var(--text);
-    }
+  label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 600;
+    color: var(--text);
+  }
 
-    input[type="text"],
-    textarea,
-    select {
-      width: 100%;
-      padding: 12px 14px;
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      font-size: 14px;
-      margin-bottom: 18px;
-      outline: none;
-      transition: border 0.2s, box-shadow 0.2s;
-    }
+  input[type="text"],
+  textarea,
+  select {
+    width: 100%;
+    padding: 12px 14px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    font-size: 14px;
+    outline: none;
+    transition: border 0.2s, box-shadow 0.2s;
+  }
 
-    input[type="text"]:focus,
-    textarea:focus,
-    select:focus {
-      border-color: var(--primary);
-      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
-    }
+  input[type="text"]:focus,
+  textarea:focus,
+  select:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+  }
 
-    textarea {
-      resize: vertical;
-      min-height: 120px;
-    }
+  textarea {
+    resize: vertical;
+    min-height: 120px;
+  }
 
-    /* File Upload (custom style) */
-    .file-upload {
-      position: relative;
-      margin-bottom: 18px;
-    }
-    .file-upload input[type="file"] {
-      display: none;
-    }
-    .file-label {
-      display: inline-block;
-      padding: 10px 16px;
-      background: #f1f5f9;
-      border: 1px dashed var(--border);
-      border-radius: 8px;
-      cursor: pointer;
-      font-size: 14px;
-      font-weight: 500;
-      color: var(--muted);
-      transition: all 0.3s;
-    }
-    .file-label:hover {
-      background: #e0e7ff;
-      color: var(--primary);
-    }
+  /* File Upload */
+  .file-upload input[type="file"] {
+    display: none;
+  }
+  .file-label {
+    display: inline-block;
+    width: 100%;
+    text-align: center;
+    padding: 12px;
+    background: #f8fafc;
+    border: 1px dashed var(--border);
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--muted);
+    transition: all 0.3s;
+  }
+  .file-label:hover {
+    background: #e0e7ff;
+    color: var(--primary);
+  }
 
-    /* Submit Button */
-    button {
-      background: linear-gradient(135deg, var(--primary-2), var(--primary));
-      color: white;
-      border: none;
-      padding: 14px;
-      font-size: 16px;
-      font-weight: 600;
-      border-radius: 8px;
-      cursor: pointer;
-      width: 100%;
-      transition: transform 0.2s, box-shadow 0.3s ease;
-      box-shadow: 0 4px 10px rgba(37, 99, 235, 0.25);
-    }
+  /* Submit Button */
+  button {
+    background: linear-gradient(135deg, var(--primary-2), var(--primary));
+    color: white;
+    border: none;
+    padding: 14px;
+    font-size: 16px;
+    font-weight: 600;
+    border-radius: 8px;
+    cursor: pointer;
+    width: 100%;
+    transition: transform 0.2s, box-shadow 0.3s ease;
+    box-shadow: 0 4px 10px rgba(37, 99, 235, 0.25);
+  }
 
-    button:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 6px 14px rgba(29, 78, 216, 0.35);
-    }
+  button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 14px rgba(29, 78, 216, 0.35);
+  }
 
-    button:active {
-      transform: scale(0.98);
-    }
-  </style>
-</head>
-<body>
-  <!-- Header -->
-  <header>
-    <h1>🏛️ CivicConnect</h1>
-    <nav>
-      <a href="{{ url_for('home') }}">Home</a>
-      <a href="{{ url_for('get_notifications_all') }}">Notifications</a>
-      <a href="{{ url_for('account_page') }}">Account</a>
-      <a href="#">Help</a>
-    </nav>
-  </header>
+  button:active {
+    transform: scale(0.98);
+  }
+</style>
 
-  <!-- Complaint Form -->
-  <div class="content-box">
-    <h2>New Complaint</h2>
-    <p>Register any type of complaint</p>
+<div class="content-box">
+  <h2>New Complaint</h2>
+  <p>Register any type of complaint</p>
 
-    <form method="post" id="complaint" enctype="multipart/form-data">
+  <form method="post" id="complaint" enctype="multipart/form-data">
+    <div class="form-group">
       <label for="description">Describe the Problem</label>
       <textarea id="description" placeholder="Write your complaint here..." name="user_complaint"></textarea>
+    </div>
 
+    <div class="form-group">
       <label for="location">Location</label>
       <input type="text" id="location" placeholder="Enter location (street, area, landmark)" name="user_location" />
+    </div>
 
+    <div class="form-group">
       <label for="image">Upload Image (Optional)</label>
       <div class="file-upload">
         <input type="file" id="image" accept=".jpg, .jpeg, .png" name="attached_image"/>
         <label for="image" class="file-label">📁 Choose a file...</label>
       </div>
-      
+    </div>
+    
+    <div class="form-group">
       <label>Department</label>
       <select id="dept-selec" name="select_dept">
         <option value="">-- Select a Department --</option>
@@ -199,30 +188,8 @@
         <option value="Parks and Recreation">Parks and Recreation</option>
         <option value="Traffic Management">Traffic Management</option>
       </select>
-      
-      <button type="button" onclick="validatForm()">Submit Complaint</button>
-    </form>
-  </div>
-
-  <script>
-    function validatForm() {
-      const user_complaint = document.getElementById('description').value.trim();
-      const user_location = document.getElementById('location').value.trim();
-      const complaint_dept = document.getElementById('dept-selec');
-
-      if (user_complaint.length === 0) {
-        alert('Please provide a description of your complaint');
-      } else if (user_location.length === 0) {
-        alert('Please enter your location');
-      } else if (complaint_dept.value === "") {
-        alert('Please select a department');
-      } else {
-        const form = document.getElementById('complaint');
-        form.action = "{{ url_for('register_complaint') }}";
-        form.method = 'post';
-        form.submit();
-      }
-    }
-  </script>
-</body>
-</html>
+    </div>
+    
+    <button type="button" onclick="validatForm()">Submit Complaint</button>
+  </form>
+</div>
