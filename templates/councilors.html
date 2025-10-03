@@ -52,7 +52,7 @@
     }
 
     .container {
-      max-width: 900px;
+      max-width: 1000px;
       margin: 24px auto;
       padding: 20px;
       background: var(--surface);
@@ -62,18 +62,30 @@
 
     h2 {
       color: var(--primary);
-      margin-bottom: 10px;
+      margin-bottom: 20px;
+      text-align: center;
     }
 
-    ul {
-      margin: 10px 0;
-      padding-left: 20px;
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 10px;
     }
 
-    li {
-      margin: 6px 0;
-      font-size: 1rem;
-      line-height: 1.5;
+    th, td {
+      border: 1px solid var(--border);
+      padding: 10px;
+      text-align: left;
+      font-size: 0.95rem;
+    }
+
+    th {
+      background: var(--primary-2);
+      color: white;
+    }
+
+    tr:nth-child(even) {
+      background: #f9fafb;
     }
   </style>
 </head>
@@ -93,11 +105,91 @@
   <!-- Main Content -->
   <main class="container">
     <h2>Councilors</h2>
-    <ul>
-      <li><strong>Ward 1:</strong> Alice Johnson – +91 90000 11111</li>
-      <li><strong>Ward 2:</strong> Ravi Kumar – +91 90000 22222</li>
-      <li><strong>Ward 3:</strong> Fatima Noor – +91 90000 33333</li>
-    </ul>
+    <table>
+      <thead>
+        <tr>
+          <th>Ward No.</th>
+          <th>Ward Name</th>
+          <th>Councilor</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td>1</td><td>FORT KOCHI</td><td>ANTONY KUREETHARA</td></tr>
+        <tr><td>2</td><td>KALVATHY</td><td>T K ASHRAF</td></tr>
+        <tr><td>3</td><td>EARAVELY</td><td>ISMUDHEEN M</td></tr>
+        <tr><td>4</td><td>KARIPPALAM</td><td>K.A MANAF</td></tr>
+        <tr><td>5</td><td>MATTANCHERY</td><td>ANSIYA K A (Deputy Mayor)</td></tr>
+        <tr><td>6</td><td>KOCHANGADI</td><td>M.H.M ASHRAF</td></tr>
+        <tr><td>7</td><td>CHERALAYI</td><td>RAGHURAMA PAI J</td></tr>
+        <tr><td>8</td><td>PANAYAPPILLY</td><td>SANIL MON J</td></tr>
+        <tr><td>9</td><td>CHAKKAMADOM</td><td>HABEEBULLA M</td></tr>
+        <tr><td>10</td><td>KARUVELIPPADY</td><td>BASTINE BABU</td></tr>
+        <tr><td>11</td><td>THOPPUMPADY</td><td>SHEEBA DUROM</td></tr>
+        <tr><td>12</td><td>THAREBHAGAM</td><td>SONY K FRANCIS</td></tr>
+        <tr><td>13</td><td>KADEBHAGAM</td><td>V A SRIJITH</td></tr>
+        <tr><td>14</td><td>THAZHUPPU</td><td>LAILADAS</td></tr>
+        <tr><td>15</td><td>EDAKOCHI NORTH</td><td>JEEJA TENSON</td></tr>
+        <tr><td>16</td><td>EDAKOCHI SOUTH</td><td>ABILASH THOPPIL</td></tr>
+        <tr><td>17</td><td>PERUMBADAPPU</td><td>C.N RENJITH MASTER</td></tr>
+        <tr><td>18</td><td>KONAM</td><td>ADV. ASWATHY VALSAN</td></tr>
+        <tr><td>19</td><td>PALLURUTHY-KACHERIPADY</td><td>P R RACHANA</td></tr>
+        <tr><td>20</td><td>NAMBYAPURAM</td><td>P.S.VIJU</td></tr>
+        <tr><td>21</td><td>PULLARDESAM</td><td>C.R SUDHEER</td></tr>
+        <tr><td>22</td><td>MUNDAMVELLY</td><td>MARY CALESTA PRAKASHAN</td></tr>
+        <tr><td>23</td><td>MANASSERY</td><td>K.P ANTONY</td></tr>
+        <tr><td>24</td><td>MOOLAMKUZHY</td><td>SHYLA THADEVOUSE</td></tr>
+        <tr><td>25</td><td>CHULLICKAL</td><td>REDINA ANTONY</td></tr>
+        <tr><td>26</td><td>NASRATHU</td><td>SHEEBA LAL</td></tr>
+        <tr><td>27</td><td>FORTKOCHI VELI</td><td>BENEDICT FERNANDEZ</td></tr>
+        <tr><td>28</td><td>AMARAVATHY</td><td>PRIYA P.A</td></tr>
+        <tr><td>29</td><td>ISLAND NORTH</td><td>PADMAKUMARI T</td></tr>
+        <tr><td>30</td><td>ISLAND SOUTH</td><td>TIBIN DEVASSY</td></tr>
+        <tr><td>31</td><td>VADUTHALA WEST</td><td>HENRY AUSTIN</td></tr>
+        <tr><td>32</td><td>VADUTHALA EAST</td><td>BINDHU MANI</td></tr>
+        <tr><td>33</td><td>ELAMAKKARA NORTH</td><td>ANILKUMAR M (Mayor)</td></tr>
+        <tr><td>34</td><td>PUTHUKKALAVATTAM</td><td>SEENA</td></tr>
+        <tr><td>35</td><td>PONEKKARA</td><td>PIUS JOSEPH</td></tr>
+        <tr><td>36</td><td>KUNNUMPURAM</td><td>JAGADAMBIKA (AMBIKA SUDARSAN)</td></tr>
+        <tr><td>37</td><td>EDAPPALLY</td><td>DEEPA VARMA</td></tr>
+        <tr><td>38</td><td>DHEVANKULANGARA</td><td>SANTHA VIJAYAN</td></tr>
+        <tr><td>39</td><td>KARUKAPPILLI</td><td>ADV. DEEPTHI MARY VARGHESE</td></tr>
+        <tr><td>40</td><td>MAMANGALAM</td><td>MINIMOL V K</td></tr>
+        <tr><td>41</td><td>PADIVATTAM</td><td>R RATHEESH</td></tr>
+        <tr><td>42</td><td>VENNALA</td><td>C.D VALSALA KUMARI</td></tr>
+        <tr><td>43</td><td>PALARIVATTAM</td><td>GEOJY KURIKODE</td></tr>
+        <tr><td>44</td><td>KARANAKKODAM</td><td>GEORGE NANATTU</td></tr>
+        <tr><td>45</td><td>THAMMANAM</td><td>SAKEER THAMMANAM</td></tr>
+        <tr><td>46</td><td>CHAKKARAPARAMBU</td><td>K B HARSHAL</td></tr>
+        <tr><td>47</td><td>CHALIKKAVATTAM</td><td>A.R PADMADAS</td></tr>
+        <tr><td>48</td><td>PONNURUNNI EAST</td><td>ADV. DIPIN DILEEP</td></tr>
+        <tr><td>49</td><td>VYTTILA</td><td>SUNITHA DIXON</td></tr>
+        <tr><td>50</td><td>CHAMBAKKARA</td><td>DR. SAILAJA T.K</td></tr>
+        <tr><td>51</td><td>POONITHURA</td><td>MERCY TEACHER</td></tr>
+        <tr><td>52</td><td>VYTTILA JANATHA</td><td>SONY JOSEPH</td></tr>
+        <tr><td>53</td><td>PONNURUNNI</td><td>C.D BINDU</td></tr>
+        <tr><td>54</td><td>ELAMKULAM</td><td>ANTONY PAINUTHARA</td></tr>
+        <tr><td>55</td><td>GIRINAGAR</td><td>MALINI KURUP</td></tr>
+        <tr><td>56</td><td>PANAMPILLI NAGAR</td><td>ANJANA TEACHER</td></tr>
+        <tr><td>57</td><td>KADAVANTHRA</td><td>SUJA LONAPPAN</td></tr>
+        <tr><td>58</td><td>KONTHURUTHY</td><td>BENCY BENNY</td></tr>
+        <tr><td>59</td><td>THEVARA</td><td>P.R. RANISH</td></tr>
+        <tr><td>60</td><td>PERUMANUR</td><td>LATHIKA K.P</td></tr>
+        <tr><td>61</td><td>RAVIPURAM</td><td>S SASIKALA</td></tr>
+        <tr><td>62</td><td>ERNAKULAM SOUTH</td><td>PADMAJA S MENON</td></tr>
+        <tr><td>63</td><td>GANDHI NAGAR</td><td>BINDU SIVAN</td></tr>
+        <tr><td>64</td><td>KATHRIKADAVU</td><td>ARISTOTTIL M.G</td></tr>
+        <tr><td>65</td><td>KALOOR SOUTH</td><td>RAJANI MANI</td></tr>
+        <tr><td>66</td><td>ERNAKULAM CENTRAL</td><td>SUDHA DILIPKUMAR</td></tr>
+        <tr><td>67</td><td>ERNAKULAM NORTH</td><td>MANU JACOB</td></tr>
+        <tr><td>68</td><td>AYYAPPANKAVU</td><td>MINI DILEEP</td></tr>
+        <tr><td>69</td><td>THRIKKANARVATTOM</td><td>KAJAL SALIM</td></tr>
+        <tr><td>70</td><td>KALOOR NORTH</td><td>ASHITHA YAHIYA</td></tr>
+        <tr><td>71</td><td>ELAMAKKARA SOUTH</td><td>SAJINI JAYACHANDRAN</td></tr>
+        <tr><td>72</td><td>POTTAKUZHY</td><td>SHAKEER C A</td></tr>
+        <tr><td>73</td><td>PACHALAM</td><td>MINI VIVERA</td></tr>
+        <tr><td>74</td><td>THATTAZHAM</td><td>V V PRAVEEN</td></tr>
+      </tbody>
+    </table>
   </main>
 </body>
 </html>
