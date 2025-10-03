@@ -4,44 +4,49 @@
 
 {% block styles %}
   <style>
-    /* Page Title */
+    /* Page Title (keep centered) */
     .page-title {
       text-align: center;
       margin: 20px 0;
     }
     .page-title h2 {
       color: var(--primary);
-      font-size: 24px;
+      font-size: 26px;
+      font-weight: 700;
     }
 
-    /* Complaint Cards Container (Vertical Layout) */
+    /* Complaint Cards Container (Vertical Left Alignment) */
     .complaint-status {
       display: flex;
-      flex-direction: column;  /* Stack vertically */
-      align-items: center;     /* Center align */
+      flex-direction: column;   /* stack vertically */
+      align-items: flex-start;  /* align left */
       gap: 20px;
-      padding: 20px;
+      padding: 20px 60px;       /* add left padding for spacing */
+      max-width: 800px;
     }
 
     /* Individual Complaint Card */
     .complaint-card {
       background: #fff;
       padding: 20px;
-      border-radius: 12px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-      width: 420px;
-      transition: transform 0.2s ease;
+      border-radius: 14px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+      width: 100%;
+      position: relative;
+      overflow: hidden;
+      transition: all 0.3s ease;
+      border-left: 6px solid var(--primary);
     }
     .complaint-card:hover {
-      transform: translateY(-5px);
+      transform: translateX(6px);
+      box-shadow: 0 6px 16px rgba(0,0,0,0.15);
     }
 
     .complaint-card h3 {
       margin: 0 0 8px;
-      font-size: 18px;
+      font-size: 20px;
+      font-weight: 600;
       color: var(--text-dark);
-      border-left: 4px solid var(--primary);
-      padding-left: 8px;
     }
 
     .complaint-meta {
@@ -49,7 +54,6 @@
       color: #666;
       margin-bottom: 12px;
     }
-
     .complaint-meta span {
       display: inline-flex;
       align-items: center;
@@ -62,30 +66,31 @@
       padding: 6px 12px;
       border-radius: 20px;
       font-size: 13px;
-      font-weight: 500;
+      font-weight: 600;
       margin-right: 8px;
     }
     .pending { background: #fef3c7; color: #92400e; }
     .scheduled { background: #d1fae5; color: #065f46; }
     .resolved { background: #dcfce7; color: #166534; }
 
-    /* Attractive View Details Button */
+    /* View Details Button */
     .details-btn {
       background: linear-gradient(135deg, #3b82f6, #2563eb);
       color: white;
-      border: none;
+      text-decoration: none;
       padding: 8px 18px;
       border-radius: 25px;
       font-size: 14px;
       font-weight: 500;
-      cursor: pointer;
+      display: inline-block;
+      margin-top: 10px;
       transition: all 0.3s ease;
       box-shadow: 0 3px 6px rgba(0,0,0,0.15);
     }
     .details-btn:hover {
       background: linear-gradient(135deg, #2563eb, #1d4ed8);
-      transform: scale(1.05);
-      box-shadow: 0 6px 12px rgba(0,0,0,0.2);
+      transform: translateY(-2px) scale(1.05);
+      box-shadow: 0 6px 12px rgba(0,0,0,0.25);
     }
     .details-btn:active {
       transform: scale(0.97);
@@ -111,7 +116,6 @@
       <p>Deep pothole causing traffic slowdown and two-wheeler skids near the bus stop.</p>
       <span class="status-badge pending">Pending</span>
       <span class="status-badge scheduled">Scheduled</span>
-      <!-- Urgent badge removed -->
     </div>
 
     <!-- Complaint 2 -->
