@@ -52,22 +52,52 @@
     }
 
     .container {
-      max-width: 800px;
+      max-width: 900px;
       margin: 24px auto;
       padding: 20px;
+    }
+
+    .profile-card {
       background: var(--surface);
       border-radius: var(--radius);
       box-shadow: var(--shadow);
+      padding: 20px;
+      margin-bottom: 20px;
+      text-align: center;
     }
 
-    h2 {
-      color: var(--primary);
+    .profile-card img {
+      width: 120px;
+      height: 120px;
+      border-radius: 8px;
       margin-bottom: 10px;
+      object-fit: cover;
     }
 
-    p {
+    .profile-card h3 {
       margin: 8px 0;
-      line-height: 1.5;
+      color: var(--primary);
+    }
+
+    .profile-card p {
+      margin: 4px 0;
+      font-size: 0.95rem;
+    }
+
+    .call-btn {
+      display: inline-block;
+      margin: 10px 0;
+      padding: 10px 18px;
+      background: var(--primary);
+      color: #fff;
+      font-weight: 600;
+      border-radius: 8px;
+      text-decoration: none;
+      transition: background 0.3s;
+    }
+
+    .call-btn:hover {
+      background: #163EB5;
     }
   </style>
 </head>
@@ -86,11 +116,29 @@
 
   <!-- Main Content -->
   <main class="container">
-    <h2>Mayor</h2>
-    <p><strong>Name:</strong> John Doe</p>
-    <p><strong>Contact:</strong> +91 98765 43210</p>
-    <p><strong>Email:</strong> mayor@civicconnect.org</p>
-    <p><strong>About:</strong> The Mayor leads the municipal administration, ensures policy implementation, and represents the city at state and national levels.</p>
+    <!-- Mayor Card -->
+    <div class="profile-card">
+      <h3>Mayor</h3>
+      <img src="{{ url_for('static', filename='images/mayor.png') }}" alt="Mayor">
+      <p><strong>Adv. M. Anilkumar</strong></p>
+      <p>Mob: 9846118975</p>
+      <a href="tel:9846118975" class="call-btn">📞 Call</a>
+      <p>Landline (Office): 0484 2369007</p>
+      <p>Landline (Personal): 0484 2353728</p>
+      <p>Email: cochinmayor@gmail.com</p>
+    </div>
+
+    <!-- Deputy Mayor Card -->
+    <div class="profile-card">
+      <h3>Deputy Mayor</h3>
+      <img src="{{ url_for('static', filename='images/deputy_mayor.jpg') }}" alt="Deputy Mayor">
+      <p><strong>K. A. Ansiya</strong></p>
+      <p>Mob: 9895879075</p>
+      <a href="tel:9895879075" class="call-btn">📞 Call</a>
+      <p>Landline (Office): 0484 2369007</p>
+      <p>Landline (Personal): 0484 2362707</p>
+      <p>Email: ansiyakaansiya@gmail.com</p>
+    </div>
   </main>
 </body>
 </html>
