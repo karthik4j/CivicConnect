@@ -29,9 +29,10 @@ body {
   text-align: center;
 }
 
+/* Login card */
 .login-card {
   background: var(--surface);
-  padding: 32px;
+  padding: 36px 32px;
   border-radius: var(--radius);
   box-shadow: var(--shadow);
   width: 100%;
@@ -39,16 +40,33 @@ body {
   text-align: center;
 }
 
-.login-card h1 {
-  margin-bottom: 8px;
-  font-size: 1.6rem;
-  color: var(--primary);
+/* Logo styling */
+.logo-container {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 16px;
 }
 
+.logo {
+  width: 80px;
+  height: auto;
+  border-radius: 50%; /* if you want a rounded look */
+  box-shadow: 0 4px 10px rgba(0,0,0,0.08);
+}
+
+/* Heading */
+.login-card h1 {
+  margin-bottom: 8px;
+  font-size: 1.8rem;
+  color: var(--primary);
+  font-weight: 700;
+}
+
+/* Subtitle */
 .login-card p {
   margin-top: 0;
-  margin-bottom: 20px;
-  font-size: 0.9rem;
+  margin-bottom: 22px;
+  font-size: 0.95rem;
   color: var(--muted);
 }
 
@@ -67,39 +85,42 @@ label {
 input[type="text"],
 input[type="password"] {
   width: 100%;
-  padding: 10px 12px;
+  padding: 12px 14px;
   border: 1px solid var(--border);
-  border-radius: 8px;
+  border-radius: 10px;
   font-size: 1rem;
   color: var(--text);
   background: var(--bg);
   outline: none;
+  transition: all 0.2s ease;
 }
 
 input:focus {
   border-color: var(--primary);
-  box-shadow: 0 0 0 2px rgba(29, 78, 216, 0.2);
+  box-shadow: 0 0 0 3px rgba(29, 78, 216, 0.2);
 }
 
 .btn {
   width: 100%;
   padding: 12px;
   border: none;
-  border-radius: 8px;
+  border-radius: 10px;
   font-size: 1rem;
   font-weight: 600;
   cursor: pointer;
-  transition: background 0.2s ease;
+  transition: all 0.2s ease;
   margin-top: 10px;
 }
 
 .btn.primary {
   background: var(--primary);
   color: #fff;
+  box-shadow: 0 4px 12px rgba(29, 78, 216, 0.2);
 }
 
 .btn.primary:hover {
   background: #163EB5;
+  transform: translateY(-1px);
 }
 
 .btn.secondary {
@@ -112,7 +133,7 @@ input:focus {
 }
 
 .divider {
-  margin: 20px 0;
+  margin: 22px 0;
   height: 1px;
   background: var(--border);
 }
@@ -132,6 +153,7 @@ input:focus {
 .footer-text a {
   color: var(--primary);
   text-decoration: none;
+  font-weight: 500;
 }
 
 .footer-text a:hover {

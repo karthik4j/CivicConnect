@@ -5,6 +5,159 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Login – CivicConnect</title>
   <link rel="stylesheet" href="/css/login.css">
+  <style>
+    :root {
+      --bg: #F8FAFC;
+      --surface: #FFFFFF;
+      --primary: #1D4ED8;
+      --text: #1E293B;
+      --muted: #64748B;
+      --border: #E2E8F0;
+      --shadow: 0 8px 24px rgba(2, 6, 23, .08);
+      --radius: 14px;
+    }
+
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+
+    .flash-msg {
+      background: #FEE2E2;
+      color: #B91C1C;
+      padding: 10px 14px;
+      border-radius: var(--radius);
+      margin-bottom: 12px;
+      text-align: center;
+    }
+
+    .login-card {
+      background: var(--surface);
+      padding: 36px 32px;
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      width: 100%;
+      max-width: 400px;
+      text-align: center;
+    }
+
+    .logo {
+      width: 80px;
+      height: 80px;
+      object-fit: contain;
+      margin-bottom: 12px;
+    }
+
+    .login-card h1 {
+      margin-bottom: 8px;
+      font-size: 1.7rem;
+      color: var(--primary);
+      font-weight: 700;
+    }
+
+    .login-card p {
+      margin-top: 0;
+      margin-bottom: 22px;
+      font-size: 0.9rem;
+      color: var(--muted);
+    }
+
+    .form-group {
+      margin-bottom: 16px;
+      text-align: left;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 6px;
+      font-size: 0.9rem;
+      font-weight: 500;
+      color: var(--text);
+    }
+
+    input[type="text"],
+    input[type="password"] {
+      width: 100%;
+      padding: 11px 12px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-size: 1rem;
+      color: var(--text);
+      background: var(--bg);
+      outline: none;
+    }
+
+    input:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 2px rgba(29, 78, 216, 0.2);
+    }
+
+    .btn {
+      width: 100%;
+      padding: 12px;
+      border: none;
+      border-radius: 8px;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s ease, transform 0.1s ease;
+      margin-top: 10px;
+    }
+
+    .btn.primary {
+      background: var(--primary);
+      color: #fff;
+    }
+
+    .btn.primary:hover {
+      background: #163EB5;
+      transform: translateY(-1px);
+    }
+
+    .btn.secondary {
+      background: #E2E8F0;
+      color: var(--text);
+    }
+
+    .btn.secondary:hover {
+      background: #CBD5E1;
+      transform: translateY(-1px);
+    }
+
+    .divider {
+      margin: 22px 0;
+      height: 1px;
+      background: var(--border);
+    }
+
+    .new-user-label {
+      font-size: 1rem;
+      margin: 10px 0;
+      color: var(--text);
+      font-weight: 500;
+    }
+
+    .footer-text {
+      margin-top: 18px;
+      font-size: 0.85rem;
+      color: var(--muted);
+    }
+
+    .footer-text a {
+      color: var(--primary);
+      text-decoration: none;
+    }
+
+    .footer-text a:hover {
+      text-decoration: underline;
+    }
+  </style>
 </head>
 <body>
   {% with messages = get_flashed_messages(with_categories=true) %}
@@ -14,6 +167,9 @@
   {% endwith %}
 
   <div class="login-card">
+    <!-- Logo -->
+    <img src="{{ url_for('static', filename='images/logo.png') }}" alt="CivicConnect Logo" class="logo">
+
     <h1>CivicConnect</h1>
     <p>Sign in to continue to your account.</p>
 
@@ -33,11 +189,9 @@
       <div class="divider"></div>
 
       <h3 class="new-user-label">New User?</h3>
-      <!-- <input type="button" value="Register" class="btn secondary" onclick="setActionForm('register')"> -->
       <input type="button" value="Register" class="btn secondary" onclick="launch_reg_page()">
 
       <div class="footer-text">
-       <!-- <p><a href="#">Forgot password?</a></p> --> 
         {% block content %}
           <p><a href="{{ url_for('admin_login') }}">Not a user? Admin Login</a></p>
         {% endblock %}
@@ -59,10 +213,8 @@
       }
     }
 
-    function launch_reg_page()
-    {
-      
-      location.href="{{url_for('user_reg_page')}}"
+    function launch_reg_page() {
+      location.href = "{{url_for('user_reg_page')}}";
     }
   </script>
 </body>
