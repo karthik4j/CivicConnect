@@ -75,6 +75,62 @@
       font-size: 1rem;
       line-height: 1.5;
     }
+
+    /* Department Heads Section */
+    .heads-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 16px;
+      margin-top: 20px;
+    }
+
+    .head-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 16px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      box-shadow: var(--shadow);
+    }
+
+    .head-card img {
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+      object-fit: cover;
+      background: #f1f5f9;
+    }
+
+    .head-info {
+      flex: 1;
+    }
+
+    .head-info h3 {
+      margin: 0;
+      font-size: 1rem;
+    }
+
+    .head-info p {
+      margin: 4px 0;
+      font-size: 0.9rem;
+      color: var(--muted);
+    }
+
+    .call-btn {
+      background: var(--primary-2);
+      color: #fff;
+      border: none;
+      padding: 6px 12px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 0.85rem;
+    }
+
+    .call-btn:hover {
+      background: var(--primary);
+    }
   </style>
 </head>
 <body>
@@ -100,6 +156,99 @@
       <li><strong>Water Supply Department:</strong> Clean water provision.</li>
       <li><strong>Electricity Department:</strong> Power supply and maintenance.</li>
     </ul>
+
+    <h2 style="margin-top: 30px;">Department Heads</h2>
+    <div class="heads-grid">
+      <div class="head-card">
+        <img src="https://i.ibb.co/5vtnLtx/avatar1.jpg" alt="Secretary">
+        <div class="head-info">
+          <h3>Chelsasini V, IAS</h3>
+          <p>Secretary</p>
+          <p>📞 9188955176</p>
+        </div>
+        <a href="tel:9188955176"><button class="call-btn">Call</button></a>
+      </div>
+
+      <div class="head-card">
+        <img src="https://i.ibb.co/5vtnLtx/avatar1.jpg" alt="Additional Secretary">
+        <div class="head-info">
+          <h3>Muhammed Shafi J</h3>
+          <p>Additional Secretary</p>
+          <p>📞 9846073749</p>
+        </div>
+        <a href="tel:9846073749"><button class="call-btn">Call</button></a>
+      </div>
+
+      <div class="head-card">
+        <img src="https://i.ibb.co/5vtnLtx/avatar1.jpg" alt="Joint Corporation Secretary">
+        <div class="head-info">
+          <h3>Bindu V.K</h3>
+          <p>Joint Corporation Secretary</p>
+          <p>📞 9446484185</p>
+        </div>
+        <a href="tel:9446484185"><button class="call-btn">Call</button></a>
+      </div>
+
+      <div class="head-card">
+        <img src="https://i.ibb.co/5vtnLtx/avatar1.jpg" alt="Superintendent Engineer">
+        <div class="head-info">
+          <h3>Bijoy K.N</h3>
+          <p>Superintendent Engineer</p>
+          <p>📞 7356335508</p>
+        </div>
+        <a href="tel:7356335508"><button class="call-btn">Call</button></a>
+      </div>
+
+      <div class="head-card">
+        <img src="https://i.ibb.co/5vtnLtx/avatar1.jpg" alt="Health Officer">
+        <div class="head-info">
+          <h3>Dr. A Sasikumar</h3>
+          <p>Health Officer</p>
+          <p>📞 9567219449</p>
+        </div>
+        <a href="tel:9567219449"><button class="call-btn">Call</button></a>
+      </div>
+
+      <div class="head-card">
+        <img src="https://i.ibb.co/5vtnLtx/avatar1.jpg" alt="PA to Mayor">
+        <div class="head-info">
+          <h3>Nicy P. Thomas</h3>
+          <p>PA to Mayor</p>
+          <p>📞 9645730615</p>
+        </div>
+        <a href="tel:9645730615"><button class="call-btn">Call</button></a>
+      </div>
+
+      <div class="head-card">
+        <img src="https://i.ibb.co/5vtnLtx/avatar1.jpg" alt="Revenue Officer">
+        <div class="head-info">
+          <h3>Anand J</h3>
+          <p>Revenue Officer</p>
+          <p>📞 9074559489</p>
+        </div>
+        <a href="tel:9074559489"><button class="call-btn">Call</button></a>
+      </div>
+
+      <div class="head-card">
+        <img src="https://i.ibb.co/5vtnLtx/avatar1.jpg" alt="Accounts Officer">
+        <div class="head-info">
+          <h3>K. A. Mathew</h3>
+          <p>Accounts Officer</p>
+          <p>📞 9846728348</p>
+        </div>
+        <a href="tel:9846728348"><button class="call-btn">Call</button></a>
+      </div>
+
+      <div class="head-card">
+        <img src="https://i.ibb.co/5vtnLtx/avatar1.jpg" alt="Clean City Manager">
+        <div class="head-info">
+          <h3>Sudheesh Kumar G</h3>
+          <p>Clean City Manager</p>
+          <p>📞 9895412446</p>
+        </div>
+        <a href="tel:9895412446"><button class="call-btn">Call</button></a>
+      </div>
+    </div>
   </main>
 </body>
 </html>
