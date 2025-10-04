@@ -62,28 +62,51 @@
 
     h2 {
       color: var(--primary);
-      margin-top: 20px;
+      margin-bottom: 20px;
+      text-align: center;
+    }
+
+    details {
+      margin-bottom: 20px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 10px;
+      background: #f9fafb;
+    }
+
+    summary {
+      font-weight: 600;
+      font-size: 1.1rem;
+      cursor: pointer;
+      color: var(--primary);
       margin-bottom: 10px;
     }
 
-    h3 {
-      color: var(--primary-2);
-      margin-top: 15px;
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 10px;
+      background: var(--surface);
+      box-shadow: var(--shadow);
+      border-radius: var(--radius);
+      overflow: hidden;
     }
 
-    ul {
-      margin: 10px 0 20px 20px;
-      padding-left: 20px;
-    }
-
-    li {
-      margin: 4px 0;
+    th, td {
+      border: 1px solid var(--border);
+      padding: 10px;
+      text-align: left;
       font-size: 0.95rem;
-      line-height: 1.4;
     }
 
-    strong {
-      color: var(--text);
+    th {
+      background: var(--primary-2);
+      color: #fff;
+      text-align: center;
+    }
+
+    tr:nth-child(even) {
+      background: #f8fafc;
     }
   </style>
 </head>
@@ -102,117 +125,143 @@
 
   <!-- Main Content -->
   <main class="container">
-    <h2>Committees</h2>
+    <h2>Standing Committees</h2>
 
-    <h3>Leadership</h3>
-    <ul>
-      <li><strong>Mayor:</strong> ANILKUMAR M</li>
-      <li><strong>Deputy Mayor:</strong> ANSIYA K A</li>
-    </ul>
+    <!-- Finance -->
+    <details open>
+      <summary>💰 Finance Standing Committee</summary>
+      <table>
+        <tr><th>S.No</th><th>Name</th><th>Role</th></tr>
+        <tr><td>1</td><td>ANSIYA K A</td><td>Chairman</td></tr>
+        <tr><td>2</td><td>ARISTOTTIL M.G</td><td>Councilor</td></tr>
+        <tr><td>3</td><td>ANJANA TEACHER</td><td>Councilor</td></tr>
+        <tr><td>4</td><td>ADV. DEEPTHI MARY VARGHESE</td><td>Councilor</td></tr>
+        <tr><td>5</td><td>BENEDICT FERNANDEZ</td><td>Councilor</td></tr>
+        <tr><td>6</td><td>K.P ANTONY</td><td>Councilor</td></tr>
+        <tr><td>7</td><td>MARY CALESTA PRAKASHAN</td><td>Councilor</td></tr>
+        <tr><td>8</td><td>ADV. ASWATHY VALSAN</td><td>Councilor</td></tr>
+        <tr><td>9</td><td>C.N RENJITH MASTER</td><td>Councilor</td></tr>
+        <tr><td>10</td><td>MANU JACOB</td><td>Councilor</td></tr>
+      </table>
+    </details>
 
-    <h3>Finance Standing Committee</h3>
-    <ul>
-      <li><strong>Chairman:</strong> ANSIYA K A</li>
-      <li>ARISTOTTIL M.G – Councilor</li>
-      <li>ANJANA TEACHER – Councilor</li>
-      <li>ADV. DEEPTHI MARY VARGHESE – Councilor</li>
-      <li>BENEDICT FERNANDEZ – Councilor</li>
-      <li>K.P ANTONY – Councilor</li>
-      <li>MARY CALESTA PRAKASHAN – Councilor</li>
-      <li>ADV. ASWATHY VALSAN – Councilor</li>
-      <li>C.N RENJITH MASTER – Councilor</li>
-      <li>MANU JACOB – Councilor</li>
-    </ul>
+    <!-- Development -->
+    <details open>
+      <summary>🏗️ Development Standing Committee</summary>
+      <table>
+        <tr><th>S.No</th><th>Name</th><th>Role</th></tr>
+        <tr><td>1</td><td>SHAKEER C A</td><td>Chairman</td></tr>
+        <tr><td>2</td><td>ISMUDHEEN M</td><td>Councilor</td></tr>
+        <tr><td>3</td><td>TIBIN DEVASSY</td><td>Councilor</td></tr>
+        <tr><td>4</td><td>HENRY AUSTIN</td><td>Councilor</td></tr>
+        <tr><td>5</td><td>C.D BINDU</td><td>Councilor</td></tr>
+        <tr><td>6</td><td>ANTONY PAINUTHARA</td><td>Councilor</td></tr>
+        <tr><td>7</td><td>P.R.RANISH</td><td>Councilor</td></tr>
+        <tr><td>8</td><td>KAJAL SALIM</td><td>Councilor</td></tr>
+        <tr><td>9</td><td>SAJINI JAYACHANDRAN</td><td>Councilor</td></tr>
+      </table>
+    </details>
 
-    <h3>Development Standing Committee</h3>
-    <ul>
-      <li><strong>Chairman:</strong> SHAKEER C A</li>
-      <li>ISMUDHEEN M – Councilor</li>
-      <li>TIBIN DEVASSY – Councilor</li>
-      <li>HENRY AUSTIN – Councilor</li>
-      <li>C.D BINDU – Councilor</li>
-      <li>ANTONY PAINUTHARA – Councilor</li>
-      <li>P.R.RANISH – Councilor</li>
-      <li>KAJAL SALIM – Councilor</li>
-      <li>SAJINI JAYACHANDRAN – Councilor</li>
-    </ul>
+    <!-- Welfare -->
+    <details open>
+      <summary>🤝 Welfare Standing Committee</summary>
+      <table>
+        <tr><th>S.No</th><th>Name</th><th>Role</th></tr>
+        <tr><td>1</td><td>SHEEBA LAL</td><td>Chairman</td></tr>
+        <tr><td>2</td><td>LAILADAS</td><td>Councilor</td></tr>
+        <tr><td>3</td><td>C.R SUDHEER</td><td>Councilor</td></tr>
+        <tr><td>4</td><td>C.D VALSALA KUMARI</td><td>Councilor</td></tr>
+        <tr><td>5</td><td>GEOJY KURIKODE</td><td>Councilor</td></tr>
+        <tr><td>6</td><td>MERCY TEACHER</td><td>Councilor</td></tr>
+        <tr><td>7</td><td>MALINI KURUP</td><td>Councilor</td></tr>
+        <tr><td>8</td><td>BENCY BENNY</td><td>Councilor</td></tr>
+        <tr><td>9</td><td>ASHITHA YAHIYA</td><td>Councilor</td></tr>
+      </table>
+    </details>
 
-    <h3>Welfare Standing Committee</h3>
-    <ul>
-      <li><strong>Chairman:</strong> SHEEBA LAL</li>
-      <li>LAILADAS – Councilor</li>
-      <li>C.R SUDHEER – Councilor</li>
-      <li>C.D VALSALA KUMARI – Councilor</li>
-      <li>GEOJY KURIKODE – Councilor</li>
-      <li>MERCY TEACHER – Councilor</li>
-      <li>MALINI KURUP – Councilor</li>
-      <li>BENCY BENNY – Councilor</li>
-      <li>ASHITHA YAHIYA – Councilor</li>
-    </ul>
+    <!-- Health -->
+    <details open>
+      <summary>🏥 Health Standing Committee</summary>
+      <table>
+        <tr><th>S.No</th><th>Name</th><th>Role</th></tr>
+        <tr><td>1</td><td>T K ASHRAF</td><td>Chairman</td></tr>
+        <tr><td>2</td><td>ANTONY KUREETHARA</td><td>Councilor</td></tr>
+        <tr><td>3</td><td>K.A MANAF</td><td>Councilor</td></tr>
+        <tr><td>4</td><td>SONY K FRANCIS</td><td>Councilor</td></tr>
+        <tr><td>5</td><td>JEEJA TENSON</td><td>Councilor</td></tr>
+        <tr><td>6</td><td>SHYLA THADEVOUSE</td><td>Councilor</td></tr>
+        <tr><td>7</td><td>DR.SAILAJA T.K</td><td>Councilor</td></tr>
+        <tr><td>8</td><td>S SASIKALA</td><td>Councilor</td></tr>
+        <tr><td>9</td><td>V V PRAVEEN</td><td>Councilor</td></tr>
+      </table>
+    </details>
 
-    <h3>Health Standing Committee</h3>
-    <ul>
-      <li><strong>Chairman:</strong> T K ASHRAF</li>
-      <li>ANTONY KUREETHARA – Councilor</li>
-      <li>K.A MANAF – Councilor</li>
-      <li>SONY K FRANCIS – Councilor</li>
-      <li>JEEJA TENSON – Councilor</li>
-      <li>SHYLA THADEVOUSE – Councilor</li>
-      <li>DR.SAILAJA T.K – Councilor</li>
-      <li>S SASIKALA – Councilor</li>
-      <li>V V PRAVEEN – Councilor</li>
-    </ul>
+    <!-- Public Works -->
+    <details open>
+      <summary>🛠️ Public Works Standing Committee</summary>
+      <table>
+        <tr><th>S.No</th><th>Name</th><th>Role</th></tr>
+        <tr><td>1</td><td>SUNITHA DIXON</td><td>Chairman</td></tr>
+        <tr><td>2</td><td>HABEEBULLA M</td><td>Councilor</td></tr>
+        <tr><td>3</td><td>ABILASH THOPPIL</td><td>Councilor</td></tr>
+        <tr><td>4</td><td>SEENA</td><td>Councilor</td></tr>
+        <tr><td>5</td><td>PIUS JOSEPH</td><td>Councilor</td></tr>
+        <tr><td>6</td><td>DEEPA VARMA</td><td>Councilor</td></tr>
+        <tr><td>7</td><td>MINIMOL V K</td><td>Councilor</td></tr>
+        <tr><td>8</td><td>K B HARSHAL</td><td>Councilor</td></tr>
+        <tr><td>9</td><td>ADV. DIPIN DILEEP</td><td>Councilor</td></tr>
+      </table>
+    </details>
 
-    <h3>Public Works Standing Committee</h3>
-    <ul>
-      <li><strong>Chairman:</strong> SUNITHA DIXON</li>
-      <li>HABEEBULLA M – Councilor</li>
-      <li>ABILASH THOPPIL – Councilor</li>
-      <li>SEENA – Councilor</li>
-      <li>PIUS JOSEPH – Councilor</li>
-      <li>DEEPA VARMA – Councilor</li>
-      <li>MINIMOL V K – Councilor</li>
-      <li>K B HARSHAL – Councilor</li>
-      <li>ADV. DIPIN DILEEP – Councilor</li>
-    </ul>
+    <!-- Town Planning -->
+    <details open>
+      <summary>🏙️ Town Planning Standing Committee</summary>
+      <table>
+        <tr><th>S.No</th><th>Name</th><th>Role</th></tr>
+        <tr><td>1</td><td>SANIL MON J</td><td>Chairman</td></tr>
+        <tr><td>2</td><td>P R RACHANA</td><td>Councilor</td></tr>
+        <tr><td>3</td><td>P.S.VIJU</td><td>Councilor</td></tr>
+        <tr><td>4</td><td>JAGADAMBIKA (AMBIKA SUDARSAN)</td><td>Councilor</td></tr>
+        <tr><td>5</td><td>SAKEER THAMMANAM</td><td>Councilor</td></tr>
+        <tr><td>6</td><td>A.R PADMADAS</td><td>Councilor</td></tr>
+        <tr><td>7</td><td>SUJA LONAPPAN</td><td>Councilor</td></tr>
+        <tr><td>8</td><td>BINDU SIVAN</td><td>Councilor</td></tr>
+        <tr><td>9</td><td>MINI DILEEP</td><td>Councilor</td></tr>
+      </table>
+    </details>
 
-    <h3>Town Planning Standing Committee</h3>
-    <ul>
-      <li><strong>Chairman:</strong> SANIL MON J</li>
-      <li>P R RACHANA – Councilor</li>
-      <li>P.S.VIJU – Councilor</li>
-      <li>JAGADAMBIKA (AMBIKA SUDARSAN) – Councilor</li>
-      <li>SAKEER THAMMANAM – Councilor</li>
-      <li>A.R PADMADAS – Councilor</li>
-      <li>SUJA LONAPPAN – Councilor</li>
-      <li>BINDU SIVAN – Councilor</li>
-      <li>MINI DILEEP – Councilor</li>
-    </ul>
+    <!-- Tax Appeal -->
+    <details open>
+      <summary>📊 Tax Appeal Standing Committee</summary>
+      <table>
+        <tr><th>S.No</th><th>Name</th><th>Role</th></tr>
+        <tr><td>1</td><td>PRIYA P.A</td><td>Chairman</td></tr>
+        <tr><td>2</td><td>RAGHURAMA PAI J</td><td>Councilor</td></tr>
+        <tr><td>3</td><td>REDINA ANTONY</td><td>Councilor</td></tr>
+        <tr><td>4</td><td>PADMAKUMARI T</td><td>Councilor</td></tr>
+        <tr><td>5</td><td>SANTHA VIJAYAN</td><td>Councilor</td></tr>
+        <tr><td>6</td><td>SONY JOSEPH</td><td>Councilor</td></tr>
+        <tr><td>7</td><td>RAJANI MANI</td><td>Councilor</td></tr>
+        <tr><td>8</td><td>MINI VIVERA</td><td>Councilor</td></tr>
+      </table>
+    </details>
 
-    <h3>Tax Appeal Standing Committee</h3>
-    <ul>
-      <li><strong>Chairman:</strong> PRIYA P.A</li>
-      <li>RAGHURAMA PAI J – Councilor</li>
-      <li>REDINA ANTONY – Councilor</li>
-      <li>PADMAKUMARI T – Councilor</li>
-      <li>SANTHA VIJAYAN – Councilor</li>
-      <li>SONY JOSEPH – Councilor</li>
-      <li>RAJANI MANI – Councilor</li>
-      <li>MINI VIVERA – Councilor</li>
-    </ul>
-
-    <h3>Education & Sports Standing Committee</h3>
-    <ul>
-      <li><strong>Chairman:</strong> V A SRIJITH</li>
-      <li>BASTINE BABU – Councilor</li>
-      <li>SHEEBA DUROM – Councilor</li>
-      <li>BINDHU MANI – Councilor</li>
-      <li>R RATHEESH – Councilor</li>
-      <li>GEORGE NANATTU – Councilor</li>
-      <li>LATHIKA K.P – Councilor</li>
-      <li>PADMAJA S MENON – Councilor</li>
-      <li>SUDHA DILIPKUMAR – Councilor</li>
-    </ul>
+    <!-- Education & Sports -->
+    <details open>
+      <summary>🎓 Education & Sports Standing Committee</summary>
+      <table>
+        <tr><th>S.No</th><th>Name</th><th>Role</th></tr>
+        <tr><td>1</td><td>V A SRIJITH</td><td>Chairman</td></tr>
+        <tr><td>2</td><td>BASTINE BABU</td><td>Councilor</td></tr>
+        <tr><td>3</td><td>SHEEBA DUROM</td><td>Councilor</td></tr>
+        <tr><td>4</td><td>BINDHU MANI</td><td>Councilor</td></tr>
+        <tr><td>5</td><td>R RATHEESH</td><td>Councilor</td></tr>
+        <tr><td>6</td><td>GEORGE NANATTU</td><td>Councilor</td></tr>
+        <tr><td>7</td><td>LATHIKA K.P</td><td>Councilor</td></tr>
+        <tr><td>8</td><td>PADMAJA S MENON</td><td>Councilor</td></tr>
+        <tr><td>9</td><td>SUDHA DILIPKUMAR</td><td>Councilor</td></tr>
+      </table>
+    </details>
 
   </main>
 </body>
