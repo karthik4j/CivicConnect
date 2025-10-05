@@ -1,0 +1,17 @@
+text,department
+There's a pothole on the road,Public Works Dept
+Streetlight not working near park,Electrical Dept
+Garbage is dumped daily behind the market,Sanitation Dept
+Sewage is overflowing and stinks badly,Public Health Dept
+Water pipe is leaking on the street,Water Supply Dept
+Noise from illegal construction every night,Environment Dept
+Traffic signal is malfunctioning,Traffic Dept
+Drain is clogged and overflowing,Sewerage Dept
+Trash bins are not being emptied,Sanitation Dept
+Power lines are hanging low,Electrical Dept
+
+
+Write this on EXCEL and then covert it to csv file and put it in the project (if you want to)
+This is basically testing data, you could modify it to be more precise.
+NOTE A: MAKE SURE 'text' AND 'department' MUST BE IN LOWER-CASE and should be the headings of the cells (aka A1 cell is 'text' and B1 cell is 'department', then type the other text respectively) 
+NOTE B: File name should be exact (civic_complaints when saving it as csv file)
