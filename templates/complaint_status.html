@@ -1,6 +1,6 @@
 {% extends "header-template.html" %}
 
-{% block title %}Complaints – Admin Panel{% endblock %}
+{% block title %}View{% endblock %}
 
 {% block styles %}
   <style>
@@ -18,11 +18,10 @@
     /* Complaint Cards Container (Vertical Left Alignment) */
     .complaint-status {
       display: flex;
-      flex-direction: column;   /* stack vertically */
-      align-items: flex-start;  /* align left */
+      flex-direction: column;   
+      align-items:center;  
       gap: 20px;
-      padding: 20px 60px;       /* add left padding for spacing */
-      max-width: 800px;
+      padding: 20px 60px;      
     }
 
     /* Individual Complaint Card */
@@ -36,6 +35,7 @@
       overflow: hidden;
       transition: all 0.3s ease;
       border-left: 6px solid var(--primary);
+      max-width: 800px;
     }
     .complaint-card:hover {
       transform: translateX(6px);
@@ -60,7 +60,17 @@
       margin-right: 15px;
     }
 
-    /* Status Badges */
+/* NEW: Text Truncation Class */
+.complaint-description {
+    /* Limits text to a maximum width, roughly 50 characters (ch unit) */
+    max-width: 50ch; 
+    white-space: nowrap; /* Forces text onto a single line */
+    overflow: hidden; /* Hides content that exceeds the max-width */
+    text-overflow: ellipsis; /* Displays '...' for hidden overflow content */
+    margin-bottom: 12px; /* Standard spacing for consistency */
+}
+
+     
     .status-badge {
       display: inline-block;
       padding: 6px 12px;
@@ -71,9 +81,9 @@
     }
     .pending { background: #fef3c7; color: #92400e; }
     .scheduled { background: #d1fae5; color: #065f46; }
-    .resolved { background: #dcfce7; color: #166534; }
+    .resolved { background: #dcfce7; color: #166534; } 
 
-    /* View Details Button */
+    
     .details-btn {
       background: linear-gradient(135deg, #3b82f6, #2563eb);
       color: white;
@@ -106,28 +116,37 @@
 
   <!-- Complaint Cards -->
   <section class="complaint-status">
-    <!-- Complaint 1 -->
+    {% for comp in complaints %}
+{% set status_class = "" %}
+{% set status_text = "" %}
+
+    {% if comp[3] == 0 %}
+        {% set status_class = "pending" %}
+        {% set status_text = "Pending" %}
+    {% elif comp[3] == 1 %}
+        {% set status_class = "scheduled" %}
+        {% set status_text = "In Progress" %}
+    {% elif comp[3] == 2 %}
+        {% set status_class = "resolved" %}
+        {% set status_text = "Done" %}
+    {% else %}
+        {% set status_class = "pending" %}
+        {% set status_text = "Unknown Status" %}
+    {% endif %}
+
     <div class="complaint-card">
-      <h3>Pothole on MG Road</h3>
+      <h3>Complaint no: {{comp[0]}}</h3>
       <div class="complaint-meta">
-        <span>📍 MG Road, Sector 4</span>
-        <span>🕒 21 Aug 2025</span>
+        <span>Filed on: {{comp[1]}}</span>
       </div>
-      <p>Deep pothole causing traffic slowdown and two-wheeler skids near the bus stop.</p>
-      <span class="status-badge pending">Pending</span>
-      <span class="status-badge scheduled">Scheduled</span>
+      <!-- Applied new CSS class for text truncation -->
+      <p class="complaint-description">{{comp[2]}}</p>
+
+      <!-- Dynamically assigned class and text based on comp[3] -->
+      <span class="status-badge {{ status_class }}">{{ status_text }}</span>
+      <a href="/complaints/{{comp[0]}}" class="details-btn">View Details</a>
     </div>
 
-    <!-- Complaint 2 -->
-    <div class="complaint-card">
-      <h3>Streetlight Not Working</h3>
-      <div class="complaint-meta">
-        <span>📍 5th Cross, Lakshmi Nagar</span>
-        <span>🕒 19 Aug 2025</span>
-      </div>
-      <p>Multiple lamps are off after 9 PM. Area remains dark and unsafe.</p>
-      <span class="status-badge resolved">Resolved</span>
-      <a href="/complaints/2" class="details-btn">View Details</a>
-    </div>
+    {% endfor %}
   </section>
 {% endblock %}

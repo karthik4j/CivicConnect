@@ -142,9 +142,58 @@ def my_complaints():
 
     return render_template('my_complaints.html', querry=result)
 
+
+#todo need to make the webiste here.
+@app.route('/complaints/<id>')
+def view_detailed_complaints_usr(id):
+    res =conn.execute("""SELECT 
+c.dof AS complaint_date,
+    c.complaint,
+    c.status AS complaint_status,
+    r.msg AS admin_response,
+    a.dept AS admin_department,
+    a.fullname AS admin_name,
+    r.date_of_change AS response_date
+FROM complaints c
+LEFT JOIN (
+    SELECT res.*
+    FROM resolution res
+    INNER JOIN (
+        SELECT comp_id, MAX(date_of_change) AS latest_date
+        FROM resolution
+        GROUP BY comp_id
+    ) latest_res
+    ON res.comp_id = latest_res.comp_id AND res.date_of_change = latest_res.latest_date
+) r ON c.comp_id = r.comp_id
+LEFT JOIN admin a ON r.admin_id = a.id
+WHERE c.comp_id = ?;
+""", (id,))
+
+# fetch result
+    result = res.fetchone()
+
+    """
+    if result:
+        print("Complaint Date:", result[0])
+        print("Complaint:", result[1])
+        print("Status:", result[2])
+        print("Admin Response:", result[3])
+        print("Admin Department:", result[4])
+        print("Admin Name:", result[5])
+        print("Response Date:", result[6])
+    else:
+        print("No complaint found for that ID.")
+    """
+    return render_template('view_detailed_complaints_user.html',complaint_id=id,issue_date=result[0],status=result[2],complaint=result[1],response=result[3],dept=result[4],officer_name=result[5],updated_date=result[6])
+
 @app.route('/complaint_status')
 def complaint_status():
-  return render_template('complaint_status.html')
+  
+  logged_in_usr_id = request.cookies.get('id')
+  res = conn.execute('SELECT comp_id, dof, complaint, status FROM complaints WHERE id = ?',(logged_in_usr_id, ))
+  res = res.fetchall()
+
+  return render_template('complaint_status.html',complaints=res)
 
 @app.route('/login', methods=['POST'])
 def login():
