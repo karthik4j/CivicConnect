@@ -146,6 +146,8 @@
     </form>
   </div>
 {% endblock %}
+
+{% block script %}
 <script>
   function OnSub()
   {  
@@ -170,8 +172,9 @@
       form.action = "{{ url_for('update_notifications_admin') }}";
       form.method = 'post';
       form.submit();
-    //  alert("Message sent successfully.")
+      alert("Message sent successfully.")
    }
   }
    
 </script>
+{% endblock %}

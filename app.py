@@ -491,7 +491,7 @@ def update_notifications_admin():
 
     
     #flash("Message sent",'success')
-    return render_template('admin_issue_notifications.html')
+    return render_template('admin/admin_issue_notifications.html')
 
 @app.route('/get_notifications_all')
 def get_notifications_all():
