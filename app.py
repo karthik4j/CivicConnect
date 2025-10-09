@@ -436,7 +436,18 @@ def admin_cred_check():
 #admin dashboard 
 @app.route('/admin_dashboard')
 def admin_dashboard():
-    return render_template ('admin/admins_dashboard.html')
+    pending_count = conn.execute("SELECT COUNT(status) FROM complaints  WHERE status = 0")
+    in_prog_count = conn.execute("SELECT COUNT(status)FROM complaints  WHERE status = 1 ")
+    resolved_count = conn.execute("SELECT COUNT(status) FROM complaints  WHERE status = 2")
+    #print("Pending :",clean_tuple(pending_count.fetchone()))
+    #print("in_prog_count :",clean_tuple(in_prog_count.fetchone()))
+    #print("resolved_count :",clean_tuple(resolved_count.fetchone()))
+
+    pending_count = clean_tuple(pending_count.fetchone())
+    in_prog_count = clean_tuple(in_prog_count.fetchone())
+    resolved_count = clean_tuple(resolved_count.fetchone())
+
+    return render_template ('admin/admins_dashboard.html',pending=pending_count,resolved=resolved_count,progress=in_prog_count)
     
 #view details of admin account by an admin themslef
 @app.route('/admin_my_account')
