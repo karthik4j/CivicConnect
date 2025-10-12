@@ -7,10 +7,78 @@ import sqlite3,os
 from werkzeug.utils import secure_filename
 from datetime import datetime
 from flask import send_from_directory
-from transformers import pipeline
-summarizer = pipeline("summarization", model="t5-base", tokenizer="t5-base")
 import threading
 
+#libraries for AI part:---------------------------------------------------------------
+from transformers import pipeline
+import pandas as pd
+from datasets import Dataset
+from sklearn.model_selection import train_test_split
+import pandas as pd
+from datasets import Dataset
+from sklearn.model_selection import train_test_split
+
+from transformers import (
+    AutoTokenizer,
+    AutoModelForSequenceClassification,
+    TrainingArguments,
+    Trainer
+)
+import torch
+
+#--------------------------------------------- Ai SUMMARIZER PART------
+summarizer = pipeline("summarization", model="t5-base", tokenizer="t5-base")
+#--------------------------------------- Ai Categorizer part --------------------------
+# CONFIGURATION
+MODEL_NAME = "bert-base-uncased"
+CSV_PATH = "civic_complaints.csv"
+NUM_EPOCHS = 3
+BATCH_SIZE = 8
+
+# LOAD DATA
+df = pd.read_csv(CSV_PATH)
+df = df.dropna(subset=['text', 'department'])  #Cleans any missing rows
+
+# Label encoding
+departments = sorted(df['department'].unique().tolist())
+label2id = {label: idx for idx, label in enumerate(departments)}
+id2label = {idx: label for label, idx in label2id.items()}
+df['label'] = df['department'].map(label2id)
+
+# Split
+train_df, test_df = train_test_split(df, test_size=0.2, random_state=42)
+train_dataset = Dataset.from_pandas(train_df[['text', 'label']])
+test_dataset = Dataset.from_pandas(test_df[['text', 'label']])
+
+# TOKENIZATION
+tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME)
+
+def tokenize(example):
+    return tokenizer(example["text"], truncation=True, padding="max_length")
+
+train_dataset = train_dataset.map(tokenize, batched=True)
+test_dataset = test_dataset.map(tokenize, batched=True)
+
+# LOAD MODEL
+model = AutoModelForSequenceClassification.from_pretrained(
+    MODEL_NAME,
+    num_labels=len(departments),
+    id2label=id2label,
+    label2id=label2id
+)
+# Auto categorizer function------------------------------------------------------------------------------
+def predict_department(text,src):
+    inputs = tokenizer(text, return_tensors="pt", truncation=True, padding=True)
+    with torch.no_grad():
+        outputs = model(**inputs)
+        probs = torch.nn.functional.softmax(outputs.logits, dim=1)
+        predicted_id = torch.argmax(probs).item()
+        #return id2label[predicted_id]
+        res = conn.execute("UPDATE complaints SET dept = ? WHERE imgsrc = ?",(id2label[predicted_id],src))
+        conn.commit()
+
+
+#---------------------------------------------------------------------------------------
 app = Flask(__name__, template_folder='templates',static_folder='static',static_url_path='/')
 
 #file management
@@ -281,7 +349,7 @@ def account_page():
 def register_complaint():
     users_complaint = request.form['user_complaint']
     users_location = request.form['user_location']
-    dept = request.form['select_dept']
+    #dept = request.form['select_dept']
     
     photo = request.files['attached_image']
     if photo and photo.filename != "":
@@ -298,13 +366,15 @@ def register_complaint():
     formatted_date = get_formatted_date()
 
     logged_in_usr_id = request.cookies.get('id')
-    conn.execute("INSERT INTO complaints (complaint, location, imgsrc, dof, dept, id,status) VALUES (?, ?, ?, ?, ?, ?, ?)", (users_complaint, users_location, rename,formatted_date,dept,logged_in_usr_id.replace("'",""),0))
+    conn.execute("INSERT INTO complaints (complaint, location, imgsrc, dof, id,status) VALUES (?, ?, ?, ?, ?, ?)", (users_complaint, users_location, rename,formatted_date,logged_in_usr_id.replace("'",""),0))
     conn.commit()
 
     #function to start summary
     #sumarrized_comp = start_summary(users_complaint)
     thread1 = threading.Thread(target=start_summary, args=(users_complaint,rename))
+    thread2 = threading.Thread(target=predict_department, args=(users_complaint,rename))
     thread1.start()
+    thread2.start()
 
     return render_template('message.html', message='Successfully registered complaint')
 
