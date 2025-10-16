@@ -210,6 +210,9 @@ def my_complaints():
 
     return render_template('my_complaints.html', querry=result)
 
+@app.route('/help_user')
+def help_user():
+    return render_template('help.html')
 
 #todo need to make the webiste here.
 @app.route('/complaints/<id>')
