@@ -74,6 +74,7 @@ def predict_department(text,src):
         probs = torch.nn.functional.softmax(outputs.logits, dim=1)
         predicted_id = torch.argmax(probs).item()
         #return id2label[predicted_id]
+        print(f"Predicted dept: {id2label[predicted_id]}")
         res = conn.execute("UPDATE complaints SET dept = ? WHERE imgsrc = ?",(id2label[predicted_id],src))
         conn.commit()
 
@@ -352,7 +353,7 @@ def account_page():
 def register_complaint():
     users_complaint = request.form['user_complaint']
     users_location = request.form['user_location']
-    #dept = request.form['select_dept']
+    dept = request.form['select_dept']
     
     photo = request.files['attached_image']
     if photo and photo.filename != "":
@@ -369,15 +370,15 @@ def register_complaint():
     formatted_date = get_formatted_date()
 
     logged_in_usr_id = request.cookies.get('id')
-    conn.execute("INSERT INTO complaints (complaint, location, imgsrc, dof, id,status) VALUES (?, ?, ?, ?, ?, ?)", (users_complaint, users_location, rename,formatted_date,logged_in_usr_id.replace("'",""),0))
+    conn.execute("INSERT INTO complaints (complaint, location, imgsrc, dof, dept, id,status) VALUES (?, ?, ?, ?, ?, ?, ?)", (users_complaint, users_location, rename,formatted_date,dept,logged_in_usr_id.replace("'",""),0))
     conn.commit()
 
     #function to start summary
     #sumarrized_comp = start_summary(users_complaint)
     thread1 = threading.Thread(target=start_summary, args=(users_complaint,rename))
-    thread2 = threading.Thread(target=predict_department, args=(users_complaint,rename))
+    #thread2 = threading.Thread(target=predict_department, args=(users_complaint,rename))
     thread1.start()
-    thread2.start()
+    #thread2.start()
 
     return render_template('message.html', message='Successfully registered complaint')
 

@@ -230,6 +230,7 @@
             const user_complaint = document.getElementById('description').value.trim();
             const user_location = document.getElementById('location').value.trim();
             const complaint_dept = document.getElementById('dept-selec');
+            const fileInput = document.getElementById('image');
 
             if (user_complaint.length === 0) {
                 alert('Please provide a description of your complaint');
@@ -237,7 +238,11 @@
                 alert('Please enter your location');
             } else if (complaint_dept.value === "") {
                 alert('Please select a department');
-            } else {
+            } else if (fileInput.files.length === 0)
+            {
+                alert("Please upload an image");
+            }
+            else {
                 const form = document.getElementById('complaint');
                 form.action = "{{ url_for('register_complaint') }}";
                 form.method = 'post';
