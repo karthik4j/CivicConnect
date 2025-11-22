@@ -664,6 +664,7 @@ def update_notifications_admin():
     notification_info = request.form['message']
     notification_title = request.form['notification_name']
     notification_priority = request.form['priority']
+    notification_ward = request.form['ward2']
     
     #print(notification_info,notification_title,notification_priority)
 
@@ -671,7 +672,7 @@ def update_notifications_admin():
     adm_id = request.cookies.get('admin_id')
     adm_dept = request.cookies.get('dept')
 
-    conn.execute("INSERT INTO messages (msg , priority, msg_title, issue_date, issued_by, dept) VALUES (?, ?, ?, ?, ?, ?)",(notification_info,notification_priority,notification_title,to_day,adm_id,adm_dept))
+    conn.execute("INSERT INTO messages (ward , msg , priority, msg_title, issue_date, issued_by, dept) VALUES (?, ?, ?, ?, ?, ?, ?)",(notification_ward,notification_info,notification_priority,notification_title,to_day,adm_id,adm_dept))
     conn.commit()
 
     
