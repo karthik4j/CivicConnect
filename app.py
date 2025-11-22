@@ -230,7 +230,6 @@ def login():
         return redirect(url_for('index'))
 
 
-# register
 @app.route('/register', methods=['POST'])
 def register():
     data = request.get_json()
@@ -240,33 +239,118 @@ def register():
     l_name = data.get('lname')
     ph_no = data.get('phone')
 
-    full_name = f_name + " " + l_name
-    to_day = get_formatted_date()
-
+    # 1. Validation Checks (Database Read)
+    # Check if username or phone already exists BEFORE proceeding to stage 2
     res = conn.execute("SELECT username FROM user WHERE username = ?", (username,))
     if res.fetchone():
         return "User already registered", 400
     
     res = conn.execute("SELECT ph_no FROM user WHERE ph_no =?",(ph_no,))
     if res.fetchone():
-        return "Phone number already registered",400
+        return "Phone number already registered", 400
 
-    else:
-        newid = str(uuid.uuid4())
-        hashed_password = generate_password_hash(password)
+    # 2. Temporary Storage in Session
+    # Store the validated, sensitive data and initial user details
+    full_name = f_name + " " + l_name
+    hashed_password = generate_password_hash(password)
+    
+    session['temp_user_data'] = {
+        'id': str(uuid.uuid4()), # Generate ID now
+        'username': username,
+        'f_name': f_name,
+        'l_name': l_name,
+        'fullname': full_name,
+        'ph_no': ph_no,
+        'password': hashed_password,
+        'DOC': get_formatted_date() # Date of Creation
+    }
+    
+    # 3. Respond with Redirect URL (to Stage 2 form)
+    response_data = {
+        'message': 'Initial data received, proceeding to additional details.',
+        'redirect_url': url_for('start_tfa') 
+    }
+    
+    # We do NOT set the 'id' cookie yet, as registration isn't final
+    resp = make_response(jsonify(response_data), 200) 
+    return resp
 
-        conn.execute("INSERT INTO user (id, username, f_name, l_name, fullname, DOC, ph_no, password) VALUES (?, ?, ?, ?, ?, ?, ?, ?)", 
-                     (newid, username, f_name, l_name, full_name, to_day, ph_no, hashed_password))
-        conn.commit()
+@app.route('/finalize_registration', methods=['POST'])
+def finalize_registration():
+    # 1. Get additional data from the second page
+    additional_data = request.get_json()
+    # e.g., assuming the second page sends 'security_question_answer'
+    # security_answer = additional_data.get('security_answer')
 
-        session['username'] = username
-        resp = make_response("Account created Successfully")
-        resp.set_cookie('id', newid)
-        return resp
+    # 2. Retrieve temporary data from session
+    temp_data = session.pop('temp_user_data', None)
+
+    if not temp_data:
+        # User tried to access this route without starting registration
+        return "Registration session expired or invalid.", 403
+
+    # 3. Combine Data and Insert into DB
+    
+    # Prepare combined data tuple for insertion
+    # (The example below uses the temporary data keys, adjust as needed for new fields)
+    insertion_tuple = (
+        temp_data['id'], 
+        temp_data['username'], 
+        temp_data['f_name'], 
+        temp_data['l_name'], 
+        temp_data['fullname'], 
+        temp_data['DOC'], 
+        temp_data['ph_no'], 
+        temp_data['password']
+        # Add new fields here if you update the SQL query
+    )
+
+    # Database insertion (The original INSERT statement)
+    conn.execute(
+        "INSERT INTO user (id, username, f_name, l_name, fullname, DOC, ph_no, password) VALUES (?, ?, ?, ?, ?, ?, ?, ?)", 
+        insertion_tuple
+    )
+    conn.commit()
+
+    # 4. Finalize Session/Cookies
+    session['username'] = temp_data['username']
+    
+    resp = make_response("Account created Successfully", 200)
+    resp.set_cookie('id', temp_data['id'])
+    return resp
 
 @app.route('/user_reg_page')
 def user_reg_page():
     return render_template('user-registration-page.html')
+
+#only for testing remove this or it might break things
+@app.route('/start_tfa')
+def start_tfa():
+    return render_template('two-fa.html')
+
+@app.route('/verify_otp', methods=['POST'])
+def verify_otp():
+    data = request.get_json()
+    received_otp = data.get('otp')
+    
+    # IMPORTANT: Replace '123456' with the actual OTP expected for the current user, 
+    # which you should have stored in the session or database previously.
+    expected_otp = '123456'     # session.get('expected_otp') 
+
+    if received_otp and expected_otp and received_otp == expected_otp:
+        # OTP is valid!
+        # You can now proceed to store the user's final data (which happens in finalize_registration).
+        # It's a good idea to clear the expected OTP after success: session.pop('expected_otp')
+        return jsonify({
+            "success": True, 
+            "message": "Verification successful! You will be logged in shortly."
+        }), 200
+    else:
+        # OTP is invalid
+        return jsonify({
+            "success": False, 
+            "message": "Invalid OTP. Please check your phone and try again."
+        }), 200
 
 # logout
 @app.route('/logout',methods=['POST'])
