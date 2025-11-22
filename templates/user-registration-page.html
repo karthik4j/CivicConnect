@@ -207,44 +207,58 @@
     const errorMsg = document.getElementById('error-msg');
 
     form.addEventListener('submit', async function(e) {
-      e.preventDefault();
+        e.preventDefault();
 
-      if (password.value !== confirmPassword.value) {
-        errorMsg.style.display = 'block';
-        return;
-      } else {
-        errorMsg.style.display = 'none';
-      }
-
-      const formData = {
-        fname: document.getElementById('fname').value,
-        lname: document.getElementById('lname').value,
-        usrname: document.getElementById('usrname').value,
-        paswd: document.getElementById('paswd').value,
-        phone: document.getElementById('phone').value
-      };
-
-      try {
-        const response = await fetch('/register', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify(formData)
-        });
-
-        if (response.ok) {
-          alert("✅ Registration successful!");
-          window.location.href = "/";  // redirect to homepage or dashboard
+        // 1. Client-Side Password Match Check
+        if (password.value !== confirmPassword.value) {
+            errorMsg.style.display = 'block';
+            return;
         } else {
-          const msg = await response.text();
-          alert("⚠️ Registration failed: " + msg);
+            errorMsg.style.display = 'none';
         }
-      } catch (error) {
-        console.error("Error:", error);
-        alert("⚠️ Something went wrong. Please try again.");
-      }
+
+        const formData = {
+            fname: document.getElementById('fname').value,
+            lname: document.getElementById('lname').value,
+            usrname: document.getElementById('usrname').value,
+            paswd: document.getElementById('paswd').value,
+            phone: document.getElementById('phone').value
+        };
+
+        try {
+            // 2. Submit initial data to Flask endpoint (/register)
+            const response = await fetch('/register', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(formData)
+            });
+
+            if (response.ok) {
+                // The server should return JSON containing the redirect_url
+                const data = await response.json(); 
+                
+                alert("✅ Initial registration successful! Redirecting for additional details.");
+
+                if (data.redirect_url) {
+                    // 3. CRITICAL CHANGE: Redirect the current tab to the Stage 2 page
+                    window.location.href = data.redirect_url; 
+                } else {
+                    // Fallback in case redirect_url is missing, but response is OK
+                    alert("Registration flow error: Redirect URL missing.");
+                }
+
+            } else {
+                // Handle registration failure (e.g., username/phone already exists)
+                const msg = await response.text();
+                alert("⚠️ Registration failed: " + msg);
+            }
+        } catch (error) {
+            console.error("Error:", error);
+            alert("⚠️ Something went wrong. Please try again.");
+        }
     });
-  </script>
+</script>
 </body>
 </html>
