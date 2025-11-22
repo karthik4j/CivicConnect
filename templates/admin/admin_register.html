@@ -22,8 +22,6 @@
     font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
     background: var(--bg);
     color: var(--text);
-    /*
-    */
   }
 
   .register-card {
@@ -34,7 +32,6 @@
     width: 100%;
     max-width: 420px;
     text-align: center;
-    margin-top:15%;
   }
 
   .register-card h1 {
@@ -46,7 +43,6 @@
   .form-group {
     margin-bottom: 16px;
     text-align: left;
-    margin-right:5%
   }
 
   label {
@@ -56,7 +52,7 @@
     color: var(--text);
   }
 
-  input {
+  input, select { /* Added select to style inputs */
     width: 100%;
     padding: 10px 12px;
     border: 1px solid var(--border);
@@ -65,9 +61,10 @@
     color: var(--text);
     background: var(--bg);
     outline: none;
+    box-sizing: border-box; /* Ensure padding doesn't affect width */
   }
 
-  input:focus {
+  input:focus, select:focus {
     border-color: var(--primary);
     box-shadow: 0 0 0 2px rgba(29, 78, 216, 0.2);
   }
@@ -139,12 +136,17 @@
     nav a:hover {
       text-decoration: underline;
     }
-    .admin-reg-form-div
-    {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    height: 100vh;
+
+    /* Combined and centered form container style */
+    .user-reg-fom-div {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      /* Use 100vh minus the header height to center vertically */
+      min-height: calc(100vh - 56px); /* Assuming header is around 56px */
+      padding-top: 20px;
+      padding-bottom: 20px;
+      box-sizing: border-box;
     }
 </style>
 </head>
@@ -157,12 +159,10 @@
     </nav>
   </header>  
 
-  <div class="admin-reg-form-div">  
+  <div class="user-reg-fom-div">  
     <div class="register-card">
       <h1>Admin Registration</h1>
-    <form id="registerForm" action="{{ url_for('admin_register') }}" method="POST">
-
-    <div class="form-group">
+    <form id="registerForm">     <div class="form-group">
       <label for="fname">First Name</label>
       <input type="text" id="fname" name="fname" placeholder="Enter first name" required>
     </div>
@@ -178,9 +178,18 @@
     </div>
 
       <div class="form-group">
-      <label for="department">Department</label>
-      <input type="text" id="department" name="department" placeholder="Choose a department" required>
-    </div>
+                    <label for="admin_dept">Department</label>
+                    <select id="admin_dept" name="adm_dept" required>
+                        <option value="">-- Select a Department --</option>
+                        <option value="Public Works Department">Public Works Department</option>
+                        <option value="Sanitation Department">Sanitation Department</option>
+                        <option value="Health Department">Health Department</option>
+                        <option value="Water Supply Department">Water Authority Department</option>
+                        <option value="Electricity Department">Electricity Department</option>
+                        <option value="Parks and Recreation">Parks and Recreation Department</option>
+                        <option value="Traffic Management">Traffic Management</option>
+                    </select>
+                </div>
 
     <div class="form-group">
       <label for="email">Email</label>
@@ -189,7 +198,7 @@
 
     <div class="form-group">
       <label for="ph_no">Phone number: </label>
-      <input type="ph_no" id="ph_no" name="ph_no" placeholder="Enter Phone number" required minlength="10" maxlength="10">
+      <input type="text" id="ph_no" name="ph_no" placeholder="Enter Phone number" required minlength="10" maxlength="10">
     </div>
 
     <div class="form-group">
@@ -210,23 +219,72 @@
       <div class="footer-text">
         <p>Already an admin? <a href="admin login.html">Login here</a></p>
       </div>
-    </div>
+  </div>
   </div>
 
-  <script>
+<script>
     const form = document.getElementById('registerForm');
     const password = document.getElementById('password');
     const confirmPassword = document.getElementById('confirm-password');
     const errorMsg = document.getElementById('error-msg');
 
-    form.addEventListener('submit', function(e) {
-      if (password.value !== confirmPassword.value) {
+    form.addEventListener('submit', async function(e) {
         e.preventDefault();
-        errorMsg.style.display = 'block';
-      } else {
-        errorMsg.style.display = 'none';
-      }
+        
+        // 1. Client-Side Password Match Check
+        if (password.value !== confirmPassword.value) {
+            errorMsg.style.display = 'block';
+            return;
+        } else {
+            errorMsg.style.display = 'none';
+        }
+
+        // 2. Collect form data
+        const formData = {
+            fname: document.getElementById('fname').value,
+            lname: document.getElementById('lname').value,
+            usrname: document.getElementById('username').value, // Corrected ID
+            dept: document.getElementById('admin_dept').value,
+            email: document.getElementById('email').value,
+            phone: document.getElementById('ph_no').value,
+            paswd: document.getElementById('password').value, // Corrected ID
+            cpass: document.getElementById('confirm-password').value
+        };
+        
+        try {
+            // 3. Submit data to Admin registration Flask endpoint (using the original form action as a guide)
+            const response = await fetch('{{ url_for("admin_register") }}', { // Kept the Flask endpoint from original form
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(formData)
+            });
+
+            if (response.ok) {
+                // Server should return JSON containing the redirect_url
+                const data = await response.json(); 
+                
+                alert("✅ Admin registration successful! Redirecting for additional details.");
+
+                if (data.redirect_url) {
+                    // 4. Redirect the current tab to the Stage 2 page
+                    window.location.href = data.redirect_url; 
+                } else {
+                    // Fallback in case redirect_url is missing
+                    alert("Registration flow error: Redirect URL missing.");
+                }
+
+            } else {
+                // Handle registration failure 
+                const msg = await response.text();
+                alert("⚠️ Admin registration failed: " + msg);
+            }
+        } catch (error) {
+            console.error("Error:", error);
+            alert("⚠️ Something went wrong. Please try again.");
+        }
     });
-  </script>
+</script>
 </body>
 </html>

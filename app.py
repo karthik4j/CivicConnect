@@ -424,7 +424,7 @@ def finalize_registration():
 def user_reg_page():
     return render_template('user-registration-page.html')
 
-#only for testing remove this or it might break things
+#internal use only
 @app.route('/start_tfa')
 def start_tfa():
     return render_template('two-fa.html')
@@ -512,59 +512,181 @@ def admin_register_page():
 # admin register
 @app.route('/admin_register', methods=['POST'])
 def admin_register():
-    f_name = request.form['fname']
-    l_name = request.form['lname']
-    username = request.form['username']
-    admin_dept = request.form['department']
-    email = request.form['email']
-    ph_no = request.form['ph_no']
-    password = request.form['password']
-    confirm_password = request.form['confirm-password']
+    # Ensure request content type is application/json
+    if not request.is_json:
+        return "Unsupported media type", 415
+
+    data = request.get_json()
+    
+    # FIX: Corrected dictionary access (used parentheses instead of brackets)
+    f_name = data.get('fname')
+    l_name = data.get('lname')
+    username = data.get('usrname') # Matches payload key from HTML
+    admin_dept = data.get('dept')
+    email = data.get('email')
+    ph_no = data.get('phone')
+    password = data.get('paswd')
+    # confirm_password = data.get('cpass') # Not needed, handled client-side/removed from logic
+
+    # Basic validation checks
+    if not all([f_name, l_name, username, admin_dept, email, ph_no, password]):
+        return "Missing required field data.", 400
 
     fullname = f_name + " " + l_name
     to_day = get_formatted_date()
 
-    # check password match (extra server-side validation)
-    if password != confirm_password:
-        flash("Passwords do not match")
-        return redirect(url_for('admin_login'))  # render form again
-
+    # --- Error Checks (FIXED to return 400 status) ---
     # check if username already exists
     res = conn.execute("SELECT username FROM admin WHERE username = ?", (username,))
     if res.fetchone():
-        flash("Username already taken. Try a different one.")
-        return redirect(url_for('admin_login'))
+        return "Username already taken. Try a different one.", 400 # FIX: Returning 400 error
 
     # check if email already exists
     res = conn.execute("SELECT email FROM admin WHERE email = ?", (email,))
     if res.fetchone():
-        flash("Email already registered. Use a different email.")
-        return redirect(url_for('admin_login'))
+        return "Email already registered. Use a different email.", 400 # FIX: Returning 400 error
+    
+    #check if the phone_no is already registed to someone else
+    res = conn.execute("SELECT ph_no from admin WHERE ph_no = ?",(ph_no, ))
+    if res.fetchone():
+        return "Phone number already registered. Please enter a new number.", 400 # FIX: Returning 400 error
+    # --- End Error Checks ---
 
     # create new admin
     newid = str(uuid.uuid4())
     hashed_password = generate_password_hash(password)
+    
+    #generate OTP
+    otps = generate_otp_choice()
 
-    conn.execute(
-       "INSERT INTO admin (id, username, f_name, l_name, fullname, dept, email, password, DOC, ph_no ) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-    (newid, username, f_name, l_name, fullname, admin_dept, email, hashed_password, to_day, ph_no)
-    )
+    #send OTP
+    print("generated OTP: ",otps) #remove 
+    msg_user = f"""Your OTP for CivicConnect is {otps}"""
+    print(msg_user)
+
+    #warning this will send an actual message. 
+    #send_message(format_indian_number(ph_no),msg_user)
+
+    # temprarily store session
+    session['temp_admin'] = {
+        'id':newid,
+        'username':username,
+        'f_name':f_name,
+        'l_name':l_name,
+        'fullname':fullname,
+        'dept':admin_dept,
+        'email':email,
+        'password':hashed_password,
+        'DOC':to_day,
+        'ph_no':ph_no,
+        'otp':otps # Storing OTP in session
+    }
+
+    #Respond with Redirect URL (to Stage 2 form)
+    response_data = {
+        'message': 'Initial data received, proceeding to additional details.',
+        'redirect_url': url_for('start_tfa_adm') 
+    }
+    
+    # We do NOT set the 'id' cookie yet, as registration isn't final
+    resp = make_response(jsonify(response_data), 200) 
+    return resp
+
+@app.route('/start_tfa_adm')
+def start_tfa_adm():
+    return render_template('admin/two-fa-adm.html')
+
+@app.route('/verify_otp_adm', methods=['POST'])
+def verify_otp_adm():
+    data = request.get_json()
+    received_otp = int(data.get('otp'))
+    
+    expected_otp = session.get('temp_admin')['otp']
+    print("Expected OTP",expected_otp,type(expected_otp))
+    print("Recived OTP",received_otp,type(received_otp))
 
     
-    conn.commit()
+    if received_otp and expected_otp and received_otp == expected_otp:
+        
+        # You can now proceed to store the user's final data (which happens in finalize_registration).
+        return jsonify({
+            "success": True, 
+            "message": "Verification successful! You will be logged in shortly."
+        }), 200
+    else:
+        # OTP is invalid
+        return jsonify({
+            "success": False, 
+            "message": "Invalid OTP. Please check your phone and try again."
+        }), 200
 
-    # start session
-    session['admin_username'] = username  
+@app.route('/finalize_admin_registration', methods=['POST'])
+def finalize_admin_registration():
+    # Retrieve temporary data from session using the key set in /admin_register
+    temp_data = session.pop('temp_admin', None)
+    print("Admin Final Save Attempt")
 
-    # attach cookie
-    resp = make_response(redirect(url_for('admin_login')))  # redirect after success
-    resp.set_cookie('admin_id', newid)
-    resp.set_cookie('dept',admin_dept)
+    if not temp_data:
+        # User tried to access this route without completing the OTP stage
+        return "Admin registration session expired or invalid.", 403
 
-    flash("Admin account created successfully 🎉")
-    print("New admin saved to db")
+    # Extract data for database insertion
+    newid = temp_data['id']
+    username = temp_data['username']
+    admin_dept = temp_data['dept']
 
-    return resp
+    # Combine Data and Insert into DB
+    insertion_tuple = (
+        temp_data['id'],
+        temp_data['username'],
+        temp_data['f_name'],
+        temp_data['l_name'],
+        temp_data['fullname'],
+        temp_data['dept'],
+        temp_data['email'],
+        temp_data['password'], # Hashed password
+        temp_data['DOC'],
+        temp_data['ph_no']
+    )
+    
+    try:
+        # Database insertion (Finally)
+        # Using the exact SQL provided in your request
+        conn.execute(
+            "INSERT INTO admin (id, username, f_name, l_name, fullname, dept, email, password, DOC, ph_no) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            insertion_tuple
+        )
+        conn.commit()
+
+        # Finalize Session/Cookies
+        session['username'] = username
+        
+        # Set the redirect URL to the admin login or dashboard page
+        redirect_url = url_for('admin_dashboard') 
+        
+        # Return a JSON object containing the status and the redirect URL
+        response_data = {
+            "success": True, 
+            "message": "Admin account created successfully 🎉. Redirecting...",
+            "redirect_to": redirect_url
+        }
+
+        resp = make_response(jsonify(response_data), 200)
+        
+        # Set cookies on the response object
+        resp.set_cookie('admin_id', newid)
+        resp.set_cookie('dept', admin_dept)
+        
+        print(f"New admin '{username}' saved to db and session/cookies set.")
+        return resp
+        
+    except Exception as e:
+        # Handle database errors
+        print(f"Database error during admin finalization: {e}")
+        # Note: If the session was popped successfully, you might want to re-add it 
+        # or handle rollback, but for simplicity, we return a 500 error.
+        return jsonify({"success": False, "message": "A database error occurred during registration."}), 500
+
 
 #route for fetching complaints from the DB (full view)
 @app.route('/admin_view_complaints')
