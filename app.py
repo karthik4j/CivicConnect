@@ -22,7 +22,10 @@ from sklearn.model_selection import train_test_split
 import pandas as pd
 from datasets import Dataset
 from sklearn.model_selection import train_test_split
+#--------------------------------------------- Ai SUMMARIZER PART------
+summarizer = pipeline("summarization", model="t5-base", tokenizer="t5-base")
 #---------------------------------------------------------------------------------------
+
 app = Flask(__name__, template_folder='templates',static_folder='static',static_url_path='/')
 
 #file management
@@ -307,6 +310,7 @@ def register():
     print("generated OTP: ",otps)
     msg_user = f"""Your OTP for CivicConnect is {otps}"""
     print(msg_user)
+
     #warning this will send an actual message. 
     #send_message(format_indian_number(ph_no),msg_user)
 
@@ -665,7 +669,6 @@ def update_notifications_admin():
     notification_title = request.form['notification_name']
     notification_priority = request.form['priority']
     notification_ward = request.form['ward2']
-    
     #print(notification_info,notification_title,notification_priority)
 
     to_day = get_formatted_date()
