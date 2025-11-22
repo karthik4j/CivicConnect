@@ -8,7 +8,12 @@ from werkzeug.utils import secure_filename
 from datetime import datetime
 from flask import send_from_directory
 import threading
-
+import string,random
+#3rd party intergration
+from twilio.rest import Client
+from dotenv import load_dotenv
+from pathlib import Path
+#---------------------------
 #libraries for AI part:---------------------------------------------------------------
 from transformers import pipeline
 import pandas as pd
@@ -28,6 +33,48 @@ if not os.path.exists(UPLOAD_FOLDER):
 
 # Database connection
 conn = sqlite3.connect('database.db', check_same_thread=False)
+#-----------------------         twilio ----------------------------------------------------
+
+# Find the venv folder relative to this file
+base_dir = Path(__file__).resolve().parents[0]  # adjust if needed
+#print(base_dir)
+venv_env = base_dir / ".env" / ".env"
+
+# Load .env from inside venv
+load_dotenv(venv_env)
+
+def format_indian_number(num_str: str) -> str:
+
+    # Keep only digits
+    digits = "".join(filter(str.isdigit, num_str))
+
+    # Case 1: Already includes country code (91)
+    if digits.startswith("91") and len(digits) == 12:
+        return "+" + digits
+
+    # Case 2: Only 10-digit local Indian number
+    if len(digits) == 10:
+        return "+91" + digits
+
+    # If none match, error out
+    raise ValueError(f"Invalid Indian phone number: {num_str}")
+
+
+def send_message(number: str, text: str):
+    account_sid = os.getenv("TWILIO_ACCOUNT_SID")
+    auth_token = os.getenv("TWILIO_AUTH_TOKEN")
+    from_number = os.getenv("TWILIO_PHONE_NUMBER")
+
+    client = Client(account_sid, auth_token)
+
+    twilio_msg = client.messages.create(
+        body=text,
+        from_=from_number,
+        to=format_indian_number(number),
+    )
+
+    print("Sent:", twilio_msg.body)
+
 
 #---------------------------------------------------------------------------- FUNCTIONS ------------------------------------------------------------------------------------------------
 def create_table():
@@ -243,8 +290,6 @@ def register():
     l_name = data.get('lname')
     ph_no = data.get('phone')
 
-    # 1. Validation Checks (Database Read)
-    # Check if username or phone already exists BEFORE proceeding to stage 2
     res = conn.execute("SELECT username FROM user WHERE username = ?", (username,))
     if res.fetchone():
         return "User already registered", 400
@@ -253,11 +298,18 @@ def register():
     if res.fetchone():
         return "Phone number already registered", 400
 
-    # 2. Temporary Storage in Session
-    # Store the validated, sensitive data and initial user details
+    # Temporary Storage in Session
     full_name = f_name + " " + l_name
     hashed_password = generate_password_hash(password)
-    
+    otps = generate_otp_choice()
+
+    #ONLY FOR RESTING REMOVE
+    print("generated OTP: ",otps)
+    msg_user = f"""Your OTP for CivicConnect is {otps}"""
+    print(msg_user)
+    #warning this will send an actual message. 
+    #send_message(format_indian_number(ph_no),msg_user)
+
     session['temp_user_data'] = {
         'id': str(uuid.uuid4()), # Generate ID now
         'username': username,
@@ -266,10 +318,12 @@ def register():
         'fullname': full_name,
         'ph_no': ph_no,
         'password': hashed_password,
-        'DOC': get_formatted_date() # Date of Creation
+        'DOC': get_formatted_date(), # Date of Creation
+        'OTP':otps
     }
     
-    # 3. Respond with Redirect URL (to Stage 2 form)
+    
+    #Respond with Redirect URL (to Stage 2 form)
     response_data = {
         'message': 'Initial data received, proceeding to additional details.',
         'redirect_url': url_for('start_tfa') 
@@ -279,9 +333,41 @@ def register():
     resp = make_response(jsonify(response_data), 200) 
     return resp
 
+def generate_otp_choice():
+    
+    digits = string.digits  # '0123456789'
+    otp = ''.join(random.choice(digits) for _ in range(6))
+    while len(otp) != 6:
+        otp = ''.join(random.choice(digits) for _ in range(6))
+    return int(otp)
+
+@app.route('/verify_otp', methods=['POST'])
+def verify_otp():
+    data = request.get_json()
+    received_otp = int(data.get('otp'))
+    
+    expected_otp = session.get('temp_user_data')['OTP']
+    print("Expected OTP",expected_otp,type(expected_otp))
+    print("Recived OTP",received_otp,type(received_otp))
+
+    
+    if received_otp and expected_otp and received_otp == expected_otp:
+        
+        # You can now proceed to store the user's final data (which happens in finalize_registration).
+        return jsonify({
+            "success": True, 
+            "message": "Verification successful! You will be logged in shortly."
+        }), 200
+    else:
+        # OTP is invalid
+        return jsonify({
+            "success": False, 
+            "message": "Invalid OTP. Please check your phone and try again."
+        }), 200
+
 @app.route('/finalize_registration', methods=['POST'])
 def finalize_registration():    
-    # 2. Retrieve temporary data from session
+    #Retrieve temporary data from session
     temp_data = session.pop('temp_user_data', None)
     print("Final save")
 
@@ -289,10 +375,7 @@ def finalize_registration():
         # User tried to access this route without starting registration
         return "Registration session expired or invalid.", 403
 
-    # 3. Combine Data and Insert into DB
-    
-    # Prepare combined data tuple for insertion
-    # (The example below uses the temporary data keys, adjust as needed for new fields)
+    #Combine Data and Insert into DB
     insertion_tuple = (
         temp_data['id'], 
         temp_data['username'], 
@@ -305,18 +388,17 @@ def finalize_registration():
         # Add new fields here if you update the SQL query
     )
     try:
-        # Database insertion (The original INSERT statement)
+        # Database insertion (Finally)
         conn.execute(
             "INSERT INTO user (id, username, f_name, l_name, fullname, DOC, ph_no, password) VALUES (?, ?, ?, ?, ?, ?, ?, ?)", 
             insertion_tuple
         )
         conn.commit()
 
-        # 4. Finalize Session/Cookies
+        #Finalize Session/Cookies
         session['username'] = temp_data['username']
         
         redirect_url = url_for('user_dashboard_page') 
-        # --- MODIFICATION END ---
         
         # Return a JSON object containing the status and the redirect URL
         resp = jsonify({
@@ -342,30 +424,6 @@ def user_reg_page():
 @app.route('/start_tfa')
 def start_tfa():
     return render_template('two-fa.html')
-
-@app.route('/verify_otp', methods=['POST'])
-def verify_otp():
-    data = request.get_json()
-    received_otp = data.get('otp')
-    
-    # IMPORTANT: Replace '123456' with the actual OTP expected for the current user, 
-    # which you should have stored in the session or database previously.
-    expected_otp = '123456'     # session.get('expected_otp') 
-
-    if received_otp and expected_otp and received_otp == expected_otp:
-        # OTP is valid!
-        # You can now proceed to store the user's final data (which happens in finalize_registration).
-        # It's a good idea to clear the expected OTP after success: session.pop('expected_otp')
-        return jsonify({
-            "success": True, 
-            "message": "Verification successful! You will be logged in shortly."
-        }), 200
-    else:
-        # OTP is invalid
-        return jsonify({
-            "success": False, 
-            "message": "Invalid OTP. Please check your phone and try again."
-        }), 200
 
 # logout
 @app.route('/logout',methods=['POST'])
