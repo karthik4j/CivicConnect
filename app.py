@@ -155,12 +155,118 @@ def index():
         return redirect(url_for('home'))
   return render_template('index.html')
 
+@app.route('/user_forgot')
+def user_forgot():
+    session['user_type']={'type':"user"}
+    return render_template('reset_user_pass.html')
+
+@app.route('/admin_forgot')
+def admin_forgot():
+    session['user_type']={'type':"admin"}
+    return render_template('reset_user_pass.html')
+
+@app.route('/user_forgot_back')
+def user_forgot_back():
+    session.clear()
+    return redirect(url_for('index'))
+
+@app.route('/check_number_OTP', methods=['POST'])
+def check_number_OTP():
+    data = request.get_json()
+    ph_no = data.get('ph_no')
+    #print(ph_no)
+    usr_type = session.pop('user_type') 
+    usr_type = usr_type['type']
+    print('Who is: ',usr_type)
+
+    if(usr_type == 'user'):
+        
+        id = conn.execute('SELECT id FROM user WHERE ph_no = ?',(ph_no,))
+        id = id.fetchone()
+        id = clean_tuple(id)
+        print('ID of user: ',id)
+        if id=='None':
+            resp = jsonify({'status':'NOT','message':'Invalid phone number'})
+            session['user_type']={'type':usr_type}
+        else:
+            resp = jsonify({'status':'OK','message':None})
+            otp_now = generate_otp_choice()
+            session['user_type']={'type':"user",'id':id,'otp':otp_now}
+            print('OTP generated : ',otp_now)
+        return resp
+        
+    elif(usr_type == 'admin'):
+        id = conn.execute('SELECT id FROM admin WHERE ph_no = ?',(ph_no,))
+        id = clean_tuple(id.fetchone())
+        print('ID of admin: ',id)
+        if id=='None':
+            resp = jsonify({'status':'NOT','message':'Invalid phone number'})
+            session['user_type']={'type':usr_type}
+        else:
+            otp_now = generate_otp_choice()
+            resp = jsonify({'status':'OK','message':None})
+            session['user_type']={'type':"admin",'id':id,'otp':otp_now}
+            print('OTP generated : ',otp_now)
+        return resp
+    else:
+        print("error")
+        resp = jsonify({'message':"Error with resetting, redireting to homepage",'url':url_for('index')})
+        return resp
+    
+@app.route('/verfiy_OTP_sent',methods=(['POST']))
+def verfiy_OTP_sent():
+    data = request.get_json()
+    given_OTP =int(data['otp'])
+
+    expected = int(session.get('user_type')['otp'])
+    print('OTP sent : ',given_OTP)
+
+    if(expected == given_OTP):
+        resp = jsonify({'message':"OK"})
+    else:
+        resp = jsonify({'message':"NOT"})
+    return resp
+
+@app.route('/set-new-password',methods=['POST'])
+def set_new_password():
+    data = request.get_json()
+    new_password = data['password']
+    usr_session = session.pop('user_type')
+    usr_type = usr_session['type']
+    usr_id = usr_session['id']
+
+    print("New password: ",new_password)
+    print('ID : ',usr_id)
+
+    if usr_type == 'user':
+        res = conn.execute('SELECT id from user WHERE id = ?',(usr_id,))
+        if res.fetchone():
+            res = conn.execute('UPDATE user SET password = ? WHERE id = ?',(generate_password_hash(new_password),usr_id, ))
+            conn.commit()
+            resp = jsonify({'message':'OK','redirect':url_for('index')})
+        else:
+            resp = jsonify({'message':'NOT'})
+        return resp
+    
+    elif usr_type == 'admin':
+        res = conn.execute('SELECT id from admin WHERE id = ?',(usr_id,))
+        if res.fetchone():
+            res = conn.execute('UPDATE admin SET password = ? WHERE id = ?',(generate_password_hash(new_password),usr_id, ))
+            conn.commit()
+            resp = jsonify({'message':'OK','redirect':url_for('admin_login')})
+        else:
+            resp = jsonify({'message':'NOT'})
+        return resp
+    else:
+        resp = resp = jsonify({'message':'Server error, try again'})
+        return resp
+
+
 @app.route('/home')
 def home():
       if "username" in session:
         return render_template("user_dashboard.html", username=session['username'])
       return render_template('index.html')
-
 
 @app.route('/mayor')
 def mayor_page():
@@ -338,12 +444,8 @@ def register():
     return resp
 
 def generate_otp_choice():
-    
-    digits = string.digits  # '0123456789'
-    otp = ''.join(random.choice(digits) for _ in range(6))
-    while len(otp) != 6:
-        otp = ''.join(random.choice(digits) for _ in range(6))
-    return int(otp)
+    otp_integer = random.randint(100000, 999999)
+    return otp_integer
 
 @app.route('/verify_otp', methods=['POST'])
 def verify_otp():
@@ -486,20 +588,6 @@ def register_complaint():
 
     return render_template('message.html', message='Successfully registered complaint')
 
-#spot waste dump
-@app.route('/waste_dump')
-def waste_dump():
-    return render_template('spot_waste_dump.html')
-
-#spot open drain
-@app.route('/open_drain')
-def open_drain():
-    return render_template('spot_open_drain.html')
-
-#spot pothole
-@app.route('/pothole')
-def pothole():
-    return render_template('spot_pothole.html')
     
 @app.route('/admin_login')
 def admin_login():

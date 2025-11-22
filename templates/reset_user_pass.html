@@ -1,0 +1,558 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reset Password – CivicConnect</title>
+    <!-- Use Inter font from Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* --- CSS VARIABLES (Tailwind-style palette) --- */
+        :root {
+            --bg: #F0F4F8; /* Lighter background */
+            --surface: #FFFFFF;
+            --primary: #1D4ED8; /* Deep Blue */
+            --primary-2: #3B82F6; /* Lighter Blue for hover */
+            --text: #1E293B;
+            --muted: #64748B;
+            --border: #CBD5E1; /* Light Gray Border */
+            --shadow: 0 10px 30px rgba(2, 6, 23, .12); /* Stronger shadow */
+            --radius: 12px;
+            /* Custom colors for feedback */
+            --success-bg: #D1FAE5; 
+            --success-text: #065F46; 
+            --success-border: #10B981;
+            --error-bg: #FEE2E2; 
+            --error-text: #991B1B; 
+            --error-border: #EF4444;
+            --warning-text: #B45309;
+        }
+
+        /* --- BASE STYLES --- */
+        body {
+            margin: 0;
+            font-family: 'Inter', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        header {
+            width: 100%;
+            background: var(--primary);
+            color: white;
+            padding: 16px 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        header h2 {
+            margin: 0;
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin-left: 20px;
+            margin-right: 20px;
+        }
+
+        header a {
+            color: white;
+            text-decoration: none;
+            font-weight: 500;
+            transition: opacity 0.2s;
+            margin-left: 20px;
+            margin-right: 20px;
+        }
+        
+        header a:hover {
+            opacity: 0.8;
+        }
+
+        /* --- CARD CONTAINER --- */
+        .auth-card {
+            background: var(--surface);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            padding: 30px;
+            margin: 40px auto;
+            width: 90%;
+            max-width: 440px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+        }
+
+        .auth-card h1 {
+            font-size: clamp(1.5rem, 5vw, 1.8rem);
+            margin-bottom: 5px;
+            color: var(--primary);
+            font-weight: 700;
+        }
+
+        .auth-card h3 {
+            color: var(--muted);
+            font-weight: 400;
+            font-size: 0.95rem;
+            margin-top: 5px;
+            margin-bottom: 25px;
+        }
+        
+        /* --- FORM FIELD GROUPING --- */
+        .form-group {
+            width: 100%;
+            margin-bottom: 20px;
+            text-align: left;
+        }
+        
+        .form-group label {
+            display: block;
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: var(--text);
+            margin-bottom: 6px;
+        }
+
+        /* --- INPUT STYLES --- */
+        input[type="text"],
+        input[type="number"],
+        input[type="password"] {
+            width: 100%;
+            padding: 12px 15px;
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            font-size: 1rem;
+            color: var(--text);
+            box-sizing: border-box; 
+            transition: border-color 0.2s, box-shadow 0.2s, background-color 0.2s;
+        }
+        
+        /* Hide number input arrows */
+        input[type="number"]::-webkit-outer-spin-button,
+        input[type="number"]::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+        input[type="number"] {
+            -moz-appearance: textfield;
+        }
+
+        /* --- BUTTON STYLING (Primary Action) --- */
+        .btnstyle {
+            background-color: var(--primary);
+            color: white;
+            padding: 12px 25px;
+            border-radius: var(--radius);
+            border: none;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.2s, transform 0.1s, box-shadow 0.2s;
+            box-shadow: 0 4px 10px rgba(29, 78, 216, 0.3);
+            width: 100%;
+            margin-top: 10px;
+        }
+
+        .btnstyle:hover {
+            background-color: var(--primary-2);
+            box-shadow: 0 6px 12px rgba(29, 78, 216, 0.4);
+        }
+
+        .btnstyle:disabled {
+            background-color: var(--muted);
+            cursor: not-allowed;
+            box-shadow: none;
+        }
+        
+        /* --- MESSAGE STYLING (usermsg) --- */
+        #usermsg {
+            width: 100%;
+            margin-top: 25px;
+            min-height: 40px;
+            transition: all 0.3s ease-in-out;
+            text-align: center;
+        }
+
+        .msg-success {
+            background-color: var(--success-bg);
+            color: var(--success-text);
+            border: 1px solid var(--success-border);
+            padding: 15px;
+            border-radius: var(--radius);
+            font-weight: 600;
+        }
+
+        .msg-error {
+            background-color: var(--error-bg);
+            color: var(--error-text);
+            border: 1px solid var(--error-border);
+            padding: 15px;
+            border-radius: var(--radius);
+            font-weight: 600;
+        }
+        
+        .msg-info {
+            background-color: #DBEAFE;
+            color: var(--primary);
+            border: 1px solid var(--primary-2);
+            padding: 15px;
+            border-radius: var(--radius);
+            font-weight: 600;
+        }
+
+    </style>
+</head>
+
+<body>
+
+    <header>
+        <!-- Retaining Jinja code for back link as requested -->
+        <a href="{{url_for('user_forgot_back')}}">Back to Login</a> 
+        <h2>🏛️ CivicConnect</h2>
+        <h2>Reset Password</h2>
+    </header> 
+
+    <div class="auth-card">
+        <h1 id="main-heading">Recover Account</h1>
+        <h3 id="main-subtitle">Enter your registered phone number to begin the recovery process.</h3>
+
+        <!-- STAGE 1: PHONE NUMBER INPUT -->
+        <div id="phone-stage" class="stage">
+            <div class="form-group">
+                <label for="userPhone">Phone Number</label>
+                <input type="text" id="userPhone" placeholder="No need for +91" maxlength="10">
+            </div>
+            
+            <button id="sendOtpBtn" class="btnstyle" onclick="handleSendOtp()" disabled>
+                Send OTP
+            </button>
+        </div>
+
+        <!-- STAGE 2: OTP INPUT - Initially Hidden -->
+        <div id="otp-stage" class="stage" style="display: none;">
+            <div class="form-group">
+                <label for="userOtp">Verification Code (OTP)</label>
+                <input type="text" id="userOtp" placeholder="e.g., 123456" maxlength="6" inputmode="numeric">
+            </div>
+
+            <button id="verifyOtpBtn" class="btnstyle" onclick="handleVerifyOtp()" disabled>
+                Verify OTP
+            </button>
+            <p style="margin-top: 15px; color: var(--muted); font-size: 0.85rem;">
+                Didn't receive code? <a href="#" onclick="handleSendOtp(true)" style="color: var(--primary); text-decoration: none; font-weight: 600;">Resend OTP</a>
+            </p>
+        </div>
+
+        <!-- STAGE 3: PASSWORD RESET INPUT - Initially Hidden -->
+        <div id="password-stage" class="stage" style="display: none;">
+            <div class="form-group">
+                <label for="newPassword">New Password</label>
+                <input type="password" id="newPassword" placeholder="Enter new password">
+            </div>
+            <div class="form-group">
+                <label for="confirmPassword">Confirm Password</label>
+                <input type="password" id="confirmPassword" placeholder="Re-enter new password">
+            </div>
+
+            <button id="resetPasswordBtn" class="btnstyle" onclick="handlePasswordReset()" disabled>
+                Set New Password
+            </button>
+        </div>
+
+        <div id="usermsg" aria-live="polite">
+            <!-- Messages will appear here -->
+        </div>
+    </div>
+
+    <script>
+        // DOM elements
+        const userPhoneInput = document.getElementById('userPhone');
+        const sendOtpBtn = document.getElementById('sendOtpBtn');
+        const userOtpInput = document.getElementById('userOtp');
+        const verifyOtpBtn = document.getElementById('verifyOtpBtn');
+        const newPasswordInput = document.getElementById('newPassword');
+        const confirmPasswordInput = document.getElementById('confirmPassword');
+        const resetPasswordBtn = document.getElementById('resetPasswordBtn');
+        const usermsg = document.getElementById('usermsg');
+        const mainHeading = document.getElementById('main-heading');
+        const mainSubtitle = document.getElementById('main-subtitle');
+        const phoneStage = document.getElementById('phone-stage');
+        const otpStage = document.getElementById('otp-stage');
+        const passwordStage = document.getElementById('password-stage');
+
+        // State to store the successfully confirmed phone number (for display purposes)
+        let confirmedPhoneNumber = null; 
+        const REDIRECT_DELAY = 5000; // 5 seconds
+
+        // --- Utility Functions ---
+
+        /** Clears and displays a message */
+        function displayMessage(message, type = 'info') {
+            usermsg.innerHTML = `<p class="msg-${type}">${message}</p>`;
+        }
+
+        /** Clears the message area */
+        function clearMessage() {
+            usermsg.innerHTML = '';
+        }
+        
+        /** Redirects after a delay */
+        function redirectTo(url) {
+            setTimeout(() => {
+                window.location.href = url;
+            }, REDIRECT_DELAY);
+        }
+
+        /** Transitions the UI from phone input to OTP input */
+        function showOtpStage(phone) {
+            confirmedPhoneNumber = phone;
+            phoneStage.style.display = 'none';
+            otpStage.style.display = 'block';
+            passwordStage.style.display = 'none';
+            
+            mainHeading.textContent = 'Verify Account';
+            
+            // Masking phone number for display
+            const maskedPhone = phone.slice(-4);
+            mainSubtitle.innerHTML = `Enter the 6-digit code sent to your number ending in <strong>${maskedPhone}</strong>.`;
+            
+            clearMessage();
+            userOtpInput.focus();
+        }
+        
+        /** Transitions the UI from OTP input to the Password Reset stage */
+        function showPasswordStage() {
+            otpStage.style.display = 'none';
+            phoneStage.style.display = 'none';
+            passwordStage.style.display = 'block';
+            
+            mainHeading.textContent = 'Set New Password';
+            mainSubtitle.textContent = 'Enter and confirm your new password below.';
+            
+            clearMessage();
+            newPasswordInput.value = '';
+            confirmPasswordInput.value = '';
+            resetPasswordBtn.disabled = true;
+            newPasswordInput.focus();
+        }
+
+        // --- Input Event Listeners for Validation ---
+
+        userPhoneInput.addEventListener('input', () => {
+            const phone = userPhoneInput.value.trim().replace(/\D/g, '');
+            // Enable Send OTP button only if 10 digits are entered
+            sendOtpBtn.disabled = phone.length !== 10; 
+        });
+
+        userOtpInput.addEventListener('input', () => {
+            const otp = userOtpInput.value.trim();
+            // Enable Verify OTP button only if 6 digits are entered
+            verifyOtpBtn.disabled = otp.length !== 6;
+        });
+
+        // Combined listener for password validation
+        function validatePasswordInputs() {
+            const newPass = newPasswordInput.value;
+            const confirmPass = confirmPasswordInput.value;
+            
+            // Check if both fields are non-empty
+            const notEmpty = newPass.length > 0 && confirmPass.length > 0;
+            // Check if passwords match
+            const passwordsMatch = newPass === confirmPass;
+
+            // Enable the reset button only if both conditions are met
+            resetPasswordBtn.disabled = !(notEmpty && passwordsMatch);
+
+            // Optional: Provide immediate feedback to the user
+            if (confirmPass.length > 0 && newPass !== confirmPass) {
+                 displayMessage("Passwords do not match.", 'error');
+            } else if (notEmpty) {
+                 clearMessage();
+            }
+        }
+        
+        newPasswordInput.addEventListener('input', validatePasswordInputs);
+        confirmPasswordInput.addEventListener('input', validatePasswordInputs);
+        
+        // --- Core Logic: Step 1 (Check Phone Number & Send OTP) ---
+
+        async function handleSendOtp(isResend = false) {
+            const phone = userPhoneInput.value.trim().replace(/\D/g, '');
+
+            if (phone.length !== 10) {
+                displayMessage("Please enter a valid 10-digit phone number.", 'error');
+                return;
+            }
+
+            // Lock UI
+            sendOtpBtn.disabled = true;
+            sendOtpBtn.textContent = isResend ? 'Resending...' : 'Checking Account...';
+            clearMessage();
+            displayMessage(isResend ? "Requesting new OTP..." : "Sending request to confirm phone number...", 'info');
+
+            const apiUrl = '/check_number_OTP';
+            const payload = { ph_no: phone };
+
+            try {
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                if (!response.ok) {
+                    throw new Error(`Server returned status: ${response.status}`);
+                }
+
+                const result = await response.json();
+
+                if (result.status === 'OK') {
+                    // User exists. Transition to OTP stage.
+                    showOtpStage(phone);
+                    // Display success message for the action taken (sending OTP)
+                    displayMessage(`An OTP has been sent to your registered number.`, 'success');
+                    
+                } else {
+                    // Phone number not registered
+                    displayMessage(result.message || "Error: Account not found. Please verify the phone number.", 'error');
+                }
+
+            } catch (error) {
+                console.error('Fetch error:', error);
+                displayMessage("A network or server error occurred. Please try again.", 'error');
+            } finally {
+                // Unlock phone button if still in phone stage
+                if (phoneStage.style.display !== 'none') {
+                    sendOtpBtn.disabled = phone.length !== 10;
+                    sendOtpBtn.textContent = 'Send OTP';
+                }
+            }
+        }
+
+        // --- Core Logic: Step 2 (Verify OTP) ---
+        
+        async function handleVerifyOtp() {
+            const otp = userOtpInput.value.trim();
+            
+            // Validation: Check only for 6 digit length
+            if (otp.length !== 6) {
+                displayMessage("Please enter the 6-digit OTP code.", 'error');
+                return;
+            }
+            
+            // Lock UI
+            verifyOtpBtn.disabled = true;
+            verifyOtpBtn.textContent = 'Verifying...';
+            clearMessage();
+            displayMessage("Verifying code...", 'info');
+
+            const apiUrl = '/verfiy_OTP_sent';
+            const payload = { otp: otp };
+
+            try {
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                if (!response.ok) {
+                    throw new Error(`Server returned status: ${response.status}`);
+                }
+
+                const result = await response.json();
+
+                if (result.message === 'OK') {
+                    // Verification successful. Proceed to next stage (password change).
+                    showPasswordStage();
+                    displayMessage("OTP verified successfully! Now set your new password.", 'success');
+                } else {
+                    // OTP is incorrect
+                    displayMessage("Verification failed. The OTP you entered is incorrect.", 'error');
+                }
+
+            } catch (error) {
+                console.error('Fetch error:', error);
+                displayMessage("A network or server error occurred during verification. Please try again.", 'error');
+            } finally {
+                // Unlock OTP button if still in OTP stage (meaning verification failed)
+                if (otpStage.style.display !== 'none') {
+                    verifyOtpBtn.disabled = otp.length !== 6;
+                    verifyOtpBtn.textContent = 'Verify OTP';
+                }
+            }
+        }
+
+        // --- Core Logic: Step 3 (Set New Password) ---
+        
+        async function handlePasswordReset() {
+            const newPassword = newPasswordInput.value.trim();
+            const confirmPassword = confirmPasswordInput.value.trim();
+
+            if (newPassword === '' || confirmPassword === '') {
+                displayMessage("Password fields cannot be empty.", 'error');
+                return;
+            }
+
+            if (newPassword !== confirmPassword) {
+                displayMessage("The new password and confirmation password do not match.", 'error');
+                return;
+            }
+
+            // Lock UI
+            resetPasswordBtn.disabled = true;
+            resetPasswordBtn.textContent = 'Setting Password...';
+            clearMessage();
+            displayMessage("Sending new password to the server...", 'info');
+
+            const apiUrl = '/set-new-password';
+            // Send only the new password, as the session handles user identification on the server.
+            const payload = { password: newPassword }; 
+
+            try {
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                if (!response.ok) {
+                    throw new Error(`Server returned status: ${response.status}`);
+                }
+
+                const result = await response.json();
+
+                if (result.message === 'OK' && result.redirect) {
+                    // Password successfully updated.
+                    mainHeading.textContent = 'Password Updated!';
+                    mainSubtitle.textContent = 'Redirecting you shortly...';
+                    
+                    const successMessage = `Success! Your password has been updated. You will be redirected in ${REDIRECT_DELAY / 1000} seconds.`;
+                    displayMessage(successMessage, 'success');
+                    
+                    // Redirect after 5 seconds
+                    redirectTo(result.redirect); 
+
+                } else {
+                    // Server-side failure (e.g., session error, user not found after all checks)
+                    displayMessage(result.message || "Password update failed. Please start the recovery process again.", 'error');
+                }
+
+            } catch (error) {
+                console.error('Fetch error:', error);
+                displayMessage("A network or server error occurred during password reset. Please try again.", 'error');
+            } finally {
+                // If the redirect hasn't happened, unlock the button
+                if (mainHeading.textContent !== 'Password Updated!') {
+                    resetPasswordBtn.disabled = false;
+                    resetPasswordBtn.textContent = 'Set New Password';
+                }
+            }
+        }
+    </script>
+</body>
+</html>
