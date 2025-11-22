@@ -116,6 +116,10 @@ def home():
 def mayor_page():
     return render_template('mayor.html')
 
+@app.route('/user_dashboard_page')
+def user_dashboard_page():
+    return render_template('user_dashboard.html')
+
 @app.route('/secretary')
 def secretary_page():
     return render_template('secretary.html')
@@ -276,14 +280,10 @@ def register():
     return resp
 
 @app.route('/finalize_registration', methods=['POST'])
-def finalize_registration():
-    # 1. Get additional data from the second page
-    additional_data = request.get_json()
-    # e.g., assuming the second page sends 'security_question_answer'
-    # security_answer = additional_data.get('security_answer')
-
+def finalize_registration():    
     # 2. Retrieve temporary data from session
     temp_data = session.pop('temp_user_data', None)
+    print("Final save")
 
     if not temp_data:
         # User tried to access this route without starting registration
@@ -304,20 +304,35 @@ def finalize_registration():
         temp_data['password']
         # Add new fields here if you update the SQL query
     )
+    try:
+        # Database insertion (The original INSERT statement)
+        conn.execute(
+            "INSERT INTO user (id, username, f_name, l_name, fullname, DOC, ph_no, password) VALUES (?, ?, ?, ?, ?, ?, ?, ?)", 
+            insertion_tuple
+        )
+        conn.commit()
 
-    # Database insertion (The original INSERT statement)
-    conn.execute(
-        "INSERT INTO user (id, username, f_name, l_name, fullname, DOC, ph_no, password) VALUES (?, ?, ?, ?, ?, ?, ?, ?)", 
-        insertion_tuple
-    )
-    conn.commit()
-
-    # 4. Finalize Session/Cookies
-    session['username'] = temp_data['username']
-    
-    resp = make_response("Account created Successfully", 200)
-    resp.set_cookie('id', temp_data['id'])
-    return resp
+        # 4. Finalize Session/Cookies
+        session['username'] = temp_data['username']
+        
+        redirect_url = url_for('user_dashboard_page') 
+        # --- MODIFICATION END ---
+        
+        # Return a JSON object containing the status and the redirect URL
+        resp = jsonify({
+            "success": True, 
+            "message": "Account created Successfully. Redirecting...",
+            "redirect_to": redirect_url
+        })
+        
+        # Set cookie on the response object
+        resp.set_cookie('id', temp_data['id'])
+        return resp
+        
+    except Exception as e:
+        # Handle database errors
+        print(f"Database error during finalization: {e}")
+        return jsonify({"success": False, "message": "A database error occurred during registration."}), 500
 
 @app.route('/user_reg_page')
 def user_reg_page():

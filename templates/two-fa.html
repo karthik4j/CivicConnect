@@ -188,6 +188,7 @@
 <body>
 
     <header>
+        <a href="{{ url_for('index') }}">Back</a>
         <h2>🏛️ CivicConnect</h2>
         <h2> Registration Page</h2>
     </header> 
@@ -277,7 +278,7 @@
                     // If verified, you might want to automatically call finalize_registration 
                     // or redirect the user.
                     // Example for calling the final step:
-                    // await finalizeRegistration(); 
+                     await finalizeRegistration(); 
                 } else {
                     userMsgDiv.textContent = result.message || "Invalid OTP. Please try again.";
                     userMsgDiv.className = 'msg-error';
@@ -295,37 +296,44 @@
             }
         };
         
-        /**
-         * Mock/Placeholder function for the /finalize_registration endpoint.
-         * You would typically call this after successful OTP verification.
-         */
-        window.finalizeRegistration = async () => {
-             // Example of calling the final endpoint
-             const userMsgDiv = document.getElementById('usermsg');
-             userMsgDiv.textContent = "Finalizing registration...";
-             userMsgDiv.className = '';
-             
-             try {
-                const response = await fetchWithBackoff('/finalize_registration', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    // Assuming no additional data is needed from the client for this final step
-                    body: JSON.stringify({}) 
-                });
 
-                const resultText = await response.text();
-                if (response.ok) {
-                    userMsgDiv.textContent = resultText; // e.g., "Account created Successfully"
-                    userMsgDiv.className = 'msg-success';
-                } else {
-                    userMsgDiv.textContent = `Finalization Failed: ${resultText}`;
-                    userMsgDiv.className = 'msg-error';
-                }
-            } catch (error) {
-                userMsgDiv.textContent = 'Fatal error during final registration. Contact support.';
-                userMsgDiv.className = 'msg-error';
+    window.finalizeRegistration = async () => {
+    // Example of calling the final endpoint
+    const userMsgDiv = document.getElementById('usermsg');
+    userMsgDiv.textContent = "Finalizing registration...";
+    userMsgDiv.className = '';
+    
+    try {
+        const response = await fetchWithBackoff('/finalize_registration', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({}) 
+        });
+
+        // Expecting JSON from Flask, not just text
+        const result = await response.json(); 
+
+        if (response.ok && result.success) {
+            userMsgDiv.textContent = result.message; // e.g., "Account created Successfully. Redirecting..."
+            userMsgDiv.className = 'msg-success';
+
+            // --- MODIFICATION START ---
+            // Perform the client-side redirect using the URL returned by Flask
+            if (result.redirect_to) {
+                window.location.href = result.redirect_to;
             }
-        };
+            // --- MODIFICATION END ---
+            
+        } else {
+            // Handle server-side errors or success=False from JSON response
+            userMsgDiv.textContent = result.message || `Finalization Failed: ${response.status} ${response.statusText}`;
+            userMsgDiv.className = 'msg-error';
+        }
+    } catch (error) {
+        userMsgDiv.textContent = 'Fatal error during final registration. Contact support.';
+        userMsgDiv.className = 'msg-error';
+    }
+};
     </script>
 </body>
 </html>
