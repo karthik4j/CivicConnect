@@ -71,7 +71,7 @@ def send_message(number: str, text: str):
     client = Client(account_sid, auth_token)
 
   #  twilio_msg = client.messages.create(body=text,from_=from_number,to=format_indian_number(number),)
-  #    print("Sent:", twilio_msg.body)
+    print('Message: ',text, '\nRecepient: ',number)
 
 
 #---------------------------------------------------------------------------- FUNCTIONS ------------------------------------------------------------------------------------------------
@@ -155,7 +155,7 @@ def send_notfications_to_users(msg_obj):
         
         res = conn.execute("SELECT ph_no FROM user")
         res = res.fetchall()
-        print('list of all ward numbers: ',res)
+        #print('list of all ward numbers: ',res)
 
         if len(res) == 0 or res == None:
             print('no matching numbers')
@@ -164,7 +164,7 @@ def send_notfications_to_users(msg_obj):
         for i in res:
             i = str(i)
             msg_body = f"{msg_title} Priority : {msg_priority} Issued On: {msg_date} By {adm_name}, {adm_dept} {msg_body}"
-            print('Message: ',msg_body, 'Recepient: ',format_indian_number(i))
+           # print('Message: ',msg_body, 'Recepient: ',format_indian_number(i))
             send_message(format_indian_number(i),msg_body)
 
 
@@ -173,7 +173,7 @@ def send_notfications_to_users(msg_obj):
         #select all numbers from that ward
         res = conn.execute("SELECT ph_no FROM user WHERE ward = ?",(ward, ))
         res = res.fetchall() 
-        print('list of some ward numbers: ',res)
+        #print('list of some ward numbers: ',res)
 
         if len(res) == 0 or res == None:
             print('no matching numbers')
@@ -182,7 +182,7 @@ def send_notfications_to_users(msg_obj):
         for i in res:
             i = str(i)
             msg_body = f"{msg_title} Priority : {msg_priority} Issued On: {msg_date} By {adm_name}, {adm_dept} \n {msg_body} "
-            print('Message: ',msg_body, 'Recepient: ',format_indian_number(i))
+            #print('Message: ',msg_body, 'Recepient: ',format_indian_number(i))
             send_message(format_indian_number(i),msg_body)
 
     elif len(ward) == 0 or ward == None:
@@ -949,6 +949,7 @@ def admin_cred_check():
 
         # store session info (SELECT ID index 0 and Dept 1)
         session['admin'] = {"username": username,'id': res[1],'dept':  res[0],'name':res[2]}
+        
 
         # attach cookie to response
         resp = redirect(url_for('admin_dashboard'))  # you should have this route
@@ -1064,10 +1065,16 @@ def get_notifications_all():
 @app.route('/admin_view_complaints/detail/<id>')
 def view_detailed_complaints(id):
 
-    res = conn.execute("""SELECT u.fullname, c.complaint, c.location, c.status, c.imgsrc AS src, c.dof, c.summary FROM user u JOIN complaints c ON u.id = c.id WHERE c.comp_id = ?;""",(id,))
+    # 1. Fetch Complaint Data
+    # Ensure the SQL query has all the fields (it looks correct now after the previous fix)
+    res = conn.execute("""SELECT u.fullname, c.complaint, c.location, c.status, c.imgsrc AS src, c.dof, c.summary, c.dept FROM user u JOIN complaints c ON u.id = c.id WHERE c.comp_id = ?;""",(id,))
 
     res = res.fetchone()
-    #print(res)
+    
+    if not res:
+        # Handle case where complaint ID is not found
+        return "Complaint not found", 404
+
     complainant = res[0]
     complaint = res[1]
     location = res[2]
@@ -1075,9 +1082,19 @@ def view_detailed_complaints(id):
     src= res[4]
     DOF = res[5]
     summarized_one = res[6]
-   
-    return render_template('admin/detailed_complaint_admin.html',comp_id=id,name=complainant,location=location,status=status,src=src,DOF=DOF,complaint=complaint,summary = summarized_one)
-
+    dept_of_comp = res[7] 
+    all_departments_list = [
+        "Public Works Department",
+        "Sanitation Department",
+        "Health Department",
+        "Water Authority Department", 
+        "Electricity Department",
+        "Parks and Recreation Department", 
+        "Traffic Management"
+    ]
+    
+    # 3. Render Template with Correct Variables
+    return render_template('admin/detailed_complaint_admin.html', comp_id=id,name=complainant,location=location,status=status,src=src,DOF=DOF,complaint=complaint,summary = summarized_one,dept_of_comp=dept_of_comp,all_departments=all_departments_list)
 
 @app.route('/admin_view_complaints/show_image/<path:filename>')
 def admin_show_image(filename):
@@ -1098,36 +1115,56 @@ def update_enquiry_status():
     if request.is_json:
         data = request.get_json()
         
-        # Extract the values from the received JSON data
         comp_id = data.get('comp_id')
         new_status = data.get('status')
         message = data.get('message')
+        new_dept = data.get('department')
         
-        #getting the Admin's ID so that we can use it as a reference for the SQL querry call
-        logged_in_adm_id = request.cookies.get('admin_id')
+        
+        obj = session.get('admin')
+        admin_name = obj['name']
+        admin_dept = obj['dept']
+        logged_in_adm_id = obj['id']
 
         #fetching the user's ID 
         res = conn.execute("SELECT id FROM complaints WHERE comp_id = ?",(int(comp_id),))
         res = res.fetchone()
         user_id = clean_tuple(res)
-        #print("ID of user: ",res," ID of Admin: ",logged_in_usr_id)
+        
         to_day =get_formatted_date()
 
-        # Print the received values to the terminal
-        #print(f"Received update for Complaint ID: {comp_id}")
-        #print(f"New Status: {new_status}")
-        #print(f"Message: '{message}'")
-
         #need to perform two update operations
-        # 1 Update the compalints page with the new status
-        cur = conn.execute("UPDATE complaints SET status = ? WHERE comp_id = ?",(new_status, comp_id))
+        # 1 Update the compalints page with the new status and dept
+        if(new_status == '2'):
+            cur = conn.execute("UPDATE complaints SET status = ?, dept = ? ,dor = ? WHERE comp_id = ?",(new_status, new_dept,get_formatted_date(),comp_id))
+        else:
+            cur = conn.execute("UPDATE complaints SET status = ?, dept = ? WHERE comp_id = ?",(new_status, new_dept, comp_id))
 
         # 2 Update the message page with the change. (insert operation)
-        cur = conn.execute("INSERT INTO resolution (comp_id, admin_id, user_id, status, msg, date_of_change) VALUES(?, ?, ?, ?, ?, ?)",(comp_id, logged_in_adm_id, user_id, new_status, message, to_day))
+        cur = conn.execute("INSERT INTO resolution (comp_id, admin_id, user_id, status, msg, date_of_change, adm_name, dept) VALUES(?, ?, ?, ?, ?, ?, ?, ?)",(comp_id, logged_in_adm_id, user_id, new_status, message, to_day,admin_name,admin_dept))
         conn.commit()
+        
+        #3 Send notificaiton to user about update :
+        user_phone_no= conn.execute("SELECT T2.ph_no  FROM complaints AS T1 INNER JOIN user AS T2 ON T1.id = T2.id WHERE T1.comp_id = ?", (comp_id,))
+        user_phone_no = user_phone_no.fetchone()
+        user_phone_no = user_phone_no[0]
 
+        user_phone_no = str(user_phone_no)
+        if new_status == 0:
+            status = 'Pending'
+        elif new_status == 1:
+            status = 'In Progress'
+        else:
+            status = 'Resolved'
+
+        if(len(message)>1):
+            msg_body = f"Update regarding complaint no: {comp_id}\n New status: {status} \n Message from admin: {message} \n {admin_name}, {admin_dept}"
+        else:
+            msg_body = f"Update regarding complaint no: {comp_id}\n New status: {status}\n {admin_name}, {admin_dept}"
+        send_message(format_indian_number(user_phone_no),msg_body)
+        
         # Return a success response
-        return jsonify({'message': 'Status and message received successfully', 'status_received': new_status}), 200
+        return jsonify({'message': 'Status and message received successfully', 'status_received': new_status,'redirect_url':url_for('admin_view_complaints')}), 200
     
     # Handle non-JSON requests
     return jsonify({'error': 'Request must be JSON'}), 400
