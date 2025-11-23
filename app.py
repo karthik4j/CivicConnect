@@ -355,7 +355,7 @@ def my_complaints():
     logged_in_usr_id = session.get('user')['id']
 
     res = conn.execute(
-        'SELECT comp_id, complaint, dept, status FROM complaints WHERE id = ?',
+        'SELECT comp_id, complaint, dept, status FROM complaints WHERE id = ? AND status != 2 ORDER BY comp_id DESC',
         (logged_in_usr_id,)
     )
     result = res.fetchall()   # e.g., [(10, "My car won't start", 'Traffic Management', 0), ...]
@@ -413,7 +413,7 @@ WHERE c.comp_id = ?;
 def complaint_status():
   
   logged_in_usr_id = session.get('user')['id']
-  res = conn.execute('SELECT comp_id, dof, complaint, status FROM complaints WHERE id = ?',(logged_in_usr_id, ))
+  res = conn.execute('SELECT comp_id, dof, complaint, status FROM complaints WHERE id = ? ORDER BY comp_id DESC',(logged_in_usr_id, ))
   res = res.fetchall()
 
   return render_template('complaint_status.html',complaints=res)
@@ -880,7 +880,7 @@ def finalize_admin_registration():
 @app.route('/admin_view_complaints')
 def admin_view_complaints():
     #order complaint_id, dof, person's name, status, dept, location
-    res = conn.execute('SELECT c.comp_id, c.dof, u.username, c.status, c.dept, c.location, c.complaint FROM complaints c JOIN user u ON c.id = u.id')
+    res = conn.execute('SELECT c.comp_id, c.dof, u.username, c.status, c.dept, c.location, c.complaint FROM complaints c JOIN user u ON c.id = u.id WHERE c.status != 2')
     result = res.fetchall() 
    # print(result)
 
@@ -965,9 +965,6 @@ def admin_dashboard():
     pending_count = conn.execute("SELECT COUNT(status) FROM complaints  WHERE status = 0")
     in_prog_count = conn.execute("SELECT COUNT(status)FROM complaints  WHERE status = 1 ")
     resolved_count = conn.execute("SELECT COUNT(status) FROM complaints  WHERE status = 2")
-    #print("Pending :",clean_tuple(pending_count.fetchone()))
-    #print("in_prog_count :",clean_tuple(in_prog_count.fetchone()))
-    #print("resolved_count :",clean_tuple(resolved_count.fetchone()))
 
     pending_count = clean_tuple(pending_count.fetchone())
     in_prog_count = clean_tuple(in_prog_count.fetchone())
@@ -1002,8 +999,16 @@ def admin_logout():
     response = redirect(url_for('admin_login'))
     return response
 
-#@app.route('/fetch_complaints_admin')
-#def fetch_complaints_admin():
+@app.route('/past_notifications')
+def past_notifications():
+    admin_id = session.get('admin')['id'] 
+    sql_query = """
+        SELECT m.msg_title, m.msg, m.priority, m.issue_date FROM messages m 
+        JOIN  admin a ON m.issued_by = a.id WHERE m.issued_by = ? ORDER BY m.issue_date DESC;
+    """
+    res = conn.execute(sql_query, (admin_id,)) 
+    result = res.fetchall() 
+    return render_template('admin/past_notifications.html', querry=result)
 
 @app.route('/admin_issue_notifications_page' )
 def admin_issue_notifications_page():

@@ -1,0 +1,121 @@
+{% extends "admin/admin_header.html" %}
+
+{% block title %}Past Notifications – Admin Panel{% endblock %}
+
+{% block styles %}
+<style>
+/* --- Styles for Cards and Layout --- */
+.card-lists
+{
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+.card {
+    margin-top: 20px;
+    width: 500px;
+    background: var(--surface);
+    border-radius: 20px;
+    border: 1px solid var(--border);
+    box-shadow: 0px 4px 12px rgba(0,0,0,0.15);
+    transition: transform 0.2s ease-in-out;
+}
+.card:hover { transform: translateY(-4px); }
+
+.card-header, .card-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin: 0 20px;
+}
+.card-footer
+{
+  justify-content: center;
+}
+
+.card-main { margin: 0 20px; }
+
+.card-header h4, .card-header h3 {  margin-top: 20px; }
+
+/* Priority styles */
+.High   { color: #DC2626; font-weight: bold; }
+.Medium { color: #D97706; font-weight: bold; }
+.Low    { color: #16A34A; font-weight: bold; }
+
+/* The detailed view styles below are no longer fully relevant for the list view, 
+   but are kept here as they were provided in the prompt */
+.container 
+{
+    padding: 2%;
+    min-height: 83vh;
+    min-width: 83vh;
+    display: flex;
+    flex-direction: column;
+}
+
+.info-header,.sel-header
+{
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.comp-header,.loc-header
+{
+    border:solid 2px;
+    border-color:  var(--primary);
+    width: 100%;
+    min-height: 100px;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    padding-left: 20px;
+}
+.loc-header { border-color: black; min-height: 50px; }
+.sel-header { justify-content:start; }
+.sel-header select { margin-left:20px; margin-right: 20px; }
+textarea { min-height: 100px; }
+.save-and-exit
+{
+    margin-top: 20px;
+    background-color: greenyellow;
+    width:200px;
+    height: 50px;
+    border-radius: 10px;
+    border:black solid 1px;
+    font-weight: bold;
+    color:black;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="card-lists">
+  {% if querry %}
+    {% for msg in querry %}
+      <div class="card">
+        <div class="card-header">
+          
+          <h3>{{ msg[0] }}</h3> 
+          
+          <h4 class="{% if msg[2] == 'High' %}High{% elif msg[2] == 'Medium' %}Medium{% else %}Low{% endif %}">
+            {{ msg[2] }}
+          </h4>
+        </div>
+        <div class="card-main">
+          
+          <p>{{ msg[1] }}</p>
+        </div>
+        <div class="card-footer">
+          
+          <h4>Issued: {{ msg[3] }}</h4>
+        </div>
+      </div>
+    {% endfor %}
+  {% else %}
+    <h1>No past notifications found.</h1>
+  {% endif %}
+</div>
+{% endblock %}
