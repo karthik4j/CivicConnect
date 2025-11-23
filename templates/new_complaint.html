@@ -16,6 +16,8 @@
         --border: #E2E8F0;
         --shadow: 0 6px 20px rgba(2, 6, 23, .08);
         --radius: 12px;
+        --success: #10B981; /* Green */
+        --error: #EF4444;   /* Red */
     }
 
     /* Universal box-sizing for easier layout management */
@@ -168,6 +170,30 @@
     button:active {
         transform: scale(0.98);
     }
+    
+    /* New styles for the message box (3) */
+    .message-box {
+        padding: 15px;
+        margin-bottom: 25px;
+        border-radius: 8px;
+        font-weight: 500;
+        text-align: center;
+        display: none; /* Initially hidden */
+        border: 1px solid transparent;
+        transition: all 0.3s ease;
+    }
+
+    .message-box.success {
+        background-color: #ECFDF5; /* Green 50 */
+        color: var(--success);
+        border-color: #A7F3D0; /* Green 200 */
+    }
+
+    .message-box.error {
+        background-color: #FEF2F2; /* Red 50 */
+        color: var(--error);
+        border-color: #FEE2E2; /* Red 200 */
+    }
 </style>
 </head>
 
@@ -185,9 +211,9 @@
     <div class="content-box">
         <h2>New Complaint</h2>
         <p>Register any type of complaint</p>
-
-        <form method="post" id="complaint" enctype="multipart/form-data">
-            <div class="form-content">
+        
+        <div id="status-message" class="message-box"></div> 
+        <form id="complaint" enctype="multipart/form-data"> <div class="form-content">
                 <div class="form-group">
                     <label for="description">Describe the Problem</label>
                     <textarea id="description" placeholder="Write your complaint here..." name="user_complaint"></textarea>
@@ -220,33 +246,100 @@
                     </select>
                 </div>
                 
-                <button type="button" onclick="validatForm()">Submit Complaint</button>
+                <button type="button" id="submit-btn" onclick="submitComplaint()">Submit Complaint</button> 
             </div>
         </form>
     </div>
 
     <script>
-        function validatForm() {
+        document.getElementById('image').addEventListener('change', function() {
+            const fileName = this.files.length > 0 ? this.files[0].name : '📁 Choose a file...';
+            document.querySelector('.file-label').textContent = fileName;
+        });
+
+        function displayMessage(type, message) {
+            const msgBox = document.getElementById('status-message');
+            msgBox.textContent = message;
+            msgBox.className = 'message-box ' + type;
+            msgBox.style.display = 'block';
+            
+            // Hide message after a few seconds if it's an error
+            if (type === 'error') {
+                setTimeout(() => {
+                    msgBox.style.display = 'none';
+                }, 7000); 
+            }
+        }
+
+        function clearForm() {
+            document.getElementById('complaint').reset(); // (4) Clear all form fields
+            document.querySelector('.file-label').textContent = '📁 Choose a file...'; // Reset file label
+        }
+
+        async function submitComplaint() {
             const user_complaint = document.getElementById('description').value.trim();
             const user_location = document.getElementById('location').value.trim();
-            const complaint_dept = document.getElementById('dept-selec');
+            const complaint_dept = document.getElementById('dept-selec').value;
             const fileInput = document.getElementById('image');
+            const submitBtn = document.getElementById('submit-btn');
 
+            // --- Client-Side Validation ---
             if (user_complaint.length === 0) {
-                alert('Please provide a description of your complaint');
-            } else if (user_location.length === 0) {
-                alert('Please enter your location');
-            } else if (complaint_dept.value === "") {
-                alert('Please select a department');
-            } else if (fileInput.files.length === 0)
-            {
-                alert("Please upload an image");
+                displayMessage('error', 'Please provide a description of your complaint');
+                return;
             }
-            else {
-                const form = document.getElementById('complaint');
-                form.action = "{{ url_for('register_complaint') }}";
-                form.method = 'post';
-                form.submit();
+            if (user_location.length === 0) {
+                displayMessage('error', 'Please enter your location');
+                return;
+            }
+            if (complaint_dept === "") {
+                displayMessage('error', 'Please select a department');
+                return;
+            }
+            // Image upload is required based on original logic:
+            if (fileInput.files.length === 0) {
+                 displayMessage('error', 'Please upload an image');
+                 return;
+            }
+            
+            // --- AJAX Submission ---
+            const form = document.getElementById('complaint');
+            const formData = new FormData(form);
+
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Submitting...';
+            document.getElementById('status-message').style.display = 'none'; // Clear previous message
+
+            try {
+                const response = await fetch("{{ url_for('register_complaint') }}", {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    displayMessage('success', result.message);
+                    clearForm(); // (4) Clear the form
+                    
+                    // (5) Redirect to dashboard after a delay
+                    if (result.redirect_url) {
+                        setTimeout(() => {
+                            window.location.href = result.redirect_url;
+                        }, 2000); // 2 second delay before redirect
+                    }
+
+                } else {
+                    // (2) Display the error/limit message
+                    displayMessage('error', result.message);
+                }
+
+            } catch (error) {
+                console.error('Submission error:', error);
+                displayMessage('error', 'An unexpected error occurred. Please try again.');
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Submit Complaint';
             }
         }
     </script>

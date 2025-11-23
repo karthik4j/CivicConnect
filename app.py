@@ -317,8 +317,8 @@ def set_new_password():
 
 @app.route('/home')
 def home():
-      if "username" in session:
-        return render_template("user_dashboard.html", username=session['username'])
+      if session.get('user')['username']:
+        return render_template("user_dashboard.html")
       return render_template('index.html')
 
 @app.route('/mayor')
@@ -352,11 +352,11 @@ def new_complaint():
 
 @app.route('/my_complaints')
 def my_complaints():
-    logged_in_usr_id = request.cookies.get('id')
+    logged_in_usr_id = session.get('user')['id']
 
     res = conn.execute(
         'SELECT comp_id, complaint, dept, status FROM complaints WHERE id = ?',
-        (logged_in_usr_id.replace("'",""),)
+        (logged_in_usr_id,)
     )
     result = res.fetchall()   # e.g., [(10, "My car won't start", 'Traffic Management', 0), ...]
 
@@ -412,7 +412,7 @@ WHERE c.comp_id = ?;
 @app.route('/complaint_status')
 def complaint_status():
   
-  logged_in_usr_id = request.cookies.get('id')
+  logged_in_usr_id = session.get('user')['id']
   res = conn.execute('SELECT comp_id, dof, complaint, status FROM complaints WHERE id = ?',(logged_in_usr_id, ))
   res = res.fetchall()
 
@@ -427,21 +427,17 @@ def login():
     row = res.fetchone()
 
     if row and check_password_hash(row[0], password):
-        session['username'] = username
-        res = conn.execute("SELECT id FROM user WHERE username = ?", (username,))
-        logged_in_usr_id = res.fetchone()
-        logged_in_usr_id = clean_tuple(logged_in_usr_id)
-        print("current logged in user is: ", logged_in_usr_id)
+        #get ID for user
+        res = conn.execute("SELECT id,ward FROM user WHERE username = ?", (username,))
+        row = res.fetchone()
 
-        # attach cookie to redirect response
+        session['user'] = {'id':row[0] ,'username': username,'ward':row[1]}
         resp = redirect(url_for('home'))
-        resp.set_cookie('id', logged_in_usr_id)
+        print("User login successfull")
         return resp
-
     else:
         flash('Invalid Username or password', 'error')
         return redirect(url_for('index'))
-
 
 @app.route('/register', methods=['POST'])
 def register():
@@ -586,61 +582,113 @@ def start_tfa():
 # logout
 @app.route('/logout',methods=['POST'])
 def logout():
-    session.pop('username', None)
-    session.pop('id',None)
+    session.pop('user', None)
     response = redirect(url_for('index'))
-    response.delete_cookie('id')
     return response
 
 @app.route('/account-page')
 def account_page():
-   logged_in_usr_id = request.cookies.get('id')
-   res = conn.execute("SELECT username, fullname, ph_no , DOC  FROM user WHERE id = ?", (logged_in_usr_id,))
+   logged_in_usr_id = session.get('user')['id']
+   res = conn.execute("SELECT fullname, ph_no , DOC, ward FROM user WHERE id = ?", (logged_in_usr_id,))
    res = res.fetchone()
-   res = clean_tuple(res).split()
-   print(res)
    
-   usr_name = res[0]
-   fullname = res[1] +" "+ res[2]
-   ph_no = res[3]
-   DateOfCreation = res[4]
+   usr_name = session.get('user')['username']
+   fullname = res[0]
+   ph_no = res[1]
+   DateOfCreation = res[2]
+   ward = res[3]
+
+   res = conn.execute("SELECT COUNT(complaint) FROM complaints WHERE id = ? AND status = 0", (logged_in_usr_id, ))
+   pending_count = res.fetchone()[0]
    
-   return render_template('account-page.html',user_id=logged_in_usr_id,user_name=usr_name, reg_name=fullname, ph_no=ph_no,DOC=DateOfCreation)
+   return render_template('account-page.html',user_id=logged_in_usr_id,user_name=usr_name, reg_name=fullname, ph_no=ph_no,DOC=DateOfCreation,pending=pending_count,ward=ward)
 
 @app.route('/register-complaint', methods=['POST'])
 def register_complaint():
-    users_complaint = request.form['user_complaint']
-    users_location = request.form['user_location']
-    dept = request.form['select_dept']
     
-    photo = request.files['attached_image']
-    if photo and photo.filename != "":
-        # Get original extension
-        original_filename = secure_filename(photo.filename)
-        _, ext = os.path.splitext(original_filename)  # ext will be like ".jpg"
-        
-        # Generate safe new filename with UUID
-        rename = str(uuid.uuid4()) + ext  
-        
-        # Save file with extension preserved
-        photo.save(os.path.join(app.config['UPLOAD_FOLDER'], rename))
-
-    formatted_date = get_formatted_date()
-
-    logged_in_usr_id = request.cookies.get('id')
-    conn.execute("INSERT INTO complaints (complaint, location, imgsrc, dof, dept, id,status) VALUES (?, ?, ?, ?, ?, ?, ?)", (users_complaint, users_location, rename,formatted_date,dept,logged_in_usr_id.replace("'",""),0))
-    conn.commit()
-
-    #function to start summary
-    #sumarrized_comp = start_summary(users_complaint)
-    thread1 = threading.Thread(target=start_summary, args=(users_complaint,rename))
-    #thread2 = threading.Thread(target=predict_department, args=(users_complaint,rename))
-    thread1.start()
-    #thread2.start()
-
-    return render_template('message.html', message='Successfully registered complaint')
+    users_complaint = request.form.get('user_complaint')
+    users_location = request.form.get('user_location')
+    dept = request.form.get('select_dept')
+    logged_in_usr_id = session.get('user', {}).get('id')
 
     
+    if not all([users_complaint, users_location, dept, logged_in_usr_id]):
+        return jsonify({'success': False, 'message': 'Missing required form fields or user ID.'}), 400
+
+    #Limiting the no of complaints uses can send
+    try:
+        res = conn.execute("SELECT COUNT(complaint) FROM complaints WHERE id = ? AND status = 0", (logged_in_usr_id, ))
+        pending_count = res.fetchone()[0]
+        
+    except Exception as e:
+        print(f"Database error checking pending complaints: {e}")
+        return jsonify({'success': False, 'message': 'A server error occurred while checking your status.'}), 500
+
+    if pending_count >= 10:
+        # User has 10 or more pending complaints (2)
+        return jsonify({
+            'success': False, 
+            'message': 'You have 10 or more pending complaints. Please wait for them to be resolved before filing new ones.'
+        })
+    else:
+        rename = None
+        photo = request.files.get('attached_image')
+        if photo and photo.filename != "":
+            try:
+                
+                original_filename = secure_filename(photo.filename)
+                _, ext = os.path.splitext(original_filename)  # ext will be like ".jpg"
+                
+                # Generate safe new filename with UUID
+                rename = str(uuid.uuid4()) + ext
+                
+                # Save file with extension preserved
+                # Changed app.config to current_app.config for consistency
+                photo.save(os.path.join(app.config['UPLOAD_FOLDER'], rename))
+            except Exception as e:
+                print(f"Error saving file: {e}")
+                rename = 'None' 
+
+        if rename is None:
+            rename = 'None' 
+
+        formatted_date = get_formatted_date()
+        try:
+            
+            conn.execute("INSERT INTO complaints (complaint, location, imgsrc, dof, dept, id, status) VALUES (?, ?, ?, ?, ?, ?, ?)", 
+                        (users_complaint, users_location, rename, formatted_date, dept, logged_in_usr_id, 0))
+            conn.commit()
+            
+
+            app_context = app.app_context() 
+            
+            # The wrapper function remains correct and isolates the thread
+            def thread_summary_wrapper(complaint, image_name):
+                with app_context: 
+                    try:
+                        # If start_summary uses app.config, conn, or other app-scoped resources, 
+                        # the 'with app_context:' block ensures they are accessible.
+                        start_summary(complaint, image_name)
+                    except Exception as thread_e:
+                        print(f"Error in background summary thread: {thread_e}")
+            
+            
+            thread1 = threading.Thread(target=thread_summary_wrapper, args=(users_complaint, rename))
+            thread1.start()
+            
+            dashboard_url = url_for('home') 
+            
+            return jsonify({
+                'success': True, 
+                'message': 'Successfully registered complaint and processing is starting.', 
+                'redirect_url': dashboard_url
+            })
+
+        except Exception as e:
+            print(f"Database error inserting complaint: {e}")
+            conn.rollback()
+            return jsonify({'success': False, 'message': 'A server error occurred while registering the complaint.'}), 500
+                       
 @app.route('/admin_login')
 def admin_login():
     return render_template('admin/admin login.html')
@@ -1007,7 +1055,8 @@ def update_notifications_admin():
     
 @app.route('/get_notifications_all')
 def get_notifications_all():
-    res = conn.execute('SELECT m.msg_title, m.msg, m.priority, a.username, m.dept, m.issue_date FROM messages m JOIN admin a ON m.issued_by = a.id;')
+    ward = session.get('user')['ward']
+    res = conn.execute("SELECT m.msg_title, m.msg, m.priority, a.username, m.dept, m.issue_date FROM messages m JOIN admin a ON m.issued_by = a.id WHERE m.WARD = ? OR m.ward = ? ORDER BY m.issue_date DESC",(ward,'all'))
     result = res.fetchall() 
     #print(result)
     return render_template('notifications_user.html',querry=result)
