@@ -838,6 +838,53 @@ def admin_view_complaints():
 
     return render_template('admin/admin_complaint_view_page.html', querry=result)    
 
+
+@app.route('/refreshed_data_admin', methods=['POST'])
+def refreshed_data_admin():
+    #Security Check: Ensure an admin is logged in before proceeding.
+    if 'admin' not in session:
+        return jsonify({"status": "error", "message": "Authentication required."}), 401
+        
+    try:
+        data = request.get_json()
+        dept = data.get('dept') 
+
+        #SQL query to retrieve all necessary complaint and user information
+        base_query = """
+            SELECT 
+                c.comp_id, 
+                c.dof, 
+                u.username, 
+                c.status, 
+                c.dept, 
+                c.location, 
+                c.complaint,
+                c.id 
+            FROM complaints c 
+            JOIN user u ON c.id = u.id
+        """
+        
+        params = ()
+        full_query = base_query
+
+        # Conditional Filtering: Build the WHERE clause
+        # The JavaScript sends 'all' if the user selects the default option.
+        if dept and dept != 'all':
+            
+            full_query = f"{base_query} WHERE c.dept = ?"
+            params = (dept,)
+        # If dept is 'all', the full_query remains the base_query (gets all complaints)
+        
+        res = conn.execute(full_query, params)
+        result = res.fetchall() 
+        
+        return jsonify({"status": "success", "complaints": result})
+
+    except Exception as e:
+        
+        print(f"Error fetching data in refreshed_data_admin route: {e}")
+        return jsonify({"status": "error", "message": "Failed to fetch complaints data due to a server error."}), 500
+
 @app.route('/admin_cred_check', methods=['POST'])
 def admin_cred_check():
     username = request.form['username']

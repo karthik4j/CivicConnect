@@ -56,7 +56,7 @@
     color: var(--text);
   }
 
-   nav a {
+   nav a {
     color: #fff;
     margin-left: 20px;
     text-decoration: none;
@@ -107,13 +107,88 @@
     font-weight: 600;
   }
 
- 
+   /* Fix 1: Proper alignment for title and selector */
+    #selector-div
+    {
+      display: flex;
+      flex-direction: row;
+      justify-content: space-between; /* Use space-between for endpoints */
+      align-items: center;
+      margin-bottom: 20px; /* Add some space below the header */
+    }
+
+    #selector-div h2
+    {
+      margin:0; /* Remove default h2 margin */
+      display: flex; /* Make h2 a flex container to align spinner/text */
+      align-items: center;
+    }
+
+    /* --- Loading Indicator Styles (Re-added) --- */
+    #loading-indicator {
+        margin-left: 10px;
+        color: var(--primary-2);
+        font-size: 14px;
+        font-weight: normal;
+        display: none; /* Hidden by default */
+    }
+    
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+    .spinner {
+        border: 2px solid #f3f3f3; /* Light grey */
+        border-top: 2px solid var(--primary-2); /* Blue */
+        border-radius: 50%;
+        width: 14px;
+        height: 14px;
+        animation: spin 1s linear infinite;
+        margin-right: 5px;
+    }
+    /* ------------------------------------------- */
+
+   .form-group {
+      margin-bottom: 0; /* Remove bottom margin to align with h2 */
+      text-align: left;
+    }
+
+    .no-results-message {
+        text-align: center;
+        padding: 40px 20px;
+        background: var(--surface);
+        border-radius: var(--radius);
+        box-shadow: var(--shadow);
+        color: var(--muted);
+        font-style: italic;
+        margin-top: 20px;
+        font-weight: 500;
+    }
 </style>
 {% endblock %}
 
 {% block content %}
    <main class="container">
-    <h2>All Complaints</h2>
+    
+      <div id="selector-div">
+          <!-- FIX: Re-added the loading indicator element here -->
+          <h2>All Complaints <span id="loading-indicator"><div class="spinner"></div> Loading...</span></h2> 
+          <div class="form-group">
+                        <label for="admin_dept">Department</label>
+                        <select id="admin_dept" name="adm_dept" required>
+                            <option value="all">All Departments</option>
+                            <option value="Public Works Department">Public Works Department</option>
+                            <option value="Sanitation Department">Sanitation Department</option>
+                            <option value="Health Department">Health Department</option>
+                            <option value="Water Supply Department">Water Authority Department</option>
+                            <option value="Electricity Department">Electricity Department</option>
+                            <option value="Parks and Recreation">Parks and Recreation Department</option>
+                            <option value="Traffic Management">Traffic Management</option>
+                        </select>
+                    </div>
+    </div>
+    
+    <div id="complaints_table_container">
     <table>
       <thead>
         <tr>
@@ -123,10 +198,11 @@
           <th>Status</th>
           <th>Department</th>
           <th>Location</th>
-          <th>Comlaints</th>
+          <th>Complaint</th>
           <th>View Complaint</th>
         </tr>
-
+      </thead>
+      <tbody id="complaints-table-body">
       {% for comp in querry %}
       <tr>
         <td>{{ comp[0] }}</td>
@@ -149,11 +225,142 @@
         <td><a href="{{ url_for('view_detailed_complaints', id=comp[0]) }}">View</a></td>
 
       </tr>
-    {% endfor %}
-      </thead>
-      <tbody>
-        <!-- Complaints will be added dynamically here -->
+      {% else %}
+        <!-- Jinja Else Block: Renders this if querry is empty -->
+        <tr id="no-complaints-row">
+            <td colspan="8" style="text-align: center; color: var(--muted); font-style: italic;">
+                No available complaints for this department.
+            </td>
+        </tr>
+      {% endfor %}
       </tbody>
     </table>
+    </div>
+
+    <!-- This div will be used by JavaScript if the list is empty and needs to be dynamically updated -->
+    <div id="no-complaints-dynamic" class="no-results-message" style="display: none;">
+        No available complaints for the selected department.
+    </div>
+
   </main>
+{% endblock %}
+
+{% block script %}
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+   const departmentSelector = document.getElementById('admin_dept');
+    const tableContainer = document.getElementById('complaints_table_container');
+    const tableBody = document.getElementById('complaints-table-body');
+    const noComplaintsRow = document.getElementById('no-complaints-row');
+    const noComplaintsDynamic = document.getElementById('no-complaints-dynamic');
+    
+    
+    const loadingIndicator = document.getElementById('loading-indicator');
+
+    // --- Utility Function to Render Complaints ---
+    function renderComplaints(complaints) {
+        let html = '';
+        if (complaints && complaints.length > 0) {
+            complaints.forEach(comp => {
+                // Determine status text based on comp[3] (status code)
+                let statusText;
+                if (comp[3] === 0) {
+                    statusText = 'Pending';
+                } else if (comp[3] === 1) {
+                    statusText = 'In Progress';
+                } else if (comp[3] === 2) {
+                    statusText = 'Resolved';
+                } else {
+                    statusText = 'Unknown';
+                }
+
+                // Assuming url_for is available from Flask/Jinja context for 'view_detailed_complaints'
+                // WARNING: Since the template is rendered once, this URL replacement is the safest way to generate dynamic links in pure JS
+                const viewUrl = `{{ url_for('view_detailed_complaints', id=123) }}`.replace('123', comp[0]);
+
+                html += `
+                    <tr>
+                        <td>${comp[0]}</td>
+                        <td>${comp[1]}</td>
+                        <td>${comp[2]}</td>
+                        <td>${statusText}</td>
+                        <td>${comp[4]}</td>
+                        <td>${comp[5]}</td>
+                        <td>${comp[6]}</td>
+                        <td><a href="${viewUrl}">View</a></td>
+                    </tr>
+                `;
+            });
+            tableBody.innerHTML = html;
+            tableContainer.style.display = 'block';
+            noComplaintsDynamic.style.display = 'none';
+
+        } else {
+            // No complaints found
+            tableContainer.style.display = 'none';
+            noComplaintsDynamic.style.display = 'block';
+        }
+    }
+
+
+    // --- Initial Load Check (Using Jinja Check to hide table if empty) ---
+    // If the server rendered the 'No Complaints' row, hide the table on load.
+    if (noComplaintsRow) {
+        tableContainer.style.display = 'none';
+        noComplaintsDynamic.style.display = 'block';
+    } else {
+        noComplaintsDynamic.style.display = 'none';
+    }
+
+
+   // --- Setup for Dynamic Filtering (Corrected with async/await) ---
+   departmentSelector.addEventListener('change', async function() {
+    const selectedDept = this.value;
+      
+      // Check if loadingIndicator is available before setting style
+     if (loadingIndicator) {
+        loadingIndicator.style.display = 'flex'; // Show loading
+     }
+      tableBody.innerHTML = ''; // Clear table while loading
+      noComplaintsDynamic.style.display = 'none'; // Hide message while loading
+      try {
+      
+          const response = await fetch('{{ url_for("refreshed_data_admin") }}', {
+         method: 'POST',
+         headers: {
+           'Content-Type': 'application/json'
+         },
+         body: JSON.stringify({'dept': selectedDept})
+      });
+
+          if (!response.ok) {
+              throw new Error(`HTTP error! status: ${response.status}`);
+          }
+          
+          const data = await response.json();
+          
+          if (data.status === "error") {
+              console.error("Server Error:", data.message);
+              // NOTE: We use a modal/custom box instead of alert()
+              console.error('Error fetching data: ' + data.message);
+              renderComplaints([]); // Display empty state
+          } else {
+              // Data received successfully, update the table
+              renderComplaints(data.complaints);
+          }
+
+      } catch (error) {
+          console.error('Fetch Error:', error);
+          // NOTE: We use a modal/custom box instead of alert()
+          console.error('An error occurred while fetching complaints.');
+          renderComplaints([]); // Display empty state on network/parse error
+      } finally {
+          // Check if loadingIndicator is available before setting style
+          if (loadingIndicator) {
+               loadingIndicator.style.display = 'none'; // Hide loading indicator
+           }
+      }
+  });
+  });
+</script>
 {% endblock %}
