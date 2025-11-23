@@ -70,13 +70,8 @@ def send_message(number: str, text: str):
 
     client = Client(account_sid, auth_token)
 
-    twilio_msg = client.messages.create(
-        body=text,
-        from_=from_number,
-        to=format_indian_number(number),
-    )
-
-    print("Sent:", twilio_msg.body)
+  #  twilio_msg = client.messages.create(body=text,from_=from_number,to=format_indian_number(number),)
+  #    print("Sent:", twilio_msg.body)
 
 
 #---------------------------------------------------------------------------- FUNCTIONS ------------------------------------------------------------------------------------------------
@@ -90,7 +85,7 @@ def create_table():
 
     usr_table_exists = usr_table_chck.fetchone()
     if not usr_table_exists:
-        conn.execute("CREATE TABLE user (id TEXT PRIMARY KEY, username TEXT UNIQUE, f_name TEXT,fullname TEXT, l_name TEXT, email TEXT,ph_no INT,DOC DATE, password TEXT)")
+        conn.execute("CREATE TABLE user (id TEXT PRIMARY KEY, username TEXT UNIQUE, f_name TEXT,fullname TEXT, l_name TEXT, email TEXT,ph_no INT,DOC DATE, password TEXT, WARD INTEGER)")
         conn.commit()
 
     comp_table_exists = comp_table_chck.fetchone()
@@ -107,13 +102,13 @@ def create_table():
 
     message_table_exists = messages_table_chck.fetchone()
     if not message_table_exists:
-        conn.execute("CREATE TABLE messages(msg_id INTEGER PRIMARY KEY AUTOINCREMENT, msg TEXT,priority TEXT,msg_title TEXT,issue_date DATE, issued_by TEXT, dept TEXT)")
+        conn.execute("CREATE TABLE messages(msg_id INTEGER PRIMARY KEY AUTOINCREMENT, msg TEXT,priority TEXT,msg_title TEXT,issue_date DATE, issued_by TEXT, dept TEXT,WARD INTEGER,adm_name TEXT)")
         conn.commit()
 
 
     resolution_table_exists = resolution_table_chck.fetchone()
     if not resolution_table_exists:
-        conn.execute("""CREATE TABLE IF NOT EXISTS resolution (resolution_id INTEGER PRIMARY KEY AUTOINCREMENT, comp_id INTEGER, admin_id TEXT, user_id TEXT, status INT, msg TEXT, date_of_change DATE, FOREIGN KEY(comp_id) REFERENCES complaints(comp_id) FOREIGN KEY(admin_id) REFERENCES admin(id), FOREIGN KEY(user_id) REFERENCES user(id))""")
+        conn.execute("""CREATE TABLE IF NOT EXISTS resolution (resolution_id INTEGER PRIMARY KEY AUTOINCREMENT, comp_id INTEGER, admin_id TEXT, user_id TEXT, status INT, msg TEXT, date_of_change DATE, adm_name TEXT, dept TEXT, FOREIGN KEY(comp_id) REFERENCES complaints(comp_id) FOREIGN KEY(admin_id) REFERENCES admin(id), FOREIGN KEY(user_id) REFERENCES user(id))""")
 
 def clean_tuple(tup):
    strings=""
@@ -138,9 +133,67 @@ def start_summary(word,id):
 
     res = conn.execute("UPDATE complaints SET summary = ? WHERE imgsrc = ?",(summary,id))
     conn.commit()
-    
 
-#---------------------------------------------------------------------------- FUNCTIONS ------------------------------------------------------------------------------------------------
+def send_notfications_to_users(msg_obj):
+    ward = msg_obj['ward']
+    msg_title = msg_obj['title']
+    msg_body = msg_obj['body']
+    msg_priority = msg_obj['priority']
+    adm_name = msg_obj['adm_name']
+    adm_dept = msg_obj['dept']
+    msg_date = msg_obj['date']
+
+    if msg_priority == 0:
+        msg_priority = 'High'
+    elif msg_priority == 1:
+        msg_priority = 'Medium'
+    else:
+        msg_priority = 'Low'
+
+    print('type of ward: ',type(ward),'ward no: ',ward)
+    if ward == 'all':
+        
+        res = conn.execute("SELECT ph_no FROM user")
+        res = res.fetchall()
+        print('list of all ward numbers: ',res)
+
+        if len(res) == 0 or res == None:
+            print('no matching numbers')
+            return 
+
+        for i in res:
+            i = str(i)
+            msg_body = f"{msg_title} Priority : {msg_priority} Issued On: {msg_date} By {adm_name}, {adm_dept} {msg_body}"
+            print('Message: ',msg_body, 'Recepient: ',format_indian_number(i))
+            send_message(format_indian_number(i),msg_body)
+
+
+   
+    elif ward != '0':
+        #select all numbers from that ward
+        res = conn.execute("SELECT ph_no FROM user WHERE ward = ?",(ward, ))
+        res = res.fetchall() 
+        print('list of some ward numbers: ',res)
+
+        if len(res) == 0 or res == None:
+            print('no matching numbers')
+            return 
+        
+        for i in res:
+            i = str(i)
+            msg_body = f"{msg_title} Priority : {msg_priority} Issued On: {msg_date} By {adm_name}, {adm_dept} \n {msg_body} "
+            print('Message: ',msg_body, 'Recepient: ',format_indian_number(i))
+            send_message(format_indian_number(i),msg_body)
+
+    elif len(ward) == 0 or ward == None:
+        print('error in sending messages to users')
+        return 
+
+
+def generate_otp_choice():
+    otp_integer = random.randint(100000, 999999)
+    return otp_integer    
+#------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 app.secret_key = 'your_secret_key'
 
 # session configuration
@@ -398,6 +451,7 @@ def register():
     f_name = data.get('fname')
     l_name = data.get('lname')
     ph_no = data.get('phone')
+    ward = data.get('ward')
 
     res = conn.execute("SELECT username FROM user WHERE username = ?", (username,))
     if res.fetchone():
@@ -429,7 +483,8 @@ def register():
         'ph_no': ph_no,
         'password': hashed_password,
         'DOC': get_formatted_date(), # Date of Creation
-        'OTP':otps
+        'OTP':otps,
+        'ward':ward
     }
     
     
@@ -442,10 +497,6 @@ def register():
     # We do NOT set the 'id' cookie yet, as registration isn't final
     resp = make_response(jsonify(response_data), 200) 
     return resp
-
-def generate_otp_choice():
-    otp_integer = random.randint(100000, 999999)
-    return otp_integer
 
 @app.route('/verify_otp', methods=['POST'])
 def verify_otp():
@@ -490,13 +541,14 @@ def finalize_registration():
         temp_data['fullname'], 
         temp_data['DOC'], 
         temp_data['ph_no'], 
-        temp_data['password']
+        temp_data['password'],
+        temp_data['ward']
         # Add new fields here if you update the SQL query
     )
     try:
         # Database insertion (Finally)
         conn.execute(
-            "INSERT INTO user (id, username, f_name, l_name, fullname, DOC, ph_no, password) VALUES (?, ?, ?, ?, ?, ?, ?, ?)", 
+            "INSERT INTO user (id, username, f_name, l_name, fullname, DOC, ph_no, password, ward) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)", 
             insertion_tuple
         )
         conn.commit()
@@ -747,7 +799,7 @@ def finalize_admin_registration():
         conn.commit()
 
         # Finalize Session/Cookies
-        session['username'] = username
+        session['admin'] = {"username": temp_data['username'],'id': temp_data['id'],'dept':  temp_data['dept'],'name':temp_data['f_name']}
         
         # Set the redirect URL to the admin login or dashboard page
         redirect_url = url_for('admin_dashboard') 
@@ -796,25 +848,15 @@ def admin_cred_check():
     row = res.fetchone()
 
     if row and check_password_hash(row[0], password):
-        # store session info
-        session['admin_username'] = username
+        #fetch info for setting session :
+        res = conn.execute("SELECT dept, id, fullname FROM admin WHERE username = ?",(username, ))
+        res = res.fetchone()
 
-        # get admin id
-        res = conn.execute("SELECT id FROM admin WHERE username = ?", (username,))
-        logged_in_admin_id = res.fetchone()
-        logged_in_admin_id = clean_tuple(logged_in_admin_id)
-        print("current logged in admin is:", logged_in_admin_id)
-
-        # get dept id
-        res = conn.execute("SELECT dept FROM admin WHERE username = ?", (username,))
-        logged_in_admin_dept = res.fetchone()
-        logged_in_admin_dept = clean_tuple(logged_in_admin_dept)
-        print("current dept:", logged_in_admin_dept)
+        # store session info (SELECT ID index 0 and Dept 1)
+        session['admin'] = {"username": username,'id': res[1],'dept':  res[0],'name':res[2]}
 
         # attach cookie to response
         resp = redirect(url_for('admin_dashboard'))  # you should have this route
-        resp.set_cookie('admin_id', logged_in_admin_id)
-        resp.set_cookie('dept',logged_in_admin_dept)
         return resp
 
     else:
@@ -840,30 +882,28 @@ def admin_dashboard():
 #view details of admin account by an admin themslef
 @app.route('/admin_my_account')
 def admin_my_account():
-   logged_in_usr_id = request.cookies.get('admin_id')
-   res = conn.execute("SELECT username, fullname, dept, email, ph_no, DOC FROM admin WHERE id = ?", (logged_in_usr_id,))
-   res = res.fetchone()
-   res = clean_tuple(res).split()
- #  print(res)
-   
-   usr_name = res[0]
-    #this is becasue the split function separates the name into two. so we have to add it again to fix this issue
-   fullname =res[1] + " " + res[2]
-   dept=res[3]
-   email =res[4]
-   ph_no = res[5]
-   DOC = res[6]
+   #get session token
+   obj = session.get('admin')
+   admin_id = obj['id']
+   admin_user_name = obj['username']
+   admin_dept = obj['dept']
 
-   return render_template('admin/admin_view_account.html',user_id=logged_in_usr_id,user_name=usr_name, reg_name=fullname,dept=dept,e_mail=email,ph_no=ph_no,DOC=DOC)
+   #logged_in_usr_id = request.cookies.get('admin_id')
+   res = conn.execute("SELECT fullname, email, ph_no, DOC FROM admin WHERE id = ?", (admin_id,))
+   res = res.fetchone()
+   print(res,obj)
+   fulllname = res[0]
+   email =res[1]
+   ph_no = res[2]
+   DOC = res[3]
+
+   return render_template('admin/admin_view_account.html',user_id=admin_id,user_name=admin_user_name, reg_name=fulllname,dept=admin_dept,e_mail=email,ph_no=ph_no,DOC=DOC)
 
 
 @app.route('/admin_logout',methods=['POST','GET'])
 def admin_logout():
-    session.pop('admin_username', None)
-    session.pop('admin_id',None)
+    session.pop('admin', None)
     response = redirect(url_for('admin_login'))
-    response.delete_cookie('admin_id')
-    response.delete_cookie('dept')
     return response
 
 #@app.route('/fetch_complaints_admin')
@@ -875,23 +915,49 @@ def admin_issue_notifications_page():
 
 @app.route('/update_notifications_admin', methods=['POST'])
 def update_notifications_admin():
-    notification_info = request.form['message']
-    notification_title = request.form['notification_name']
-    notification_priority = request.form['priority']
-    notification_ward = request.form['ward2']
-    #print(notification_info,notification_title,notification_priority)
+    try:
+        notification_info = request.form['message']
+        notification_title = request.form['notification_name']
+        notification_priority = request.form['priority']
+        notification_ward = request.form['ward']
 
-    to_day = get_formatted_date()
-    adm_id = request.cookies.get('admin_id')
-    adm_dept = request.cookies.get('dept')
+        to_day = get_formatted_date() 
 
-    conn.execute("INSERT INTO messages (ward , msg , priority, msg_title, issue_date, issued_by, dept) VALUES (?, ?, ?, ?, ?, ?, ?)",(notification_ward,notification_info,notification_priority,notification_title,to_day,adm_id,adm_dept))
-    conn.commit()
+        # get data from session obj 
+        obj = session.get('admin')
 
+        if not obj:
+            
+            return jsonify({"status": "error", "message": "Admin session not found."}), 401
+
+        adm_id = obj['id']
+        adm_dept = obj['dept']
+        adm_name = obj['name']
+        
+        conn.execute("INSERT INTO messages (ward , msg , priority, msg_title, issue_date, issued_by, dept, adm_name) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+                     (notification_ward, notification_info, notification_priority, notification_title, to_day, adm_id, adm_dept, adm_name))
+        conn.commit()
+        
+        msg_obj = {'title':notification_title,
+                   'date':to_day,
+                   'priority':notification_priority,
+                   'body':notification_info,
+                   'ward':notification_ward,
+                   'dept':adm_dept,
+                   'adm_name':adm_name
+                   }
+        send_notfications_to_users(msg_obj)
+        
+        return jsonify({
+            "status": "success", 
+            "message": "Message sent successfully.",
+            'redirect': url_for('admin_dashboard') 
+        })
+
+    except Exception as e:
+        print(f"Database error: {e}")
+        return jsonify({"status": "error", "message": "Database insertion failed."}), 500
     
-    #flash("Message sent",'success')
-    return render_template('admin/admin_issue_notifications.html')
-
 @app.route('/get_notifications_all')
 def get_notifications_all():
     res = conn.execute('SELECT m.msg_title, m.msg, m.priority, a.username, m.dept, m.issue_date FROM messages m JOIN admin a ON m.issued_by = a.id;')

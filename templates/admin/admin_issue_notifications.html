@@ -227,37 +227,62 @@
 
 {% block script %}
 <script>
-  function OnSub()
-  {  
-   const msg = document.getElementById('message').value;
-   const title = document.getElementById('notification_name').value;
-   const priority = document.getElementById('priority').value;
-   const ward = document.getElementById('ward2').value;
-   const form = document.getElementById('admin_notification');
-    if(msg.length === 0)
-   {
-    alert('Please provide a valid message')
-   }
-   else if(title.length===0)
-   {
-    alert('Please provide a valid title')
-   }
-   else if(priority.length === 0)
-   {
-    alert('Please assgin a valid priority.')
-   }
-   else if(ward.length === 0)
-   {
-    alert('Please select your ward.')
-   }
-   else
-   {
-      form.action = "{{ url_for('update_notifications_admin') }}";
-      form.method = 'post';
-      form.submit();
-      alert("Message sent successfully.")
-   }
+  function OnSub() {  
+  const msg = document.getElementById('message').value.trim();
+  const title = document.getElementById('notification_name').value.trim();
+  const priority = document.getElementById('priority').value;
+  const ward = document.getElementById('ward2').value;
+  const form = document.getElementById('admin_notification');
+
+    // --- Client-side Validation ---
+    if(msg.length === 0) {
+      alert('Please provide a valid message');
+      return;
+    } else if(title.length === 0) {
+      alert('Please provide a valid title');
+      return;
+    } else if(priority.length === 0) {
+      alert('Please assign a valid priority.');
+      return;
+    } else if(ward.length === 0) {
+      alert('Please select your ward.');
+      return;
+    }
+
+    // --- AJAX Submission using fetch ---
+    const formData = new FormData(form);
+    
+    fetch('{{ url_for("update_notifications_admin") }}', {
+      method: 'POST',
+      body: formData
+    })
+    .then(response => {
+      if (!response.ok) {
+        throw new Error('Network response was not ok, status: ' + response.status);
+      }
+      return response.json(); // Expecting JSON response from Flask
+    })
+    .then(data => {
+      if (data.status === "success") {
+        // 1. Send confirmation alert
+        alert(data.message || "Message sent successfully.");
+        
+        // 2. Clear the form
+        form.reset(); 
+
+        // 3. Redirect to the specified URL
+        // **IMPORTANT:** Replace 'admin_dashboard' with your actual target Flask route name.
+        window.location.href = data.redirect; 
+
+      } else {
+        // Handle server-side validation or error messages
+        alert(`Failed to send message: ${data.message || 'Unknown server error.'}`);
+      }
+    })
+    .catch(error => {
+      console.error('Submission Error:', error);
+      alert('An unexpected error occurred during submission.');
+    });
   }
-   
 </script>
 {% endblock %}
