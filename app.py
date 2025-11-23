@@ -366,48 +366,53 @@ def my_complaints():
 def help_user():
     return render_template('help.html')
 
-#todo need to make the webiste here.
+
 @app.route('/complaints/<id>')
 def view_detailed_complaints_usr(id):
-    res =conn.execute("""SELECT 
-c.dof AS complaint_date,
-    c.complaint,
-    c.status AS complaint_status,
-    r.msg AS admin_response,
-    a.dept AS admin_department,
-    a.fullname AS admin_name,
-    r.date_of_change AS response_date
-FROM complaints c
-LEFT JOIN (
-    SELECT res.*
-    FROM resolution res
-    INNER JOIN (
-        SELECT comp_id, MAX(date_of_change) AS latest_date
-        FROM resolution
-        GROUP BY comp_id
-    ) latest_res
-    ON res.comp_id = latest_res.comp_id AND res.date_of_change = latest_res.latest_date
-) r ON c.comp_id = r.comp_id
-LEFT JOIN admin a ON r.admin_id = a.id
-WHERE c.comp_id = ?;
-""", (id,))
-
-# fetch result
+    # This query uses the ROW_NUMBER() window function to efficiently find the single latest 
+    # resolution for the specific complaint ID.
+    # We now use both 'date_of_change' and 'resolution_id' in the ORDER BY clause 
+    # to ensure a deterministic selection of the absolute newest resolution entry, 
+    # even in case of identical timestamps.
+    res = conn.execute("""
+        SELECT 
+            c.dof AS complaint_date,
+            c.complaint,
+            c.status AS complaint_status,
+            r.msg AS admin_response,
+            r.dept AS admin_department,     -- Fetched directly from the resolution table
+            r.adm_name AS admin_name,       -- Fetched directly from the resolution table
+            r.date_of_change AS response_date
+        FROM complaints c
+        LEFT JOIN (
+            -- Subquery to select the latest resolution (rn=1) for each complaint_id
+            SELECT 
+                *,
+                ROW_NUMBER() OVER (
+                    PARTITION BY comp_id 
+                    -- FIX: Order by date_of_change DESC (primary) and resolution_id DESC (tie-breaker)
+                    ORDER BY date_of_change DESC, resolution_id DESC
+                ) as rn
+            FROM resolution
+        ) r ON c.comp_id = r.comp_id AND r.rn = 1
+        WHERE c.comp_id = ?;
+    """, (id,))
+    
+    # fetch result
     result = res.fetchone()
 
-    """
-    if result:
-        print("Complaint Date:", result[0])
-        print("Complaint:", result[1])
-        print("Status:", result[2])
-        print("Admin Response:", result[3])
-        print("Admin Department:", result[4])
-        print("Admin Name:", result[5])
-        print("Response Date:", result[6])
-    else:
-        print("No complaint found for that ID.")
-    """
-    return render_template('view_detailed_complaints_user.html',complaint_id=id,issue_date=result[0],status=result[2],complaint=result[1],response=result[3],dept=result[4],officer_name=result[5],updated_date=result[6])
+    if not result:
+        return "Complaint not found", 404 
+
+    return render_template('view_detailed_complaints_user.html',
+                           complaint_id=id,
+                           issue_date=result[0],
+                           status=result[2],
+                           complaint=result[1],
+                           response=result[3],
+                           dept=result[4],
+                           officer_name=result[5],
+                           updated_date=result[6])
 
 @app.route('/complaint_status')
 def complaint_status():
@@ -889,16 +894,18 @@ def admin_view_complaints():
 
 @app.route('/refreshed_data_admin', methods=['POST'])
 def refreshed_data_admin():
-    #Security Check: Ensure an admin is logged in before proceeding.
+    # Ensure the user is authenticated as an admin
     if 'admin' not in session:
         return jsonify({"status": "error", "message": "Authentication required."}), 401
         
     try:
         data = request.get_json()
         dept = data.get('dept') 
+        status = data.get('status')
 
-        #SQL query to retrieve all necessary complaint and user information
-        base_query = """
+        # Base query structure, stopping before the WHERE clause for dynamic construction,
+        # and ensuring the JOIN is correctly placed before any WHERE conditions.
+        base_query_prefix = """
             SELECT 
                 c.comp_id, 
                 c.dof, 
@@ -908,22 +915,39 @@ def refreshed_data_admin():
                 c.location, 
                 c.complaint,
                 c.id 
-            FROM complaints c 
+            FROM complaints c
             JOIN user u ON c.id = u.id
         """
         
-        params = ()
-        full_query = base_query
-
-        # Conditional Filtering: Build the WHERE clause
-        # The JavaScript sends 'all' if the user selects the default option.
-        if dept and dept != 'all':
-            
-            full_query = f"{base_query} WHERE c.dept = ?"
-            params = (dept,)
-        # If dept is 'all', the full_query remains the base_query (gets all complaints)
+        where_clauses = ["c.status != 2"]
+        params = []
         
-        res = conn.execute(full_query, params)
+        # 1. Department Filter
+        # If dept is not 'all', add the department filter
+        if dept and dept.lower() != 'all':
+            where_clauses.append("c.dept = ?")
+            params.append(dept)
+
+        # 2. Status Filter
+        # If status is provided and is not 'all', add the status filter
+        if status and status.lower() != 'all':
+            # This allows filtering for status 0 or 1. Since the mandatory condition
+            # excludes 2, filtering specifically for 2 will result in an empty list.
+            try:
+                status_int = int(status)
+                where_clauses.append("c.status = ?")
+                params.append(status_int)
+            except ValueError:
+                # Handle case where status is not a valid integer
+                pass
+        
+        # Build the final query: prefix + WHERE (condition 1 AND condition 2 AND ...) + ORDER BY
+        # All conditions, including the mandatory 'c.status != 2', are joined by ' AND '.
+        full_query = base_query_prefix + " WHERE " + " AND ".join(where_clauses)
+        full_query += " ORDER BY c.dof DESC" # Optional: add ordering
+
+        # Execute the query (assuming 'conn' is the database connection)
+        res = conn.execute(full_query, tuple(params))
         result = res.fetchall() 
         
         return jsonify({"status": "success", "complaints": result})
@@ -932,7 +956,7 @@ def refreshed_data_admin():
         
         print(f"Error fetching data in refreshed_data_admin route: {e}")
         return jsonify({"status": "error", "message": "Failed to fetch complaints data due to a server error."}), 500
-
+        
 @app.route('/admin_cred_check', methods=['POST'])
 def admin_cred_check():
     username = request.form['username']

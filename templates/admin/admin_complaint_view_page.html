@@ -186,6 +186,14 @@
                             <option value="Traffic Management">Traffic Management</option>
                         </select>
                     </div>
+        <div class="form-group">
+                        <label for="completion-sort">Department</label>
+                        <select id="completion-sort" name="completion-sort" required>
+                            <option value="">All</option>
+                            <option value="0">Pending</option>
+                            <option value="1">In Progress</option>
+                        </select>
+                    </div>                    
     </div>
     
     <div id="complaints_table_container">
@@ -249,15 +257,15 @@
 <script>
   document.addEventListener('DOMContentLoaded', function() {
    const departmentSelector = document.getElementById('admin_dept');
-    const tableContainer = document.getElementById('complaints_table_container');
-    const tableBody = document.getElementById('complaints-table-body');
-    const noComplaintsRow = document.getElementById('no-complaints-row');
-    const noComplaintsDynamic = document.getElementById('no-complaints-dynamic');
+   const statusSelector = document.getElementById('completion-sort'); // NEW: Get status selector
+   const tableContainer = document.getElementById('complaints_table_container');
+   const tableBody = document.getElementById('complaints-table-body');
+   const noComplaintsRow = document.getElementById('no-complaints-row');
+   const noComplaintsDynamic = document.getElementById('no-complaints-dynamic');
     
-    
-    const loadingIndicator = document.getElementById('loading-indicator');
+   const loadingIndicator = document.getElementById('loading-indicator');
 
-    // --- Utility Function to Render Complaints ---
+    // --- Utility Function to Render Complaints (No change needed here) ---
     function renderComplaints(complaints) {
         let html = '';
         if (complaints && complaints.length > 0) {
@@ -303,8 +311,57 @@
     }
 
 
+    // --- Fetch and Update Complaints Logic (Combined) ---
+   async function fetchComplaints() {
+        // 1. Get current filter values
+        const selectedDept = departmentSelector.value;
+        const selectedStatus = statusSelector.value;
+
+       if (loadingIndicator) {
+          loadingIndicator.style.display = 'flex'; // Show loading
+       }
+        tableBody.innerHTML = ''; // Clear table while loading
+        noComplaintsDynamic.style.display = 'none'; // Hide message while loading
+        
+        try {
+            const response = await fetch('{{ url_for("refreshed_data_admin") }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                // 2. Send both department and status in the request body
+                body: JSON.stringify({
+                    'dept': selectedDept,
+                    'status': selectedStatus
+                })
+            });
+
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            
+            const data = await response.json();
+            
+            if (data.status === "error") {
+                console.error("Server Error:", data.message);
+                renderComplaints([]); // Display empty state
+            } else {
+                renderComplaints(data.complaints);
+            }
+
+        } catch (error) {
+            console.error('Fetch Error:', error);
+            console.error('An error occurred while fetching complaints.');
+            renderComplaints([]); // Display empty state on network/parse error
+        } finally {
+            if (loadingIndicator) {
+                loadingIndicator.style.display = 'none'; // Hide loading indicator
+            }
+        }
+    }
+
+
     // --- Initial Load Check (Using Jinja Check to hide table if empty) ---
-    // If the server rendered the 'No Complaints' row, hide the table on load.
     if (noComplaintsRow) {
         tableContainer.style.display = 'none';
         noComplaintsDynamic.style.display = 'block';
@@ -313,54 +370,13 @@
     }
 
 
-   // --- Setup for Dynamic Filtering (Corrected with async/await) ---
-   departmentSelector.addEventListener('change', async function() {
-    const selectedDept = this.value;
-      
-      // Check if loadingIndicator is available before setting style
-     if (loadingIndicator) {
-        loadingIndicator.style.display = 'flex'; // Show loading
-     }
-      tableBody.innerHTML = ''; // Clear table while loading
-      noComplaintsDynamic.style.display = 'none'; // Hide message while loading
-      try {
-      
-          const response = await fetch('{{ url_for("refreshed_data_admin") }}', {
-         method: 'POST',
-         headers: {
-           'Content-Type': 'application/json'
-         },
-         body: JSON.stringify({'dept': selectedDept})
-      });
+    // --- Add Event Listeners for Filtering ---
+    // When department changes, fetch new data
+    departmentSelector.addEventListener('change', fetchComplaints);
+    
+    // NEW: When status changes, fetch new data
+    statusSelector.addEventListener('change', fetchComplaints); 
 
-          if (!response.ok) {
-              throw new Error(`HTTP error! status: ${response.status}`);
-          }
-          
-          const data = await response.json();
-          
-          if (data.status === "error") {
-              console.error("Server Error:", data.message);
-              // NOTE: We use a modal/custom box instead of alert()
-              console.error('Error fetching data: ' + data.message);
-              renderComplaints([]); // Display empty state
-          } else {
-              // Data received successfully, update the table
-              renderComplaints(data.complaints);
-          }
-
-      } catch (error) {
-          console.error('Fetch Error:', error);
-          // NOTE: We use a modal/custom box instead of alert()
-          console.error('An error occurred while fetching complaints.');
-          renderComplaints([]); // Display empty state on network/parse error
-      } finally {
-          // Check if loadingIndicator is available before setting style
-          if (loadingIndicator) {
-               loadingIndicator.style.display = 'none'; // Hide loading indicator
-           }
-      }
-  });
   });
 </script>
 {% endblock %}
