@@ -70,7 +70,7 @@ def send_message(number: str, text: str):
 
     client = Client(account_sid, auth_token)
 
-  #  twilio_msg = client.messages.create(body=text,from_=from_number,to=format_indian_number(number),)
+    #twilio_msg = client.messages.create(body=text,from_=from_number,to=format_indian_number(number),)
     print('Message: ',text, '\nRecepient: ',number)
 
 
@@ -246,6 +246,8 @@ def check_number_OTP():
             otp_now = generate_otp_choice()
             session['user_type']={'type':"user",'id':id,'otp':otp_now}
             print('OTP generated : ',otp_now)
+            msg_body = f"\nCivicConnect\nYour OTP for password reset is: {otp_now}"
+            send_message(format_indian_number(str(ph_no)),msg_body)
         return resp
         
     elif(usr_type == 'admin'):
@@ -260,6 +262,8 @@ def check_number_OTP():
             resp = jsonify({'status':'OK','message':None})
             session['user_type']={'type':"admin",'id':id,'otp':otp_now}
             print('OTP generated : ',otp_now)
+            msg_body = f"\nCivicConnect\nYour OTP for password reset is: {otp_now}"
+            send_message(format_indian_number(str(ph_no)),msg_body)
         return resp
     else:
         print("error")
@@ -469,11 +473,11 @@ def register():
 
     #ONLY FOR RESTING REMOVE
     print("generated OTP: ",otps)
-    msg_user = f"""Your OTP for CivicConnect is {otps}"""
+    msg_user = f"""\nYour OTP for CivicConnect registration is {otps}"""
     print(msg_user)
 
     #warning this will send an actual message. 
-    #send_message(format_indian_number(ph_no),msg_user)
+    send_message(format_indian_number(ph_no),msg_user)
 
     session['temp_user_data'] = {
         'id': str(uuid.uuid4()), # Generate ID now
@@ -754,11 +758,11 @@ def admin_register():
 
     #send OTP
     print("generated OTP: ",otps) #remove 
-    msg_user = f"""Your OTP for CivicConnect is {otps}"""
+    msg_user = f"""\nYour OTP for CivicConnect registration is {otps}"""
     print(msg_user)
 
     #warning this will send an actual message. 
-    #send_message(format_indian_number(ph_no),msg_user)
+    send_message(format_indian_number(ph_no),msg_user)
 
     # temprarily store session
     session['temp_admin'] = {
@@ -1179,11 +1183,12 @@ def update_enquiry_status():
         user_phone_no = user_phone_no[0]
 
         user_phone_no = str(user_phone_no)
-        if new_status == 0:
+        print('type of status : ',type(new_status))
+        if new_status == '0':
             status = 'Pending'
-        elif new_status == 1:
+        elif new_status == '1':
             status = 'In Progress'
-        else:
+        elif new_status=='2':
             status = 'Resolved'
 
         if(len(message)>1):
