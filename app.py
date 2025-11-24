@@ -5,7 +5,7 @@ import uuid
 from flask_session import Session
 import sqlite3,os
 from werkzeug.utils import secure_filename
-from datetime import datetime
+from datetime import datetime, timedelta
 from flask import send_from_directory
 import threading
 import string,random
@@ -163,7 +163,7 @@ def send_notfications_to_users(msg_obj):
 
         for i in res:
             i = str(i)
-            msg_body = f"{msg_title} Priority : {msg_priority} Issued On: {msg_date} By {adm_name}, {adm_dept} {msg_body}"
+            msg_body = f"{msg_title} \tPriority : {msg_priority} \tIssued on : {msg_date} \n{msg_body}\n By {adm_name}, {adm_dept}"
            # print('Message: ',msg_body, 'Recepient: ',format_indian_number(i))
             send_message(format_indian_number(i),msg_body)
 
@@ -193,6 +193,40 @@ def send_notfications_to_users(msg_obj):
 def generate_otp_choice():
     otp_integer = random.randint(100000, 999999)
     return otp_integer    
+
+def generate_timestamp():
+    #Generates the current timestamp formatted as 'yyyy-mm-dd-hh-mm-ss'.
+    now = datetime.now()
+    formatted_timestamp = now.strftime("%Y-%m-%d-%H-%M-%S")
+    return formatted_timestamp
+
+def check_timestamp(a_timestamp: str) -> bool:
+    #yyyy-mm-dd-hh-mm-ss format
+
+    TIME_FORMAT = "%Y-%m-%d-%H-%M-%S"
+    MAX_DURATION = timedelta(minutes=5)
+
+    try:
+        past_time = datetime.strptime(a_timestamp, TIME_FORMAT)
+        current_time = datetime.now()
+
+        time_difference = abs(current_time - past_time)
+
+        is_recent = time_difference < MAX_DURATION
+
+        print(f"\n--- Timestamp Check ---")
+        print(f"Given Timestamp: {a_timestamp}")
+        print(f"Current Time:    {current_time.strftime(TIME_FORMAT)}")
+        print(f"Time Difference: {time_difference}")
+        print(f"Is difference < 5 mins? {is_recent}")
+        print(f"-----------------------")
+        
+        return is_recent
+
+    except ValueError:
+        print(f"\nError: Timestamp '{a_timestamp}' does not match the expected format {TIME_FORMAT}. Cannot perform check.")
+        return False
+
 #------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 app.secret_key = 'your_secret_key'
 
@@ -451,133 +485,317 @@ def login():
 @app.route('/register', methods=['POST'])
 def register():
     data = request.get_json()
-    username = data.get('usrname')
-    password = data.get('paswd')
-    f_name = data.get('fname')
-    l_name = data.get('lname')
-    ph_no = data.get('phone')
-    ward = data.get('ward')
+    usr_type = data.get('type')
 
-    res = conn.execute("SELECT username FROM user WHERE username = ?", (username,))
-    if res.fetchone():
-        return "User already registered", 400
+    if usr_type == 'user':
+        #we are trying to register a user 
+        username = data.get('usrname')
+        password = data.get('paswd')
+        f_name = data.get('fname')
+        l_name = data.get('lname')
+        ph_no = data.get('phone')
+        ward = data.get('ward')
+
+        res = conn.execute("SELECT username FROM user WHERE username = ?", (username,))
+        if res.fetchone():
+            return "User already registered", 400
+        
+        res = conn.execute("SELECT ph_no FROM user WHERE ph_no =?",(ph_no,))
+        if res.fetchone():
+            return "Phone number already registered", 400
+
+        # Temporary Storage in Session
+        full_name = f_name + " " + l_name
+        hashed_password = generate_password_hash(password)
+        otps = generate_otp_choice()
+
+        #ONLY FOR RESTING REMOVE
+        print("generated OTP: ",otps)
+        msg_user = f"""\nYour OTP for CivicConnect registration is {otps}"""
+        print(msg_user)
+
+        #warning this will send an actual message. 
+        send_message(format_indian_number(ph_no),msg_user)
+
+        session['temp_user_data'] = {
+            'id': str(uuid.uuid4()), # Generate ID now
+            'username': username,
+            'f_name': f_name,
+            'l_name': l_name,
+            'fullname': full_name,
+            'ph_no': ph_no,
+            'password': hashed_password,
+            'DOC': get_formatted_date(), # Date of Creation
+            'otp':otps,
+            'ward':ward,
+            'timestamp':generate_timestamp(),
+            'trials':0,
+            'user_type':'user',
+            'status':False
+        }
     
-    res = conn.execute("SELECT ph_no FROM user WHERE ph_no =?",(ph_no,))
-    if res.fetchone():
-        return "Phone number already registered", 400
+    elif usr_type == 'admin':
+            f_name = data.get('fname')
+            l_name = data.get('lname')
+            username = data.get('usrname') 
+            admin_dept = data.get('dept')
+            email = data.get('email')
+            ph_no = data.get('phone')
+            password = data.get('paswd')
 
-    # Temporary Storage in Session
-    full_name = f_name + " " + l_name
-    hashed_password = generate_password_hash(password)
-    otps = generate_otp_choice()
+            # Basic validation checks
+            if not all([f_name, l_name, username, admin_dept, email, ph_no, password]):
+                return "Missing required field data.", 400
 
-    #ONLY FOR RESTING REMOVE
-    print("generated OTP: ",otps)
-    msg_user = f"""\nYour OTP for CivicConnect registration is {otps}"""
-    print(msg_user)
+            fullname = f_name + " " + l_name
+            to_day = get_formatted_date()
 
-    #warning this will send an actual message. 
-    send_message(format_indian_number(ph_no),msg_user)
+            # check if username already exists
+            res = conn.execute("SELECT username FROM admin WHERE username = ?", (username,))
+            if res.fetchone():
+                return "Username already taken. Try a different one.", 400 # FIX: Returning 400 error
 
-    session['temp_user_data'] = {
-        'id': str(uuid.uuid4()), # Generate ID now
-        'username': username,
-        'f_name': f_name,
-        'l_name': l_name,
-        'fullname': full_name,
-        'ph_no': ph_no,
-        'password': hashed_password,
-        'DOC': get_formatted_date(), # Date of Creation
-        'OTP':otps,
-        'ward':ward
-    }
-    
-    
+            # check if email already exists
+            res = conn.execute("SELECT email FROM admin WHERE email = ?", (email,))
+            if res.fetchone():
+                return "Email already registered. Use a different email.", 400 # FIX: Returning 400 error
+            
+            #check if the phone_no is already registed to someone else
+            res = conn.execute("SELECT ph_no from admin WHERE ph_no = ?",(ph_no, ))
+            if res.fetchone():
+                return "Phone number already registered. Please enter a new number.", 400 # FIX: Returning 400 error
+
+            # create new admin
+            newid = str(uuid.uuid4())
+            hashed_password = generate_password_hash(password)
+            
+            #generate OTP
+            otps = generate_otp_choice()
+
+            #send OTP
+            print("generated OTP: ",otps) #remove 
+            msg_user = f"""\nYour OTP for CivicConnect registration is {otps}"""
+            print(msg_user)
+
+            #warning this will send an actual message. 
+            send_message(format_indian_number(ph_no),msg_user)
+
+            # temprarily store session
+            session['temp_user_data'] = {
+                'id':newid,
+                'username':username,
+                'f_name':f_name,
+                'l_name':l_name,
+                'fullname':fullname,
+                'dept':admin_dept,
+                'email':email,
+                'password':hashed_password,
+                'DOC':to_day,
+                'ph_no':ph_no,
+                'otp':otps,
+                'timestamp':generate_timestamp(),
+                'trials':0,
+                'user_type':'admin',
+                'status':False
+            }
+
     #Respond with Redirect URL (to Stage 2 form)
     response_data = {
         'message': 'Initial data received, proceeding to additional details.',
         'redirect_url': url_for('start_tfa') 
     }
-    
-    # We do NOT set the 'id' cookie yet, as registration isn't final
     resp = make_response(jsonify(response_data), 200) 
     return resp
 
 @app.route('/verify_otp', methods=['POST'])
 def verify_otp():
-    data = request.get_json()
-    received_otp = int(data.get('otp'))
     
-    expected_otp = session.get('temp_user_data')['OTP']
+    # 1. Preliminary check for session data
+    if 'temp_user_data' not in session:
+        return jsonify({
+            'success': False, 
+            'message': 'No pending registration data found. Please start over.',
+            'redirect_to': url_for('index')
+        }), 400
+
+    data = request.get_json()
+    # Safely convert to int, handle case where 'otp' might be missing or invalid
+    try:
+        received_otp = int(data.get('otp'))
+    except (TypeError, ValueError):
+        # This should ideally be caught by client-side validation, but is a good server-side fallback
+        return jsonify({'success': False, 'message': 'Invalid OTP format submitted.'}), 400
+
+    # Retrieve data from session
+    temp_data = session.get('temp_user_data')
+    expected_otp = temp_data.get('otp')
+    user_type = temp_data.get('user_type')
+    user_otp_timestamp = temp_data.get('timestamp')
+    user_attempts = temp_data.get('trials', 0) # Use .get with a default for safety
+
     print("Expected OTP",expected_otp,type(expected_otp))
     print("Recived OTP",received_otp,type(received_otp))
+    print('sesion obj:',session.get('temp_user_data'))
 
-    
-    if received_otp and expected_otp and received_otp == expected_otp:
+    # 2. Check for OTP Expiry
+    if check_timestamp(user_otp_timestamp) == False:
+        # Clear the session data as the OTP is expired
+        session.pop('temp_user_data', None)
+        return jsonify({
+            'success': False, 
+            'message': 'OTP has expired! Please request a new one.',
+            'expired': True
+        }), 403 # Forbidden or appropriate error code
+
+    # 3. Check for Max Attempts
+    MAX_ATTEMPTS = 5
+    if user_attempts >= MAX_ATTEMPTS:
+        # Clear the session data after max attempts are reached
+        session.pop('temp_user_data', None)
+        return jsonify({
+            'success': False, 
+            'message': f'You have exceeded the maximum {MAX_ATTEMPTS} attempts.',
+            'redirect_to': url_for('index') 
+        }), 429 
+
+    # 4. Check for OTP Match
+    if expected_otp == received_otp:
+        # OTP is correct and within time/attempt limits
+        return_str = ''
+        if user_type == 'admin':
+            return_str ='index'
+        else:
+            return_str ='admin_login'
+
+        return jsonify({
+            'success': True, 
+            'message': 'OTP confirmed! Finalizing registration...'
+        }), 200
         
-        # You can now proceed to store the user's final data (which happens in finalize_registration).
-        return jsonify({
-            "success": True, 
-            "message": "Verification successful! You will be logged in shortly."
-        }), 200
     else:
-        # OTP is invalid
+        # 5. Handle Incorrect OTP
+        session['temp_user_data']['trials'] = user_attempts + 1
+        
+        # Calculate remaining attempts for the user feedback
+        remaining_attempts = MAX_ATTEMPTS - (user_attempts + 1)
+        
+        message = f"Invalid OTP. {remaining_attempts} attempts remaining."
+        if remaining_attempts == 0:
+             # This is the last failed attempt, so trigger the max attempts message
+            # The next request will hit the 'Max Attempts' block above and clear the session.
+            message = f"Invalid OTP. You have one final attempt."
+
         return jsonify({
-            "success": False, 
-            "message": "Invalid OTP. Please check your phone and try again."
-        }), 200
+            'success': False, 
+            'message': message,
+            'remaining_attempts': remaining_attempts
+        }), 401 # Unauthorized
+
+    # If somehow execution reaches here (e.g., due to an 'else' block
+    # for user_type that was removed), return a default error.
+    # return jsonify({'success': False, 'message': 'An unexpected error occurred.'}), 500
+
 
 @app.route('/finalize_registration', methods=['POST'])
 def finalize_registration():    
     #Retrieve temporary data from session
     temp_data = session.pop('temp_user_data', None)
-    print("Final save")
 
     if not temp_data:
         # User tried to access this route without starting registration
         return "Registration session expired or invalid.", 403
 
-    #Combine Data and Insert into DB
-    insertion_tuple = (
-        temp_data['id'], 
-        temp_data['username'], 
-        temp_data['f_name'], 
-        temp_data['l_name'], 
-        temp_data['fullname'], 
-        temp_data['DOC'], 
-        temp_data['ph_no'], 
-        temp_data['password'],
-        temp_data['ward']
-        # Add new fields here if you update the SQL query
-    )
-    try:
-        # Database insertion (Finally)
-        conn.execute(
-            "INSERT INTO user (id, username, f_name, l_name, fullname, DOC, ph_no, password, ward) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)", 
-            insertion_tuple
+    if temp_data['user_type'] == 'user':
+        #Combine Data and Insert into DB
+        insertion_tuple = (
+            temp_data['id'], 
+            temp_data['username'], 
+            temp_data['f_name'], 
+            temp_data['l_name'], 
+            temp_data['fullname'], 
+            temp_data['DOC'], 
+            temp_data['ph_no'], 
+            temp_data['password'],
+            temp_data['ward']
         )
-        conn.commit()
+        try:
+            conn.execute("INSERT INTO user (id, username, f_name, l_name, fullname, DOC, ph_no, password, ward) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)", insertion_tuple)
+            conn.commit()
 
-        #Finalize Session/Cookies
-        session['username'] = temp_data['username']
+            #Finalize Session/Cookies
+            session['user'] = {'id':temp_data['id'] ,'username': temp_data['username'],'ward': temp_data['ward']}        
+            redirect_url = url_for('user_dashboard_page') 
+            
+            # Return a JSON object containing the status and the redirect URL
+            resp = jsonify({
+                "success": True, 
+                "message": "Account created Successfully. Redirecting...",
+                "redirect_to": redirect_url
+            })
+            
+            # Set cookie on the response object
+            resp.set_cookie('id', temp_data['id'])
+            return resp
+            
+        except Exception as e:
+            # Handle database errors
+            print(f"Database error during finalization: {e}")
+            return jsonify({"success": False, "message": "A database error occurred during registration."}), 500     
+    
+    elif temp_data['user_type'] == 'admin':
+        # Extract data for database insertion
+        newid = temp_data['id']
+        username = temp_data['username']
+        admin_dept = temp_data['dept']
+
+        # Combine Data and Insert into DB
+        insertion_tuple = (
+            temp_data['id'],
+            temp_data['username'],
+            temp_data['f_name'],
+            temp_data['l_name'],
+            temp_data['fullname'],
+            temp_data['dept'],
+            temp_data['email'],
+            temp_data['password'], # Hashed password
+            temp_data['DOC'],
+            temp_data['ph_no']
+        )
         
-        redirect_url = url_for('user_dashboard_page') 
-        
-        # Return a JSON object containing the status and the redirect URL
-        resp = jsonify({
-            "success": True, 
-            "message": "Account created Successfully. Redirecting...",
-            "redirect_to": redirect_url
-        })
-        
-        # Set cookie on the response object
-        resp.set_cookie('id', temp_data['id'])
-        return resp
-        
-    except Exception as e:
-        # Handle database errors
-        print(f"Database error during finalization: {e}")
-        return jsonify({"success": False, "message": "A database error occurred during registration."}), 500
+        try:
+            # Database insertion (Finally)
+            # Using the exact SQL provided in your request
+            conn.execute(
+                "INSERT INTO admin (id, username, f_name, l_name, fullname, dept, email, password, DOC, ph_no) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                insertion_tuple
+            )
+            conn.commit()
+
+            # Finalize Session/Cookies
+            session['admin'] = {"username": temp_data['username'],'id': temp_data['id'],'dept':  temp_data['dept'],'name':temp_data['f_name']}
+            
+            # Set the redirect URL to the admin login or dashboard page
+            redirect_url = url_for('admin_dashboard') 
+            
+            # Return a JSON object containing the status and the redirect URL
+            response_data = {
+                "success": True, 
+                "message": "Admin account created successfully 🎉. Redirecting...",
+                "redirect_to": redirect_url
+            }
+
+            resp = make_response(jsonify(response_data), 200)
+            
+            print(f"New admin '{username}' saved to db and session/cookies set.")
+            return resp
+            
+        except Exception as e:
+            # Handle database errors
+            print(f"Database error during admin finalization: {e}")
+            # Note: If the session was popped successfully, you might want to re-add it 
+            # or handle rollback, but for simplicity, we return a 500 error.
+            return jsonify({"success": False, "message": "A database error occurred during registration."}), 500
+
 
 @app.route('/user_reg_page')
 def user_reg_page():
@@ -706,186 +924,10 @@ def admin_login():
 def admin_register_page():
     return render_template('admin/admin_register.html')
 
-# admin register
-@app.route('/admin_register', methods=['POST'])
-def admin_register():
-    # Ensure request content type is application/json
-    if not request.is_json:
-        return "Unsupported media type", 415
-
-    data = request.get_json()
-    
-    # FIX: Corrected dictionary access (used parentheses instead of brackets)
-    f_name = data.get('fname')
-    l_name = data.get('lname')
-    username = data.get('usrname') # Matches payload key from HTML
-    admin_dept = data.get('dept')
-    email = data.get('email')
-    ph_no = data.get('phone')
-    password = data.get('paswd')
-    # confirm_password = data.get('cpass') # Not needed, handled client-side/removed from logic
-
-    # Basic validation checks
-    if not all([f_name, l_name, username, admin_dept, email, ph_no, password]):
-        return "Missing required field data.", 400
-
-    fullname = f_name + " " + l_name
-    to_day = get_formatted_date()
-
-    # --- Error Checks (FIXED to return 400 status) ---
-    # check if username already exists
-    res = conn.execute("SELECT username FROM admin WHERE username = ?", (username,))
-    if res.fetchone():
-        return "Username already taken. Try a different one.", 400 # FIX: Returning 400 error
-
-    # check if email already exists
-    res = conn.execute("SELECT email FROM admin WHERE email = ?", (email,))
-    if res.fetchone():
-        return "Email already registered. Use a different email.", 400 # FIX: Returning 400 error
-    
-    #check if the phone_no is already registed to someone else
-    res = conn.execute("SELECT ph_no from admin WHERE ph_no = ?",(ph_no, ))
-    if res.fetchone():
-        return "Phone number already registered. Please enter a new number.", 400 # FIX: Returning 400 error
-    # --- End Error Checks ---
-
-    # create new admin
-    newid = str(uuid.uuid4())
-    hashed_password = generate_password_hash(password)
-    
-    #generate OTP
-    otps = generate_otp_choice()
-
-    #send OTP
-    print("generated OTP: ",otps) #remove 
-    msg_user = f"""\nYour OTP for CivicConnect registration is {otps}"""
-    print(msg_user)
-
-    #warning this will send an actual message. 
-    send_message(format_indian_number(ph_no),msg_user)
-
-    # temprarily store session
-    session['temp_admin'] = {
-        'id':newid,
-        'username':username,
-        'f_name':f_name,
-        'l_name':l_name,
-        'fullname':fullname,
-        'dept':admin_dept,
-        'email':email,
-        'password':hashed_password,
-        'DOC':to_day,
-        'ph_no':ph_no,
-        'otp':otps # Storing OTP in session
-    }
-
-    #Respond with Redirect URL (to Stage 2 form)
-    response_data = {
-        'message': 'Initial data received, proceeding to additional details.',
-        'redirect_url': url_for('start_tfa_adm') 
-    }
-    
-    # We do NOT set the 'id' cookie yet, as registration isn't final
-    resp = make_response(jsonify(response_data), 200) 
-    return resp
-
 @app.route('/start_tfa_adm')
 def start_tfa_adm():
     return render_template('admin/two-fa-adm.html')
 
-@app.route('/verify_otp_adm', methods=['POST'])
-def verify_otp_adm():
-    data = request.get_json()
-    received_otp = int(data.get('otp'))
-    
-    expected_otp = session.get('temp_admin')['otp']
-    print("Expected OTP",expected_otp,type(expected_otp))
-    print("Recived OTP",received_otp,type(received_otp))
-
-    
-    if received_otp and expected_otp and received_otp == expected_otp:
-        
-        # You can now proceed to store the user's final data (which happens in finalize_registration).
-        return jsonify({
-            "success": True, 
-            "message": "Verification successful! You will be logged in shortly."
-        }), 200
-    else:
-        # OTP is invalid
-        return jsonify({
-            "success": False, 
-            "message": "Invalid OTP. Please check your phone and try again."
-        }), 200
-
-@app.route('/finalize_admin_registration', methods=['POST'])
-def finalize_admin_registration():
-    # Retrieve temporary data from session using the key set in /admin_register
-    temp_data = session.pop('temp_admin', None)
-    print("Admin Final Save Attempt")
-
-    if not temp_data:
-        # User tried to access this route without completing the OTP stage
-        return "Admin registration session expired or invalid.", 403
-
-    # Extract data for database insertion
-    newid = temp_data['id']
-    username = temp_data['username']
-    admin_dept = temp_data['dept']
-
-    # Combine Data and Insert into DB
-    insertion_tuple = (
-        temp_data['id'],
-        temp_data['username'],
-        temp_data['f_name'],
-        temp_data['l_name'],
-        temp_data['fullname'],
-        temp_data['dept'],
-        temp_data['email'],
-        temp_data['password'], # Hashed password
-        temp_data['DOC'],
-        temp_data['ph_no']
-    )
-    
-    try:
-        # Database insertion (Finally)
-        # Using the exact SQL provided in your request
-        conn.execute(
-            "INSERT INTO admin (id, username, f_name, l_name, fullname, dept, email, password, DOC, ph_no) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-            insertion_tuple
-        )
-        conn.commit()
-
-        # Finalize Session/Cookies
-        session['admin'] = {"username": temp_data['username'],'id': temp_data['id'],'dept':  temp_data['dept'],'name':temp_data['f_name']}
-        
-        # Set the redirect URL to the admin login or dashboard page
-        redirect_url = url_for('admin_dashboard') 
-        
-        # Return a JSON object containing the status and the redirect URL
-        response_data = {
-            "success": True, 
-            "message": "Admin account created successfully 🎉. Redirecting...",
-            "redirect_to": redirect_url
-        }
-
-        resp = make_response(jsonify(response_data), 200)
-        
-        # Set cookies on the response object
-        resp.set_cookie('admin_id', newid)
-        resp.set_cookie('dept', admin_dept)
-        
-        print(f"New admin '{username}' saved to db and session/cookies set.")
-        return resp
-        
-    except Exception as e:
-        # Handle database errors
-        print(f"Database error during admin finalization: {e}")
-        # Note: If the session was popped successfully, you might want to re-add it 
-        # or handle rollback, but for simplicity, we return a 500 error.
-        return jsonify({"success": False, "message": "A database error occurred during registration."}), 500
-
-
-#route for fetching complaints from the DB (full view)
 @app.route('/admin_view_complaints')
 def admin_view_complaints():
     #order complaint_id, dof, person's name, status, dept, location

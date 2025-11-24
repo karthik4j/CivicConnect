@@ -248,12 +248,13 @@
             email: document.getElementById('email').value,
             phone: document.getElementById('ph_no').value,
             paswd: document.getElementById('password').value, // Corrected ID
-            cpass: document.getElementById('confirm-password').value
+            cpass: document.getElementById('confirm-password').value,
+            type:'admin'
         };
         
         try {
             // 3. Submit data to Admin registration Flask endpoint (using the original form action as a guide)
-            const response = await fetch('{{ url_for("admin_register") }}', { // Kept the Flask endpoint from original form
+            const response = await fetch('{{ url_for("register") }}', { // Kept the Flask endpoint from original form
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'

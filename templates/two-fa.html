@@ -23,9 +23,12 @@
         --error-bg: #FEE2E2; /* Light Red */
         --error-text: #991B1B; /* Dark Red */
         --error-border: #EF4444;
+        --warning-bg: #FFFBEB; /* Light Yellow */
+        --warning-text: #92400E; /* Dark Yellow/Brown */
+        --warning-border: #FBBF24;
     }
 
-    /* --- BASE STYLES --- */
+    /* --- BASE STYLES (Keep existing) --- */
     body {
         margin: 0;
         font-family: 'Inter', system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
@@ -53,10 +56,10 @@
     }
     
     .form-box {
-        flex-grow: 1; /* Allows the box to center vertically */
+        flex-grow: 1;
         display: flex;
         flex-direction: column;
-        justify-content: flex-start; /* Aligned to top, use 'center' for full vertical centering */
+        justify-content: flex-start;
         align-items: center;
         padding: 40px 20px;
         text-align: center;
@@ -74,11 +77,24 @@
         font-size: 1rem;
         margin-top: 15px;
     }
+    
+    /* NEW STYLE: OTP Timer */
+    .otp-timer {
+        color: var(--warning-text);
+        background-color: var(--warning-bg);
+        border: 1px solid var(--warning-border);
+        padding: 8px 15px;
+        border-radius: var(--radius);
+        margin-top: 20px;
+        font-weight: 600;
+        font-size: 0.9rem;
+    }
 
-    /* --- OTP INPUT & BUTTON CONTAINER --- */
+
+    /* --- OTP INPUT & BUTTON CONTAINER (Keep existing) --- */
     .otp-box {
         display: flex;
-        flex-direction: column; /* Stack vertically for mobile */
+        flex-direction: column;
         align-items: center;
         gap: 20px;
         margin-top: 30px;
@@ -88,7 +104,7 @@
     
     @media (min-width: 600px) {
         .otp-box {
-            flex-direction: row; /* Horizontal on desktop */
+            flex-direction: row;
             justify-content: center;
         }
     }
@@ -101,19 +117,19 @@
         font-size: 1.1rem;
         text-align: center;
         max-width: 180px;
-        -moz-appearance: textfield; /* Hide arrows in Firefox */
+        -moz-appearance: textfield;
         width: 100%;
     }
     
     .otp-box input[type="number"]::-webkit-outer-spin-button,
     .otp-box input[type="number"]::-webkit-inner-spin-button {
-        -webkit-appearance: none; /* Hide arrows in Chrome/Safari */
+        -webkit-appearance: none;
         margin: 0;
     }
 
-    /* --- BUTTON STYLING --- */
+    /* --- BUTTON STYLING (Keep existing) --- */
     .btnstyle {
-        background-color: var(--primary); /* Changed from lawngreen to primary blue */
+        background-color: var(--primary);
         color: white;
         padding: 12px 25px;
         border-radius: var(--radius);
@@ -142,7 +158,7 @@
         box-shadow: none;
     }
 
-    /* --- MESSAGE STYLING (usermsg) --- */
+    /* --- MESSAGE STYLING (Keep existing) --- */
     #usermsg {
         width: 100%;
         max-width: 400px;
@@ -195,11 +211,12 @@
 
     <div class="form-box">
         <h1>Enter your One Time Password (OTP)</h1>
+        
+        <div id="otpTimer" class="otp-timer">OTP expires in 05:00</div>
+        
         <div class="otp-box">
-            <!-- Updated input to include placeholder and size constraints -->
             <input type="number" id="myOTP" minlength="6" maxlength="6" placeholder="******" pattern="[0-9]{6}">
             
-            <!-- Replaced input[type=submit] with a button and added an ID/onclick -->
             <button id="confirmBtn" class="btnstyle" onclick="handleConfirmOtp()">
                 Confirm OTP
             </button>
@@ -211,21 +228,54 @@
     </div>
 
     <script>
-        // Helper function for robust API calls with exponential backoff
+        // --- TIMER LOGIC ---
+        const OTP_TIMEOUT_SECONDS = 5 * 60; // 5 minutes
+        let timeRemaining = OTP_TIMEOUT_SECONDS;
+        let timerInterval;
+
+        /**
+         * Updates the timer display every second.
+         */
+        const updateTimer = () => {
+            const minutes = Math.floor(timeRemaining / 60);
+            const seconds = timeRemaining % 60;
+            const timerDisplay = document.getElementById('otpTimer');
+            const confirmBtn = document.getElementById('confirmBtn');
+
+            timerDisplay.textContent = `OTP expires in ${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+
+            if (timeRemaining <= 0) {
+                clearInterval(timerInterval);
+                timerDisplay.textContent = 'OTP has expired. Please request a new one.';
+                timerDisplay.style.backgroundColor = 'var(--error-bg)';
+                timerDisplay.style.borderColor = 'var(--error-border)';
+                timerDisplay.style.color = 'var(--error-text)';
+                confirmBtn.disabled = true;
+                confirmBtn.textContent = 'Expired';
+            }
+            timeRemaining--;
+        };
+
+        // Start the timer when the page loads
+        timerInterval = setInterval(updateTimer, 1000);
+        // --- END TIMER LOGIC ---
+
+
+        // Helper function for robust API calls with exponential backoff (KEEP AS IS)
         const fetchWithBackoff = async (url, options, maxRetries = 5) => {
             for (let i = 0; i < maxRetries; i++) {
                 try {
                     const response = await fetch(url, options);
-                    if (!response.ok) {
-                        // For server errors (5xx), we retry
-                        throw new Error(`Server error, retrying: ${response.status} ${response.statusText}`);
+                    // Check for general server errors (5xx)
+                    if (response.status >= 500 && response.status <= 599) {
+                         throw new Error(`Server error, retrying: ${response.status} ${response.statusText}`);
                     }
                     return response;
                 } catch (error) {
                     console.error(`Attempt ${i + 1} failed:`, error.message);
-                    if (i === maxRetries - 1) throw error; // Re-throw the error on the final attempt
+                    if (i === maxRetries - 1) throw error; 
                     
-                    const delay = Math.pow(2, i) * 1000 + Math.random() * 500; // 1s, 2s, 4s, 8s, etc. + jitter
+                    const delay = Math.pow(2, i) * 1000 + Math.random() * 500;
                     await new Promise(resolve => setTimeout(resolve, delay));
                 }
             }
@@ -241,12 +291,19 @@
 
             const otpValue = otpInput.value.trim();
 
-            // 1. Client-side validation: ensure it's 6 digits
+            // 1. Client-side validation: ensure it's 6 digits and timer is active
             if (otpValue.length !== 6 || isNaN(otpValue)) {
                 userMsgDiv.textContent = 'Please enter a valid 6-digit OTP.';
                 userMsgDiv.className = 'msg-error';
                 return;
             }
+            
+            if (timeRemaining <= 0) {
+                 userMsgDiv.textContent = 'OTP has expired! Please request a new code.';
+                 userMsgDiv.className = 'msg-error';
+                 return;
+            }
+
 
             // Reset message area and show loading
             confirmBtn.disabled = true;
@@ -254,51 +311,73 @@
             userMsgDiv.textContent = 'Checking code...';
             userMsgDiv.className = '';
 
-            // --- Define the Flask endpoint for OTP verification ---
-            // NOTE: You need to implement this endpoint in Flask (e.g., '/verify_otp')
-            // This endpoint should return JSON: { success: true/false, message: "..." }
             const verificationEndpoint = '/verify_otp'; 
 
             try {
-                // 2. Send OTP to Flask backend using fetch
+                // 2. Send OTP to Flask backend
                 const response = await fetchWithBackoff(verificationEndpoint, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ otp: otpValue })
                 });
                 
-                // Expecting a JSON response from Flask
                 const result = await response.json();
 
                 // 3. Update UI based on server response
                 if (result.success) {
+                    // Correct OTP - Proceed to finalization
+                    clearInterval(timerInterval); // Stop the timer on success
                     userMsgDiv.textContent = result.message || "You have been verified!";
                     userMsgDiv.className = 'msg-success';
                     
-                    // If verified, you might want to automatically call finalize_registration 
-                    // or redirect the user.
-                    // Example for calling the final step:
-                     await finalizeRegistration(); 
+                    await finalizeRegistration(); 
+                    
                 } else {
+                    // Incorrect OTP or other server-side error
                     userMsgDiv.textContent = result.message || "Invalid OTP. Please try again.";
                     userMsgDiv.className = 'msg-error';
+                    
+                    if (result.expired || response.status === 403) {
+                         // Specific handling for OTP expired
+                         clearInterval(timerInterval); // Ensure timer is stopped
+                         // The timer display will be handled by the updateTimer function if time ran out, 
+                         // but we also ensure the button is disabled.
+                         document.getElementById('otpTimer').textContent = 'OTP has expired. Please request a new one.';
+                         confirmBtn.disabled = true;
+                         confirmBtn.textContent = 'Expired';
+                         
+                    } else if (result.redirect_to || response.status === 429) {
+                        // Specific handling for Max Attempts Reached
+                        clearInterval(timerInterval); // Stop the timer
+                        confirmBtn.disabled = true;
+                        confirmBtn.textContent = 'Locked';
+                        
+                        // Automatically redirect the user if a URL is provided
+                        if (result.redirect_to) {
+                             setTimeout(() => {
+                                 window.location.href = result.redirect_to;
+                             }, 2000); // Wait 2 seconds before redirecting
+                        }
+                    }
                 }
 
             } catch (error) {
                 console.error('OTP Verification Error:', error);
                 // Handle connection/fatal errors
-                userMsgDiv.textContent = 'Could not connect to the server. Please check your network and try again.';
+                userMsgDiv.textContent = 'A network error occurred. Please try again.';
                 userMsgDiv.className = 'msg-error';
             } finally {
-                // Re-enable button regardless of outcome
-                confirmBtn.disabled = false;
-                confirmBtn.textContent = 'Confirm OTP';
+                // Re-enable button ONLY if not locked/expired
+                if (confirmBtn.textContent !== 'Expired' && confirmBtn.textContent !== 'Locked') {
+                    confirmBtn.disabled = false;
+                    confirmBtn.textContent = 'Confirm OTP';
+                }
             }
         };
         
 
     window.finalizeRegistration = async () => {
-    // Example of calling the final endpoint
+    // Example of calling the final endpoint (KEEP AS IS)
     const userMsgDiv = document.getElementById('usermsg');
     userMsgDiv.textContent = "Finalizing registration...";
     userMsgDiv.className = '';
@@ -310,22 +389,17 @@
             body: JSON.stringify({}) 
         });
 
-        // Expecting JSON from Flask, not just text
         const result = await response.json(); 
 
         if (response.ok && result.success) {
-            userMsgDiv.textContent = result.message; // e.g., "Account created Successfully. Redirecting..."
+            userMsgDiv.textContent = result.message; 
             userMsgDiv.className = 'msg-success';
 
-            // --- MODIFICATION START ---
-            // Perform the client-side redirect using the URL returned by Flask
             if (result.redirect_to) {
                 window.location.href = result.redirect_to;
             }
-            // --- MODIFICATION END ---
             
         } else {
-            // Handle server-side errors or success=False from JSON response
             userMsgDiv.textContent = result.message || `Finalization Failed: ${response.status} ${response.statusText}`;
             userMsgDiv.className = 'msg-error';
         }
