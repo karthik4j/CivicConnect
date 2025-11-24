@@ -70,7 +70,7 @@ def send_message(number: str, text: str):
 
     client = Client(account_sid, auth_token)
 
-    #twilio_msg = client.messages.create(body=text,from_=from_number,to=format_indian_number(number),)
+    twilio_msg = client.messages.create(body=text,from_=from_number,to=format_indian_number(number),)
     print('Message: ',text, '\nRecepient: ',number)
 
 
@@ -143,9 +143,11 @@ def send_notfications_to_users(msg_obj):
     adm_dept = msg_obj['dept']
     msg_date = msg_obj['date']
 
-    if msg_priority == 0:
+    msg_priority = str(msg_priority)
+
+    if msg_priority == '0':
         msg_priority = 'High'
-    elif msg_priority == 1:
+    elif msg_priority == '1':
         msg_priority = 'Medium'
     else:
         msg_priority = 'Low'
