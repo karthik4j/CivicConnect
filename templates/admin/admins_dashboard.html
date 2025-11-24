@@ -127,7 +127,26 @@
 </main>
 
 <div class="buttons-container">
-  <button class="adm" onclick='location.href="{{ url_for("admin_view_complaints") }}"'>View complaints</button>
-  <button class="adm" onclick='location.href="{{ url_for("admin_issue_notifications_page") }}"'>Issue notifications</button>
+  <button class="adm" onclick='one()'>View complaints</button>
+  <button class="adm" onclick='two()'>Issue notifications</button>
+  <button class="adm" onclick='three()'>See Past notifications</button>
 </div>
+
+<script>
+    function one()
+    {
+      location.href="{{ url_for("admin_view_complaints")}}";
+    }
+
+    
+    function two()
+    {
+      location.href="{{ url_for("admin_issue_notifications_page") }}";
+    }
+    
+    function three()
+    {
+      location.href="{{ url_for("past_notifications") }}";
+    }
+</script>
 {% endblock %}

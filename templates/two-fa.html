@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin Registration – CivicConnect OTP</title>
+<style>
+    /* --- CSS VARIABLES --- */
+    :root {
+        --bg: #F8FAFC;
+        --surface: #FFFFFF;
+        --primary: #1D4ED8; /* Deep Blue */
+        --primary-2: #3B82F6; /* Lighter Blue */
+        --text: #1E293B;
+        --muted: #64748B;
+        --border: #E2E8F0;
+        --shadow: 0 8px 24px rgba(2, 6, 23, .08);
+        --radius: 14px;
+        /* Custom colors for feedback */
+        --success-bg: #D1FAE5; /* Light Green */
+        --success-text: #065F46; /* Dark Green */
+        --success-border: #10B981;
+        --error-bg: #FEE2E2; /* Light Red */
+        --error-text: #991B1B; /* Dark Red */
+        --error-border: #EF4444;
+        --warning-bg: #FFFBEB; /* Light Yellow */
+        --warning-text: #92400E; /* Dark Yellow/Brown */
+        --warning-border: #FBBF24;
+    }
+
+    /* --- BASE STYLES (Keep existing) --- */
+    body {
+        margin: 0;
+        font-family: 'Inter', system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+        background: var(--bg);
+        color: var(--text);
+        display: flex;
+        flex-direction: column;
+        min-height: 100vh;
+    }
+
+    header {
+        background: var(--primary);
+        color: #fff;
+        padding: 16px 24px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        box-shadow: var(--shadow);
+    }
+
+    header h2 {
+        margin: 0;
+        font-size: 1.4rem;
+        font-weight: 600;
+    }
+    
+    .form-box {
+        flex-grow: 1;
+        display: flex;
+        flex-direction: column;
+        justify-content: flex-start;
+        align-items: center;
+        padding: 40px 20px;
+        text-align: center;
+    }
+
+    .form-box h1 {
+        font-size: clamp(1.5rem, 5vw, 2rem);
+        margin-bottom: 10px;
+        color: var(--primary);
+    }
+
+    .form-box h3 {
+        color: var(--muted);
+        font-weight: 400;
+        font-size: 1rem;
+        margin-top: 15px;
+    }
+    
+    /* NEW STYLE: OTP Timer */
+    .otp-timer {
+        color: var(--warning-text);
+        background-color: var(--warning-bg);
+        border: 1px solid var(--warning-border);
+        padding: 8px 15px;
+        border-radius: var(--radius);
+        margin-top: 20px;
+        font-weight: 600;
+        font-size: 0.9rem;
+    }
+
+
+    /* --- OTP INPUT & BUTTON CONTAINER (Keep existing) --- */
+    .otp-box {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 20px;
+        margin-top: 30px;
+        width: 100%;
+        max-width: 350px;
+    }
+    
+    @media (min-width: 600px) {
+        .otp-box {
+            flex-direction: row;
+            justify-content: center;
+        }
+    }
+
+    .otp-box input[type="number"] {
+        flex-grow: 1;
+        padding: 12px 15px;
+        border: 2px solid var(--border);
+        border-radius: var(--radius);
+        font-size: 1.1rem;
+        text-align: center;
+        max-width: 180px;
+        -moz-appearance: textfield;
+        width: 100%;
+    }
+    
+    .otp-box input[type="number"]::-webkit-outer-spin-button,
+    .otp-box input[type="number"]::-webkit-inner-spin-button {
+        -webkit-appearance: none;
+        margin: 0;
+    }
+
+    /* --- BUTTON STYLING (Keep existing) --- */
+    .btnstyle {
+        background-color: var(--primary);
+        color: white;
+        padding: 12px 25px;
+        border-radius: var(--radius);
+        border: none;
+        font-size: 1rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: background-color 0.2s, transform 0.1s, box-shadow 0.2s;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        width: 100%;
+        max-width: 180px;
+    }
+
+    .btnstyle:hover {
+        background-color: var(--primary-2);
+        box-shadow: 0 6px 8px rgba(0, 0, 0, 0.15);
+    }
+
+    .btnstyle:active {
+        transform: scale(0.98);
+    }
+    
+    .btnstyle:disabled {
+        background-color: var(--muted);
+        cursor: not-allowed;
+        box-shadow: none;
+    }
+
+    /* --- MESSAGE STYLING (Keep existing) --- */
+    #usermsg {
+        width: 100%;
+        max-width: 400px;
+        margin-top: 40px;
+        min-height: 40px;
+        transition: all 0.3s ease-in-out;
+        text-align: center;
+    }
+
+    .msg-success {
+        background-color: var(--success-bg);
+        color: var(--success-text);
+        border: 1px solid var(--success-border);
+        padding: 15px;
+        border-radius: var(--radius);
+        font-weight: 600;
+        animation: fadeIn 0.5s ease-out;
+    }
+
+    .msg-error {
+        background-color: var(--error-bg);
+        color: var(--error-text);
+        border: 1px solid var(--error-border);
+        padding: 15px;
+        border-radius: var(--radius);
+        font-weight: 600;
+        animation: shake 0.5s;
+    }
+    
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(-10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    
+    @keyframes shake {
+      0%, 100% {transform: translateX(0);}
+      20%, 60% {transform: translateX(-5px);}
+      40%, 80% {transform: translateX(5px);}
+    }
+</style>
+</head>
+
+<body>
+
+    <header>
+        <a href="{{ url_for('index') }}">Back</a>
+        <h2>🏛️ CivicConnect</h2>
+        <h2> Registration Page</h2>
+    </header> 
+
+    <div class="form-box">
+        <h1>Enter your One Time Password (OTP)</h1>
+        
+        <div id="otpTimer" class="otp-timer">OTP expires in 05:00</div>
+        
+        <div class="otp-box">
+            <input type="number" id="myOTP" minlength="6" maxlength="6" placeholder="******" pattern="[0-9]{6}">
+            
+            <button id="confirmBtn" class="btnstyle" onclick="handleConfirmOtp()">
+                Confirm OTP
+            </button>
+        </div>
+        
+        <h3>OTP has been sent to your phone number</h3>
+
+        <div id="usermsg"></div>
+    </div>
+
+    <script>
+        // --- TIMER LOGIC ---
+        const OTP_TIMEOUT_SECONDS = 5 * 60; // 5 minutes
+        let timeRemaining = OTP_TIMEOUT_SECONDS;
+        let timerInterval;
+
+        /**
+         * Updates the timer display every second.
+         */
+        const updateTimer = () => {
+            const minutes = Math.floor(timeRemaining / 60);
+            const seconds = timeRemaining % 60;
+            const timerDisplay = document.getElementById('otpTimer');
+            const confirmBtn = document.getElementById('confirmBtn');
+
+            timerDisplay.textContent = `OTP expires in ${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+
+            if (timeRemaining <= 0) {
+                clearInterval(timerInterval);
+                timerDisplay.textContent = 'OTP has expired. Please request a new one.';
+                timerDisplay.style.backgroundColor = 'var(--error-bg)';
+                timerDisplay.style.borderColor = 'var(--error-border)';
+                timerDisplay.style.color = 'var(--error-text)';
+                confirmBtn.disabled = true;
+                confirmBtn.textContent = 'Expired';
+            }
+            timeRemaining--;
+        };
+
+        // Start the timer when the page loads
+        timerInterval = setInterval(updateTimer, 1000);
+        // --- END TIMER LOGIC ---
+
+
+        // Helper function for robust API calls with exponential backoff (KEEP AS IS)
+        const fetchWithBackoff = async (url, options, maxRetries = 5) => {
+            for (let i = 0; i < maxRetries; i++) {
+                try {
+                    const response = await fetch(url, options);
+                    // Check for general server errors (5xx)
+                    if (response.status >= 500 && response.status <= 599) {
+                         throw new Error(`Server error, retrying: ${response.status} ${response.statusText}`);
+                    }
+                    return response;
+                } catch (error) {
+                    console.error(`Attempt ${i + 1} failed:`, error.message);
+                    if (i === maxRetries - 1) throw error; 
+                    
+                    const delay = Math.pow(2, i) * 1000 + Math.random() * 500;
+                    await new Promise(resolve => setTimeout(resolve, delay));
+                }
+            }
+        };
+
+        /**
+         * Main function to handle OTP submission.
+         */
+        window.handleConfirmOtp = async () => {
+            const otpInput = document.getElementById('myOTP');
+            const userMsgDiv = document.getElementById('usermsg');
+            const confirmBtn = document.getElementById('confirmBtn');
+
+            const otpValue = otpInput.value.trim();
+
+            // 1. Client-side validation: ensure it's 6 digits and timer is active
+            if (otpValue.length !== 6 || isNaN(otpValue)) {
+                userMsgDiv.textContent = 'Please enter a valid 6-digit OTP.';
+                userMsgDiv.className = 'msg-error';
+                return;
+            }
+            
+            if (timeRemaining <= 0) {
+                 userMsgDiv.textContent = 'OTP has expired! Please request a new code.';
+                 userMsgDiv.className = 'msg-error';
+                 return;
+            }
+
+
+            // Reset message area and show loading
+            confirmBtn.disabled = true;
+            confirmBtn.textContent = 'Verifying...';
+            userMsgDiv.textContent = 'Checking code...';
+            userMsgDiv.className = '';
+
+            const verificationEndpoint = '/verify_otp'; 
+
+            try {
+                // 2. Send OTP to Flask backend
+                const response = await fetchWithBackoff(verificationEndpoint, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ otp: otpValue })
+                });
+                
+                const result = await response.json();
+
+                // 3. Update UI based on server response
+                if (result.success) {
+                    // Correct OTP - Proceed to finalization
+                    clearInterval(timerInterval); // Stop the timer on success
+                    userMsgDiv.textContent = result.message || "You have been verified!";
+                    userMsgDiv.className = 'msg-success';
+                    
+                    await finalizeRegistration(); 
+                    
+                } else {
+                    // Incorrect OTP or other server-side error
+                    userMsgDiv.textContent = result.message || "Invalid OTP. Please try again.";
+                    userMsgDiv.className = 'msg-error';
+                    
+                    if (result.expired || response.status === 403) {
+                         // Specific handling for OTP expired
+                         clearInterval(timerInterval); // Ensure timer is stopped
+                         // The timer display will be handled by the updateTimer function if time ran out, 
+                         // but we also ensure the button is disabled.
+                         document.getElementById('otpTimer').textContent = 'OTP has expired. Please request a new one.';
+                         confirmBtn.disabled = true;
+                         confirmBtn.textContent = 'Expired';
+                         
+                    } else if (result.redirect_to || response.status === 429) {
+                        // Specific handling for Max Attempts Reached
+                        clearInterval(timerInterval); // Stop the timer
+                        confirmBtn.disabled = true;
+                        confirmBtn.textContent = 'Locked';
+                        
+                        // Automatically redirect the user if a URL is provided
+                        if (result.redirect_to) {
+                             setTimeout(() => {
+                                 window.location.href = result.redirect_to;
+                             }, 2000); // Wait 2 seconds before redirecting
+                        }
+                    }
+                }
+
+            } catch (error) {
+                console.error('OTP Verification Error:', error);
+                // Handle connection/fatal errors
+                userMsgDiv.textContent = 'A network error occurred. Please try again.';
+                userMsgDiv.className = 'msg-error';
+            } finally {
+                // Re-enable button ONLY if not locked/expired
+                if (confirmBtn.textContent !== 'Expired' && confirmBtn.textContent !== 'Locked') {
+                    confirmBtn.disabled = false;
+                    confirmBtn.textContent = 'Confirm OTP';
+                }
+            }
+        };
+        
+
+    window.finalizeRegistration = async () => {
+    // Example of calling the final endpoint (KEEP AS IS)
+    const userMsgDiv = document.getElementById('usermsg');
+    userMsgDiv.textContent = "Finalizing registration...";
+    userMsgDiv.className = '';
+    
+    try {
+        const response = await fetchWithBackoff('/finalize_registration', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({}) 
+        });
+
+        const result = await response.json(); 
+
+        if (response.ok && result.success) {
+            userMsgDiv.textContent = result.message; 
+            userMsgDiv.className = 'msg-success';
+
+            if (result.redirect_to) {
+                window.location.href = result.redirect_to;
+            }
+            
+        } else {
+            userMsgDiv.textContent = result.message || `Finalization Failed: ${response.status} ${response.statusText}`;
+            userMsgDiv.className = 'msg-error';
+        }
+    } catch (error) {
+        userMsgDiv.textContent = 'Fatal error during final registration. Contact support.';
+        userMsgDiv.className = 'msg-error';
+    }
+};
+    </script>
+</body>
+</html>

@@ -5,10 +5,15 @@ import uuid
 from flask_session import Session
 import sqlite3,os
 from werkzeug.utils import secure_filename
-from datetime import datetime
+from datetime import datetime, timedelta
 from flask import send_from_directory
 import threading
-
+import string,random
+#3rd party intergration
+from twilio.rest import Client
+from dotenv import load_dotenv
+from pathlib import Path
+#---------------------------
 #libraries for AI part:---------------------------------------------------------------
 from transformers import pipeline
 import pandas as pd
@@ -17,69 +22,10 @@ from sklearn.model_selection import train_test_split
 import pandas as pd
 from datasets import Dataset
 from sklearn.model_selection import train_test_split
-
-from transformers import (
-    AutoTokenizer,
-    AutoModelForSequenceClassification,
-    TrainingArguments,
-    Trainer
-)
-import torch
-
 #--------------------------------------------- Ai SUMMARIZER PART------
 summarizer = pipeline("summarization", model="t5-base", tokenizer="t5-base")
-#--------------------------------------- Ai Categorizer part --------------------------
-# CONFIGURATION
-MODEL_NAME = "bert-base-uncased"
-CSV_PATH = "civic_complaints.csv"
-NUM_EPOCHS = 3
-BATCH_SIZE = 8
-
-# LOAD DATA
-df = pd.read_csv(CSV_PATH)
-df = df.dropna(subset=['text', 'department'])  #Cleans any missing rows
-
-# Label encoding
-departments = sorted(df['department'].unique().tolist())
-label2id = {label: idx for idx, label in enumerate(departments)}
-id2label = {idx: label for label, idx in label2id.items()}
-df['label'] = df['department'].map(label2id)
-
-# Split
-train_df, test_df = train_test_split(df, test_size=0.2, random_state=42)
-train_dataset = Dataset.from_pandas(train_df[['text', 'label']])
-test_dataset = Dataset.from_pandas(test_df[['text', 'label']])
-
-# TOKENIZATION
-tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME)
-
-def tokenize(example):
-    return tokenizer(example["text"], truncation=True, padding="max_length")
-
-train_dataset = train_dataset.map(tokenize, batched=True)
-test_dataset = test_dataset.map(tokenize, batched=True)
-
-# LOAD MODEL
-model = AutoModelForSequenceClassification.from_pretrained(
-    MODEL_NAME,
-    num_labels=len(departments),
-    id2label=id2label,
-    label2id=label2id
-)
-# Auto categorizer function------------------------------------------------------------------------------
-def predict_department(text,src):
-    inputs = tokenizer(text, return_tensors="pt", truncation=True, padding=True)
-    with torch.no_grad():
-        outputs = model(**inputs)
-        probs = torch.nn.functional.softmax(outputs.logits, dim=1)
-        predicted_id = torch.argmax(probs).item()
-        #return id2label[predicted_id]
-        print(f"Predicted dept: {id2label[predicted_id]}")
-        res = conn.execute("UPDATE complaints SET dept = ? WHERE imgsrc = ?",(id2label[predicted_id],src))
-        conn.commit()
-
-
 #---------------------------------------------------------------------------------------
+
 app = Flask(__name__, template_folder='templates',static_folder='static',static_url_path='/')
 
 #file management
@@ -90,6 +36,43 @@ if not os.path.exists(UPLOAD_FOLDER):
 
 # Database connection
 conn = sqlite3.connect('database.db', check_same_thread=False)
+#-----------------------         twilio ----------------------------------------------------
+
+# Find the venv folder relative to this file
+base_dir = Path(__file__).resolve().parents[0]  # adjust if needed
+#print(base_dir)
+venv_env = base_dir / ".env" / ".env"
+
+# Load .env from inside venv
+load_dotenv(venv_env)
+
+def format_indian_number(num_str: str) -> str:
+
+    # Keep only digits
+    digits = "".join(filter(str.isdigit, num_str))
+
+    # Case 1: Already includes country code (91)
+    if digits.startswith("91") and len(digits) == 12:
+        return "+" + digits
+
+    # Case 2: Only 10-digit local Indian number
+    if len(digits) == 10:
+        return "+91" + digits
+
+    # If none match, error out
+    raise ValueError(f"Invalid Indian phone number: {num_str}")
+
+
+def send_message(number: str, text: str):
+    account_sid = os.getenv("TWILIO_ACCOUNT_SID")
+    auth_token = os.getenv("TWILIO_AUTH_TOKEN")
+    from_number = os.getenv("TWILIO_PHONE_NUMBER")
+
+    client = Client(account_sid, auth_token)
+
+    twilio_msg = client.messages.create(body=text,from_=from_number,to=format_indian_number(number),)
+    print('Message: ',text, '\nRecepient: ',number)
+
 
 #---------------------------------------------------------------------------- FUNCTIONS ------------------------------------------------------------------------------------------------
 def create_table():
@@ -102,7 +85,7 @@ def create_table():
 
     usr_table_exists = usr_table_chck.fetchone()
     if not usr_table_exists:
-        conn.execute("CREATE TABLE user (id TEXT PRIMARY KEY, username TEXT UNIQUE, f_name TEXT,fullname TEXT, l_name TEXT, email TEXT,ph_no INT,DOC DATE, password TEXT)")
+        conn.execute("CREATE TABLE user (id TEXT PRIMARY KEY, username TEXT UNIQUE, f_name TEXT,fullname TEXT, l_name TEXT, email TEXT,ph_no INT,DOC DATE, password TEXT, WARD INTEGER)")
         conn.commit()
 
     comp_table_exists = comp_table_chck.fetchone()
@@ -119,13 +102,13 @@ def create_table():
 
     message_table_exists = messages_table_chck.fetchone()
     if not message_table_exists:
-        conn.execute("CREATE TABLE messages(msg_id INTEGER PRIMARY KEY AUTOINCREMENT, msg TEXT,priority TEXT,msg_title TEXT,issue_date DATE, issued_by TEXT, dept TEXT)")
+        conn.execute("CREATE TABLE messages(msg_id INTEGER PRIMARY KEY AUTOINCREMENT, msg TEXT,priority TEXT,msg_title TEXT,issue_date DATE, issued_by TEXT, dept TEXT,WARD INTEGER,adm_name TEXT)")
         conn.commit()
 
 
     resolution_table_exists = resolution_table_chck.fetchone()
     if not resolution_table_exists:
-        conn.execute("""CREATE TABLE IF NOT EXISTS resolution (resolution_id INTEGER PRIMARY KEY AUTOINCREMENT, comp_id INTEGER, admin_id TEXT, user_id TEXT, status INT, msg TEXT, date_of_change DATE, FOREIGN KEY(comp_id) REFERENCES complaints(comp_id) FOREIGN KEY(admin_id) REFERENCES admin(id), FOREIGN KEY(user_id) REFERENCES user(id))""")
+        conn.execute("""CREATE TABLE IF NOT EXISTS resolution (resolution_id INTEGER PRIMARY KEY AUTOINCREMENT, comp_id INTEGER, admin_id TEXT, user_id TEXT, status INT, msg TEXT, date_of_change DATE, adm_name TEXT, dept TEXT, FOREIGN KEY(comp_id) REFERENCES complaints(comp_id) FOREIGN KEY(admin_id) REFERENCES admin(id), FOREIGN KEY(user_id) REFERENCES user(id))""")
 
 def clean_tuple(tup):
    strings=""
@@ -150,9 +133,103 @@ def start_summary(word,id):
 
     res = conn.execute("UPDATE complaints SET summary = ? WHERE imgsrc = ?",(summary,id))
     conn.commit()
-    
 
-#---------------------------------------------------------------------------- FUNCTIONS ------------------------------------------------------------------------------------------------
+def send_notfications_to_users(msg_obj):
+    ward = msg_obj['ward']
+    msg_title = msg_obj['title']
+    msg_body = msg_obj['body']
+    msg_priority = msg_obj['priority']
+    adm_name = msg_obj['adm_name']
+    adm_dept = msg_obj['dept']
+    msg_date = msg_obj['date']
+
+    msg_priority = str(msg_priority)
+
+    if msg_priority == '0':
+        msg_priority = 'High'
+    elif msg_priority == '1':
+        msg_priority = 'Medium'
+    else:
+        msg_priority = 'Low'
+
+    print('type of ward: ',type(ward),'ward no: ',ward)
+    if ward == 'all':
+        
+        res = conn.execute("SELECT ph_no FROM user")
+        res = res.fetchall()
+        #print('list of all ward numbers: ',res)
+
+        if len(res) == 0 or res == None:
+            print('no matching numbers')
+            return 
+
+        for i in res:
+            i = str(i)
+            msg_body = f"{msg_title} \tPriority : {msg_priority} \tIssued on : {msg_date} \n{msg_body}\n By {adm_name}, {adm_dept}"
+           # print('Message: ',msg_body, 'Recepient: ',format_indian_number(i))
+            send_message(format_indian_number(i),msg_body)
+
+
+   
+    elif ward != '0':
+        #select all numbers from that ward
+        res = conn.execute("SELECT ph_no FROM user WHERE ward = ?",(ward, ))
+        res = res.fetchall() 
+        #print('list of some ward numbers: ',res)
+
+        if len(res) == 0 or res == None:
+            print('no matching numbers')
+            return 
+        
+        for i in res:
+            i = str(i)
+            msg_body = f"{msg_title} Priority : {msg_priority} Issued On: {msg_date} By {adm_name}, {adm_dept} \n {msg_body} "
+            #print('Message: ',msg_body, 'Recepient: ',format_indian_number(i))
+            send_message(format_indian_number(i),msg_body)
+
+    elif len(ward) == 0 or ward == None:
+        print('error in sending messages to users')
+        return 
+
+
+def generate_otp_choice():
+    otp_integer = random.randint(100000, 999999)
+    return otp_integer    
+
+def generate_timestamp():
+    #Generates the current timestamp formatted as 'yyyy-mm-dd-hh-mm-ss'.
+    now = datetime.now()
+    formatted_timestamp = now.strftime("%Y-%m-%d-%H-%M-%S")
+    return formatted_timestamp
+
+def check_timestamp(a_timestamp: str) -> bool:
+    #yyyy-mm-dd-hh-mm-ss format
+
+    TIME_FORMAT = "%Y-%m-%d-%H-%M-%S"
+    MAX_DURATION = timedelta(minutes=5)
+
+    try:
+        past_time = datetime.strptime(a_timestamp, TIME_FORMAT)
+        current_time = datetime.now()
+
+        time_difference = abs(current_time - past_time)
+
+        is_recent = time_difference < MAX_DURATION
+
+        print(f"\n--- Timestamp Check ---")
+        print(f"Given Timestamp: {a_timestamp}")
+        print(f"Current Time:    {current_time.strftime(TIME_FORMAT)}")
+        print(f"Time Difference: {time_difference}")
+        print(f"Is difference < 5 mins? {is_recent}")
+        print(f"-----------------------")
+        
+        return is_recent
+
+    except ValueError:
+        print(f"\nError: Timestamp '{a_timestamp}' does not match the expected format {TIME_FORMAT}. Cannot perform check.")
+        return False
+
+#------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 app.secret_key = 'your_secret_key'
 
 # session configuration
@@ -167,16 +244,130 @@ def index():
         return redirect(url_for('home'))
   return render_template('index.html')
 
+@app.route('/user_forgot')
+def user_forgot():
+    session['user_type']={'type':"user"}
+    return render_template('reset_user_pass.html')
+
+@app.route('/admin_forgot')
+def admin_forgot():
+    session['user_type']={'type':"admin"}
+    return render_template('reset_user_pass.html')
+
+@app.route('/user_forgot_back')
+def user_forgot_back():
+    session.clear()
+    return redirect(url_for('index'))
+
+@app.route('/check_number_OTP', methods=['POST'])
+def check_number_OTP():
+    data = request.get_json()
+    ph_no = data.get('ph_no')
+    #print(ph_no)
+    usr_type = session.pop('user_type') 
+    usr_type = usr_type['type']
+    print('Who is: ',usr_type)
+
+    if(usr_type == 'user'):
+        
+        id = conn.execute('SELECT id FROM user WHERE ph_no = ?',(ph_no,))
+        id = id.fetchone()
+        id = clean_tuple(id)
+        print('ID of user: ',id)
+        if id=='None':
+            resp = jsonify({'status':'NOT','message':'Invalid phone number'})
+            session['user_type']={'type':usr_type}
+        else:
+            resp = jsonify({'status':'OK','message':None})
+            otp_now = generate_otp_choice()
+            session['user_type']={'type':"user",'id':id,'otp':otp_now}
+            print('OTP generated : ',otp_now)
+            msg_body = f"\nCivicConnect\nYour OTP for password reset is: {otp_now}"
+            send_message(format_indian_number(str(ph_no)),msg_body)
+        return resp
+        
+    elif(usr_type == 'admin'):
+        id = conn.execute('SELECT id FROM admin WHERE ph_no = ?',(ph_no,))
+        id = clean_tuple(id.fetchone())
+        print('ID of admin: ',id)
+        if id=='None':
+            resp = jsonify({'status':'NOT','message':'Invalid phone number'})
+            session['user_type']={'type':usr_type}
+        else:
+            otp_now = generate_otp_choice()
+            resp = jsonify({'status':'OK','message':None})
+            session['user_type']={'type':"admin",'id':id,'otp':otp_now}
+            print('OTP generated : ',otp_now)
+            msg_body = f"\nCivicConnect\nYour OTP for password reset is: {otp_now}"
+            send_message(format_indian_number(str(ph_no)),msg_body)
+        return resp
+    else:
+        print("error")
+        resp = jsonify({'message':"Error with resetting, redireting to homepage",'url':url_for('index')})
+        return resp
+    
+@app.route('/verfiy_OTP_sent',methods=(['POST']))
+def verfiy_OTP_sent():
+    data = request.get_json()
+    given_OTP =int(data['otp'])
+
+    expected = int(session.get('user_type')['otp'])
+    print('OTP sent : ',given_OTP)
+
+    if(expected == given_OTP):
+        resp = jsonify({'message':"OK"})
+    else:
+        resp = jsonify({'message':"NOT"})
+    return resp
+
+@app.route('/set-new-password',methods=['POST'])
+def set_new_password():
+    data = request.get_json()
+    new_password = data['password']
+    usr_session = session.pop('user_type')
+    usr_type = usr_session['type']
+    usr_id = usr_session['id']
+
+    print("New password: ",new_password)
+    print('ID : ',usr_id)
+
+    if usr_type == 'user':
+        res = conn.execute('SELECT id from user WHERE id = ?',(usr_id,))
+        if res.fetchone():
+            res = conn.execute('UPDATE user SET password = ? WHERE id = ?',(generate_password_hash(new_password),usr_id, ))
+            conn.commit()
+            resp = jsonify({'message':'OK','redirect':url_for('index')})
+        else:
+            resp = jsonify({'message':'NOT'})
+        return resp
+    
+    elif usr_type == 'admin':
+        res = conn.execute('SELECT id from admin WHERE id = ?',(usr_id,))
+        if res.fetchone():
+            res = conn.execute('UPDATE admin SET password = ? WHERE id = ?',(generate_password_hash(new_password),usr_id, ))
+            conn.commit()
+            resp = jsonify({'message':'OK','redirect':url_for('admin_login')})
+        else:
+            resp = jsonify({'message':'NOT'})
+        return resp
+    else:
+        resp = resp = jsonify({'message':'Server error, try again'})
+        return resp
+
+
 @app.route('/home')
 def home():
-      if "username" in session:
-        return render_template("user_dashboard.html", username=session['username'])
+      if session.get('user')['username']:
+        return render_template("user_dashboard.html")
       return render_template('index.html')
-
 
 @app.route('/mayor')
 def mayor_page():
     return render_template('mayor.html')
+
+@app.route('/user_dashboard_page')
+def user_dashboard_page():
+    return render_template('user_dashboard.html')
 
 @app.route('/secretary')
 def secretary_page():
@@ -201,11 +392,11 @@ def new_complaint():
 
 @app.route('/my_complaints')
 def my_complaints():
-    logged_in_usr_id = request.cookies.get('id')
+    logged_in_usr_id = session.get('user')['id']
 
     res = conn.execute(
-        'SELECT comp_id, complaint, dept, status FROM complaints WHERE id = ?',
-        (logged_in_usr_id.replace("'",""),)
+        'SELECT comp_id, complaint, dept, status FROM complaints WHERE id = ? AND status != 2 ORDER BY comp_id DESC',
+        (logged_in_usr_id,)
     )
     result = res.fetchall()   # e.g., [(10, "My car won't start", 'Traffic Management', 0), ...]
 
@@ -215,54 +406,59 @@ def my_complaints():
 def help_user():
     return render_template('help.html')
 
-#todo need to make the webiste here.
+
 @app.route('/complaints/<id>')
 def view_detailed_complaints_usr(id):
-    res =conn.execute("""SELECT 
-c.dof AS complaint_date,
-    c.complaint,
-    c.status AS complaint_status,
-    r.msg AS admin_response,
-    a.dept AS admin_department,
-    a.fullname AS admin_name,
-    r.date_of_change AS response_date
-FROM complaints c
-LEFT JOIN (
-    SELECT res.*
-    FROM resolution res
-    INNER JOIN (
-        SELECT comp_id, MAX(date_of_change) AS latest_date
-        FROM resolution
-        GROUP BY comp_id
-    ) latest_res
-    ON res.comp_id = latest_res.comp_id AND res.date_of_change = latest_res.latest_date
-) r ON c.comp_id = r.comp_id
-LEFT JOIN admin a ON r.admin_id = a.id
-WHERE c.comp_id = ?;
-""", (id,))
-
-# fetch result
+    # This query uses the ROW_NUMBER() window function to efficiently find the single latest 
+    # resolution for the specific complaint ID.
+    # We now use both 'date_of_change' and 'resolution_id' in the ORDER BY clause 
+    # to ensure a deterministic selection of the absolute newest resolution entry, 
+    # even in case of identical timestamps.
+    res = conn.execute("""
+        SELECT 
+            c.dof AS complaint_date,
+            c.complaint,
+            c.status AS complaint_status,
+            r.msg AS admin_response,
+            r.dept AS admin_department,     -- Fetched directly from the resolution table
+            r.adm_name AS admin_name,       -- Fetched directly from the resolution table
+            r.date_of_change AS response_date
+        FROM complaints c
+        LEFT JOIN (
+            -- Subquery to select the latest resolution (rn=1) for each complaint_id
+            SELECT 
+                *,
+                ROW_NUMBER() OVER (
+                    PARTITION BY comp_id 
+                    -- FIX: Order by date_of_change DESC (primary) and resolution_id DESC (tie-breaker)
+                    ORDER BY date_of_change DESC, resolution_id DESC
+                ) as rn
+            FROM resolution
+        ) r ON c.comp_id = r.comp_id AND r.rn = 1
+        WHERE c.comp_id = ?;
+    """, (id,))
+    
+    # fetch result
     result = res.fetchone()
 
-    """
-    if result:
-        print("Complaint Date:", result[0])
-        print("Complaint:", result[1])
-        print("Status:", result[2])
-        print("Admin Response:", result[3])
-        print("Admin Department:", result[4])
-        print("Admin Name:", result[5])
-        print("Response Date:", result[6])
-    else:
-        print("No complaint found for that ID.")
-    """
-    return render_template('view_detailed_complaints_user.html',complaint_id=id,issue_date=result[0],status=result[2],complaint=result[1],response=result[3],dept=result[4],officer_name=result[5],updated_date=result[6])
+    if not result:
+        return "Complaint not found", 404 
+
+    return render_template('view_detailed_complaints_user.html',
+                           complaint_id=id,
+                           issue_date=result[0],
+                           status=result[2],
+                           complaint=result[1],
+                           response=result[3],
+                           dept=result[4],
+                           officer_name=result[5],
+                           updated_date=result[6])
 
 @app.route('/complaint_status')
 def complaint_status():
   
-  logged_in_usr_id = request.cookies.get('id')
-  res = conn.execute('SELECT comp_id, dof, complaint, status FROM complaints WHERE id = ?',(logged_in_usr_id, ))
+  logged_in_usr_id = session.get('user')['id']
+  res = conn.execute('SELECT comp_id, dof, complaint, status FROM complaints WHERE id = ? ORDER BY comp_id DESC',(logged_in_usr_id, ))
   res = res.fetchall()
 
   return render_template('complaint_status.html',complaints=res)
@@ -276,127 +472,452 @@ def login():
     row = res.fetchone()
 
     if row and check_password_hash(row[0], password):
-        session['username'] = username
-        res = conn.execute("SELECT id FROM user WHERE username = ?", (username,))
-        logged_in_usr_id = res.fetchone()
-        logged_in_usr_id = clean_tuple(logged_in_usr_id)
-        print("current logged in user is: ", logged_in_usr_id)
+        #get ID for user
+        res = conn.execute("SELECT id,ward FROM user WHERE username = ?", (username,))
+        row = res.fetchone()
 
-        # attach cookie to redirect response
+        session['user'] = {'id':row[0] ,'username': username,'ward':row[1]}
         resp = redirect(url_for('home'))
-        resp.set_cookie('id', logged_in_usr_id)
+        print("User login successfull")
         return resp
-
     else:
         flash('Invalid Username or password', 'error')
         return redirect(url_for('index'))
 
-
-# register
 @app.route('/register', methods=['POST'])
 def register():
     data = request.get_json()
-    username = data.get('usrname')
-    password = data.get('paswd')
-    f_name = data.get('fname')
-    l_name = data.get('lname')
-    ph_no = data.get('phone')
+    usr_type = data.get('type')
 
-    full_name = f_name + " " + l_name
-    to_day = get_formatted_date()
+    if usr_type == 'user':
+        #we are trying to register a user 
+        username = data.get('usrname')
+        password = data.get('paswd')
+        f_name = data.get('fname')
+        l_name = data.get('lname')
+        ph_no = data.get('phone')
+        ward = data.get('ward')
 
-    res = conn.execute("SELECT username FROM user WHERE username = ?", (username,))
-    if res.fetchone():
-        return "User already registered", 400
-    else:
-        newid = str(uuid.uuid4())
+        res = conn.execute("SELECT username FROM user WHERE username = ?", (username,))
+        if res.fetchone():
+            return "User already registered", 400
+        
+        res = conn.execute("SELECT ph_no FROM user WHERE ph_no =?",(ph_no,))
+        if res.fetchone():
+            return "Phone number already registered", 400
+
+        # Temporary Storage in Session
+        full_name = f_name + " " + l_name
         hashed_password = generate_password_hash(password)
+        otps = generate_otp_choice()
 
-        conn.execute("INSERT INTO user (id, username, f_name, l_name, fullname, DOC, ph_no, password) VALUES (?, ?, ?, ?, ?, ?, ?, ?)", 
-                     (newid, username, f_name, l_name, full_name, to_day, ph_no, hashed_password))
-        conn.commit()
+        #ONLY FOR RESTING REMOVE
+        print("generated OTP: ",otps)
+        msg_user = f"""\nYour OTP for CivicConnect registration is {otps}"""
+        print(msg_user)
 
-        session['username'] = username
-        resp = make_response("Account created Successfully")
-        resp.set_cookie('id', newid)
-        return resp
+        #warning this will send an actual message. 
+        send_message(format_indian_number(ph_no),msg_user)
+
+        session['temp_user_data'] = {
+            'id': str(uuid.uuid4()), # Generate ID now
+            'username': username,
+            'f_name': f_name,
+            'l_name': l_name,
+            'fullname': full_name,
+            'ph_no': ph_no,
+            'password': hashed_password,
+            'DOC': get_formatted_date(), # Date of Creation
+            'otp':otps,
+            'ward':ward,
+            'timestamp':generate_timestamp(),
+            'trials':0,
+            'user_type':'user',
+            'status':False
+        }
+    
+    elif usr_type == 'admin':
+            f_name = data.get('fname')
+            l_name = data.get('lname')
+            username = data.get('usrname') 
+            admin_dept = data.get('dept')
+            email = data.get('email')
+            ph_no = data.get('phone')
+            password = data.get('paswd')
+
+            # Basic validation checks
+            if not all([f_name, l_name, username, admin_dept, email, ph_no, password]):
+                return "Missing required field data.", 400
+
+            fullname = f_name + " " + l_name
+            to_day = get_formatted_date()
+
+            # check if username already exists
+            res = conn.execute("SELECT username FROM admin WHERE username = ?", (username,))
+            if res.fetchone():
+                return "Username already taken. Try a different one.", 400 # FIX: Returning 400 error
+
+            # check if email already exists
+            res = conn.execute("SELECT email FROM admin WHERE email = ?", (email,))
+            if res.fetchone():
+                return "Email already registered. Use a different email.", 400 # FIX: Returning 400 error
+            
+            #check if the phone_no is already registed to someone else
+            res = conn.execute("SELECT ph_no from admin WHERE ph_no = ?",(ph_no, ))
+            if res.fetchone():
+                return "Phone number already registered. Please enter a new number.", 400 # FIX: Returning 400 error
+
+            # create new admin
+            newid = str(uuid.uuid4())
+            hashed_password = generate_password_hash(password)
+            
+            #generate OTP
+            otps = generate_otp_choice()
+
+            #send OTP
+            print("generated OTP: ",otps) #remove 
+            msg_user = f"""\nYour OTP for CivicConnect registration is {otps}"""
+            print(msg_user)
+
+            #warning this will send an actual message. 
+            send_message(format_indian_number(ph_no),msg_user)
+
+            # temprarily store session
+            session['temp_user_data'] = {
+                'id':newid,
+                'username':username,
+                'f_name':f_name,
+                'l_name':l_name,
+                'fullname':fullname,
+                'dept':admin_dept,
+                'email':email,
+                'password':hashed_password,
+                'DOC':to_day,
+                'ph_no':ph_no,
+                'otp':otps,
+                'timestamp':generate_timestamp(),
+                'trials':0,
+                'user_type':'admin',
+                'status':False
+            }
+
+    #Respond with Redirect URL (to Stage 2 form)
+    response_data = {
+        'message': 'Initial data received, proceeding to additional details.',
+        'redirect_url': url_for('start_tfa') 
+    }
+    resp = make_response(jsonify(response_data), 200) 
+    return resp
+
+@app.route('/verify_otp', methods=['POST'])
+def verify_otp():
+    
+    # 1. Preliminary check for session data
+    if 'temp_user_data' not in session:
+        return jsonify({
+            'success': False, 
+            'message': 'No pending registration data found. Please start over.',
+            'redirect_to': url_for('index')
+        }), 400
+
+    data = request.get_json()
+    # Safely convert to int, handle case where 'otp' might be missing or invalid
+    try:
+        received_otp = int(data.get('otp'))
+    except (TypeError, ValueError):
+        # This should ideally be caught by client-side validation, but is a good server-side fallback
+        return jsonify({'success': False, 'message': 'Invalid OTP format submitted.'}), 400
+
+    # Retrieve data from session
+    temp_data = session.get('temp_user_data')
+    expected_otp = temp_data.get('otp')
+    user_type = temp_data.get('user_type')
+    user_otp_timestamp = temp_data.get('timestamp')
+    user_attempts = temp_data.get('trials', 0) # Use .get with a default for safety
+
+    print("Expected OTP",expected_otp,type(expected_otp))
+    print("Recived OTP",received_otp,type(received_otp))
+    print('sesion obj:',session.get('temp_user_data'))
+
+    # 2. Check for OTP Expiry
+    if check_timestamp(user_otp_timestamp) == False:
+        # Clear the session data as the OTP is expired
+        session.pop('temp_user_data', None)
+        return jsonify({
+            'success': False, 
+            'message': 'OTP has expired! Please request a new one.',
+            'expired': True
+        }), 403 # Forbidden or appropriate error code
+
+    # 3. Check for Max Attempts
+    MAX_ATTEMPTS = 5
+    if user_attempts >= MAX_ATTEMPTS:
+        # Clear the session data after max attempts are reached
+        session.pop('temp_user_data', None)
+        return jsonify({
+            'success': False, 
+            'message': f'You have exceeded the maximum {MAX_ATTEMPTS} attempts.',
+            'redirect_to': url_for('index') 
+        }), 429 
+
+    # 4. Check for OTP Match
+    if expected_otp == received_otp:
+        # OTP is correct and within time/attempt limits
+        return_str = ''
+        if user_type == 'admin':
+            return_str ='index'
+        else:
+            return_str ='admin_login'
+
+        return jsonify({
+            'success': True, 
+            'message': 'OTP confirmed! Finalizing registration...'
+        }), 200
+        
+    else:
+        # 5. Handle Incorrect OTP
+        session['temp_user_data']['trials'] = user_attempts + 1
+        
+        # Calculate remaining attempts for the user feedback
+        remaining_attempts = MAX_ATTEMPTS - (user_attempts + 1)
+        
+        message = f"Invalid OTP. {remaining_attempts} attempts remaining."
+        if remaining_attempts == 0:
+             # This is the last failed attempt, so trigger the max attempts message
+            # The next request will hit the 'Max Attempts' block above and clear the session.
+            message = f"Invalid OTP. You have one final attempt."
+
+        return jsonify({
+            'success': False, 
+            'message': message,
+            'remaining_attempts': remaining_attempts
+        }), 401 # Unauthorized
+
+    # If somehow execution reaches here (e.g., due to an 'else' block
+    # for user_type that was removed), return a default error.
+    # return jsonify({'success': False, 'message': 'An unexpected error occurred.'}), 500
+
+
+@app.route('/finalize_registration', methods=['POST'])
+def finalize_registration():    
+    #Retrieve temporary data from session
+    temp_data = session.pop('temp_user_data', None)
+
+    if not temp_data:
+        # User tried to access this route without starting registration
+        return "Registration session expired or invalid.", 403
+
+    if temp_data['user_type'] == 'user':
+        #Combine Data and Insert into DB
+        insertion_tuple = (
+            temp_data['id'], 
+            temp_data['username'], 
+            temp_data['f_name'], 
+            temp_data['l_name'], 
+            temp_data['fullname'], 
+            temp_data['DOC'], 
+            temp_data['ph_no'], 
+            temp_data['password'],
+            temp_data['ward']
+        )
+        try:
+            conn.execute("INSERT INTO user (id, username, f_name, l_name, fullname, DOC, ph_no, password, ward) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)", insertion_tuple)
+            conn.commit()
+
+            #Finalize Session/Cookies
+            session['user'] = {'id':temp_data['id'] ,'username': temp_data['username'],'ward': temp_data['ward']}        
+            redirect_url = url_for('user_dashboard_page') 
+            
+            # Return a JSON object containing the status and the redirect URL
+            resp = jsonify({
+                "success": True, 
+                "message": "Account created Successfully. Redirecting...",
+                "redirect_to": redirect_url
+            })
+            
+            # Set cookie on the response object
+            resp.set_cookie('id', temp_data['id'])
+            return resp
+            
+        except Exception as e:
+            # Handle database errors
+            print(f"Database error during finalization: {e}")
+            return jsonify({"success": False, "message": "A database error occurred during registration."}), 500     
+    
+    elif temp_data['user_type'] == 'admin':
+        # Extract data for database insertion
+        newid = temp_data['id']
+        username = temp_data['username']
+        admin_dept = temp_data['dept']
+
+        # Combine Data and Insert into DB
+        insertion_tuple = (
+            temp_data['id'],
+            temp_data['username'],
+            temp_data['f_name'],
+            temp_data['l_name'],
+            temp_data['fullname'],
+            temp_data['dept'],
+            temp_data['email'],
+            temp_data['password'], # Hashed password
+            temp_data['DOC'],
+            temp_data['ph_no']
+        )
+        
+        try:
+            # Database insertion (Finally)
+            # Using the exact SQL provided in your request
+            conn.execute(
+                "INSERT INTO admin (id, username, f_name, l_name, fullname, dept, email, password, DOC, ph_no) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                insertion_tuple
+            )
+            conn.commit()
+
+            # Finalize Session/Cookies
+            session['admin'] = {"username": temp_data['username'],'id': temp_data['id'],'dept':  temp_data['dept'],'name':temp_data['f_name']}
+            
+            # Set the redirect URL to the admin login or dashboard page
+            redirect_url = url_for('admin_dashboard') 
+            
+            # Return a JSON object containing the status and the redirect URL
+            response_data = {
+                "success": True, 
+                "message": "Admin account created successfully 🎉. Redirecting...",
+                "redirect_to": redirect_url
+            }
+
+            resp = make_response(jsonify(response_data), 200)
+            
+            print(f"New admin '{username}' saved to db and session/cookies set.")
+            return resp
+            
+        except Exception as e:
+            # Handle database errors
+            print(f"Database error during admin finalization: {e}")
+            # Note: If the session was popped successfully, you might want to re-add it 
+            # or handle rollback, but for simplicity, we return a 500 error.
+            return jsonify({"success": False, "message": "A database error occurred during registration."}), 500
+
 
 @app.route('/user_reg_page')
 def user_reg_page():
     return render_template('user-registration-page.html')
 
+#internal use only
+@app.route('/start_tfa')
+def start_tfa():
+    return render_template('two-fa.html')
+
 # logout
 @app.route('/logout',methods=['POST'])
 def logout():
-    session.pop('username', None)
-    session.pop('id',None)
+    session.pop('user', None)
     response = redirect(url_for('index'))
-    response.delete_cookie('id')
     return response
 
 @app.route('/account-page')
 def account_page():
-   logged_in_usr_id = request.cookies.get('id')
-   res = conn.execute("SELECT username, fullname, ph_no , DOC  FROM user WHERE id = ?", (logged_in_usr_id,))
+   logged_in_usr_id = session.get('user')['id']
+   res = conn.execute("SELECT fullname, ph_no , DOC, ward FROM user WHERE id = ?", (logged_in_usr_id,))
    res = res.fetchone()
-   res = clean_tuple(res).split()
-   print(res)
    
-   usr_name = res[0]
-   fullname = res[1] +" "+ res[2]
-   ph_no = res[3]
-   DateOfCreation = res[4]
+   usr_name = session.get('user')['username']
+   fullname = res[0]
+   ph_no = res[1]
+   DateOfCreation = res[2]
+   ward = res[3]
+
+   res = conn.execute("SELECT COUNT(complaint) FROM complaints WHERE id = ? AND status = 0", (logged_in_usr_id, ))
+   pending_count = res.fetchone()[0]
    
-   return render_template('account-page.html',user_id=logged_in_usr_id,user_name=usr_name, reg_name=fullname, ph_no=ph_no,DOC=DateOfCreation)
+   return render_template('account-page.html',user_id=logged_in_usr_id,user_name=usr_name, reg_name=fullname, ph_no=ph_no,DOC=DateOfCreation,pending=pending_count,ward=ward)
 
 @app.route('/register-complaint', methods=['POST'])
 def register_complaint():
-    users_complaint = request.form['user_complaint']
-    users_location = request.form['user_location']
-    dept = request.form['select_dept']
     
-    photo = request.files['attached_image']
-    if photo and photo.filename != "":
-        # Get original extension
-        original_filename = secure_filename(photo.filename)
-        _, ext = os.path.splitext(original_filename)  # ext will be like ".jpg"
-        
-        # Generate safe new filename with UUID
-        rename = str(uuid.uuid4()) + ext  
-        
-        # Save file with extension preserved
-        photo.save(os.path.join(app.config['UPLOAD_FOLDER'], rename))
+    users_complaint = request.form.get('user_complaint')
+    users_location = request.form.get('user_location')
+    dept = request.form.get('select_dept')
+    logged_in_usr_id = session.get('user', {}).get('id')
 
-    formatted_date = get_formatted_date()
-
-    logged_in_usr_id = request.cookies.get('id')
-    conn.execute("INSERT INTO complaints (complaint, location, imgsrc, dof, dept, id,status) VALUES (?, ?, ?, ?, ?, ?, ?)", (users_complaint, users_location, rename,formatted_date,dept,logged_in_usr_id.replace("'",""),0))
-    conn.commit()
-
-    #function to start summary
-    #sumarrized_comp = start_summary(users_complaint)
-    thread1 = threading.Thread(target=start_summary, args=(users_complaint,rename))
-    #thread2 = threading.Thread(target=predict_department, args=(users_complaint,rename))
-    thread1.start()
-    #thread2.start()
-
-    return render_template('message.html', message='Successfully registered complaint')
-
-#spot waste dump
-@app.route('/waste_dump')
-def waste_dump():
-    return render_template('spot_waste_dump.html')
-
-#spot open drain
-@app.route('/open_drain')
-def open_drain():
-    return render_template('spot_open_drain.html')
-
-#spot pothole
-@app.route('/pothole')
-def pothole():
-    return render_template('spot_pothole.html')
     
+    if not all([users_complaint, users_location, dept, logged_in_usr_id]):
+        return jsonify({'success': False, 'message': 'Missing required form fields or user ID.'}), 400
+
+    #Limiting the no of complaints uses can send
+    try:
+        res = conn.execute("SELECT COUNT(complaint) FROM complaints WHERE id = ? AND status = 0", (logged_in_usr_id, ))
+        pending_count = res.fetchone()[0]
+        
+    except Exception as e:
+        print(f"Database error checking pending complaints: {e}")
+        return jsonify({'success': False, 'message': 'A server error occurred while checking your status.'}), 500
+
+    if pending_count >= 10:
+        # User has 10 or more pending complaints (2)
+        return jsonify({
+            'success': False, 
+            'message': 'You have 10 or more pending complaints. Please wait for them to be resolved before filing new ones.'
+        })
+    else:
+        rename = None
+        photo = request.files.get('attached_image')
+        if photo and photo.filename != "":
+            try:
+                
+                original_filename = secure_filename(photo.filename)
+                _, ext = os.path.splitext(original_filename)  # ext will be like ".jpg"
+                
+                # Generate safe new filename with UUID
+                rename = str(uuid.uuid4()) + ext
+                
+                # Save file with extension preserved
+                # Changed app.config to current_app.config for consistency
+                photo.save(os.path.join(app.config['UPLOAD_FOLDER'], rename))
+            except Exception as e:
+                print(f"Error saving file: {e}")
+                rename = 'None' 
+
+        if rename is None:
+            rename = 'None' 
+
+        formatted_date = get_formatted_date()
+        try:
+            
+            conn.execute("INSERT INTO complaints (complaint, location, imgsrc, dof, dept, id, status) VALUES (?, ?, ?, ?, ?, ?, ?)", 
+                        (users_complaint, users_location, rename, formatted_date, dept, logged_in_usr_id, 0))
+            conn.commit()
+            
+
+            app_context = app.app_context() 
+            
+            # The wrapper function remains correct and isolates the thread
+            def thread_summary_wrapper(complaint, image_name):
+                with app_context: 
+                    try:
+                        # If start_summary uses app.config, conn, or other app-scoped resources, 
+                        # the 'with app_context:' block ensures they are accessible.
+                        start_summary(complaint, image_name)
+                    except Exception as thread_e:
+                        print(f"Error in background summary thread: {thread_e}")
+            
+            
+            thread1 = threading.Thread(target=thread_summary_wrapper, args=(users_complaint, rename))
+            thread1.start()
+            
+            dashboard_url = url_for('home') 
+            
+            return jsonify({
+                'success': True, 
+                'message': 'Successfully registered complaint and processing is starting.', 
+                'redirect_url': dashboard_url
+            })
+
+        except Exception as e:
+            print(f"Database error inserting complaint: {e}")
+            conn.rollback()
+            return jsonify({'success': False, 'message': 'A server error occurred while registering the complaint.'}), 500
+                       
 @app.route('/admin_login')
 def admin_login():
     return render_template('admin/admin login.html')
@@ -405,73 +926,85 @@ def admin_login():
 def admin_register_page():
     return render_template('admin/admin_register.html')
 
-# admin register
-@app.route('/admin_register', methods=['POST'])
-def admin_register():
-    f_name = request.form['fname']
-    l_name = request.form['lname']
-    username = request.form['username']
-    admin_dept = request.form['department']
-    email = request.form['email']
-    ph_no = request.form['ph_no']
-    password = request.form['password']
-    confirm_password = request.form['confirm-password']
+@app.route('/start_tfa_adm')
+def start_tfa_adm():
+    return render_template('admin/two-fa-adm.html')
 
-    fullname = f_name + " " + l_name
-    to_day = get_formatted_date()
-
-    # check password match (extra server-side validation)
-    if password != confirm_password:
-        flash("Passwords do not match")
-        return redirect(url_for('admin_login'))  # render form again
-
-    # check if username already exists
-    res = conn.execute("SELECT username FROM admin WHERE username = ?", (username,))
-    if res.fetchone():
-        flash("Username already taken. Try a different one.")
-        return redirect(url_for('admin_login'))
-
-    # check if email already exists
-    res = conn.execute("SELECT email FROM admin WHERE email = ?", (email,))
-    if res.fetchone():
-        flash("Email already registered. Use a different email.")
-        return redirect(url_for('admin_login'))
-
-    # create new admin
-    newid = str(uuid.uuid4())
-    hashed_password = generate_password_hash(password)
-
-    conn.execute(
-       "INSERT INTO admin (id, username, f_name, l_name, fullname, dept, email, password, DOC, ph_no ) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-    (newid, username, f_name, l_name, fullname, admin_dept, email, hashed_password, to_day, ph_no)
-    )
-
-    
-    conn.commit()
-
-    # start session
-    session['admin_username'] = username  
-
-    # attach cookie
-    resp = make_response(redirect(url_for('admin_login')))  # redirect after success
-    resp.set_cookie('admin_id', newid)
-    resp.set_cookie('dept',admin_dept)
-
-    flash("Admin account created successfully 🎉")
-    print("New admin saved to db")
-
-    return resp
-
-#route for fetching complaints from the DB (full view)
 @app.route('/admin_view_complaints')
 def admin_view_complaints():
     #order complaint_id, dof, person's name, status, dept, location
-    res = conn.execute('SELECT c.comp_id, c.dof, u.username, c.status, c.dept, c.location, c.complaint FROM complaints c JOIN user u ON c.id = u.id')
+    res = conn.execute('SELECT c.comp_id, c.dof, u.username, c.status, c.dept, c.location, c.complaint FROM complaints c JOIN user u ON c.id = u.id WHERE c.status != 2')
     result = res.fetchall() 
    # print(result)
 
     return render_template('admin/admin_complaint_view_page.html', querry=result)    
 
+
+@app.route('/refreshed_data_admin', methods=['POST'])
+def refreshed_data_admin():
+    # Ensure the user is authenticated as an admin
+    if 'admin' not in session:
+        return jsonify({"status": "error", "message": "Authentication required."}), 401
+        
+    try:
+        data = request.get_json()
+        dept = data.get('dept') 
+        status = data.get('status')
+
+        # Base query structure, stopping before the WHERE clause for dynamic construction,
+        # and ensuring the JOIN is correctly placed before any WHERE conditions.
+        base_query_prefix = """
+            SELECT 
+                c.comp_id, 
+                c.dof, 
+                u.username, 
+                c.status, 
+                c.dept, 
+                c.location, 
+                c.complaint,
+                c.id 
+            FROM complaints c
+            JOIN user u ON c.id = u.id
+        """
+        
+        where_clauses = ["c.status != 2"]
+        params = []
+        
+        # 1. Department Filter
+        # If dept is not 'all', add the department filter
+        if dept and dept.lower() != 'all':
+            where_clauses.append("c.dept = ?")
+            params.append(dept)
+
+        # 2. Status Filter
+        # If status is provided and is not 'all', add the status filter
+        if status and status.lower() != 'all':
+            # This allows filtering for status 0 or 1. Since the mandatory condition
+            # excludes 2, filtering specifically for 2 will result in an empty list.
+            try:
+                status_int = int(status)
+                where_clauses.append("c.status = ?")
+                params.append(status_int)
+            except ValueError:
+                # Handle case where status is not a valid integer
+                pass
+        
+        # Build the final query: prefix + WHERE (condition 1 AND condition 2 AND ...) + ORDER BY
+        # All conditions, including the mandatory 'c.status != 2', are joined by ' AND '.
+        full_query = base_query_prefix + " WHERE " + " AND ".join(where_clauses)
+        full_query += " ORDER BY c.dof DESC" # Optional: add ordering
+
+        # Execute the query (assuming 'conn' is the database connection)
+        res = conn.execute(full_query, tuple(params))
+        result = res.fetchall() 
+        
+        return jsonify({"status": "success", "complaints": result})
+
+    except Exception as e:
+        
+        print(f"Error fetching data in refreshed_data_admin route: {e}")
+        return jsonify({"status": "error", "message": "Failed to fetch complaints data due to a server error."}), 500
+        
 @app.route('/admin_cred_check', methods=['POST'])
 def admin_cred_check():
     username = request.form['username']
@@ -482,25 +1015,16 @@ def admin_cred_check():
     row = res.fetchone()
 
     if row and check_password_hash(row[0], password):
-        # store session info
-        session['admin_username'] = username
+        #fetch info for setting session :
+        res = conn.execute("SELECT dept, id, fullname FROM admin WHERE username = ?",(username, ))
+        res = res.fetchone()
 
-        # get admin id
-        res = conn.execute("SELECT id FROM admin WHERE username = ?", (username,))
-        logged_in_admin_id = res.fetchone()
-        logged_in_admin_id = clean_tuple(logged_in_admin_id)
-        print("current logged in admin is:", logged_in_admin_id)
-
-        # get dept id
-        res = conn.execute("SELECT dept FROM admin WHERE username = ?", (username,))
-        logged_in_admin_dept = res.fetchone()
-        logged_in_admin_dept = clean_tuple(logged_in_admin_dept)
-        print("current dept:", logged_in_admin_dept)
+        # store session info (SELECT ID index 0 and Dept 1)
+        session['admin'] = {"username": username,'id': res[1],'dept':  res[0],'name':res[2]}
+        
 
         # attach cookie to response
         resp = redirect(url_for('admin_dashboard'))  # you should have this route
-        resp.set_cookie('admin_id', logged_in_admin_id)
-        resp.set_cookie('dept',logged_in_admin_dept)
         return resp
 
     else:
@@ -513,9 +1037,6 @@ def admin_dashboard():
     pending_count = conn.execute("SELECT COUNT(status) FROM complaints  WHERE status = 0")
     in_prog_count = conn.execute("SELECT COUNT(status)FROM complaints  WHERE status = 1 ")
     resolved_count = conn.execute("SELECT COUNT(status) FROM complaints  WHERE status = 2")
-    #print("Pending :",clean_tuple(pending_count.fetchone()))
-    #print("in_prog_count :",clean_tuple(in_prog_count.fetchone()))
-    #print("resolved_count :",clean_tuple(resolved_count.fetchone()))
 
     pending_count = clean_tuple(pending_count.fetchone())
     in_prog_count = clean_tuple(in_prog_count.fetchone())
@@ -526,34 +1047,40 @@ def admin_dashboard():
 #view details of admin account by an admin themslef
 @app.route('/admin_my_account')
 def admin_my_account():
-   logged_in_usr_id = request.cookies.get('admin_id')
-   res = conn.execute("SELECT username, fullname, dept, email, ph_no, DOC FROM admin WHERE id = ?", (logged_in_usr_id,))
-   res = res.fetchone()
-   res = clean_tuple(res).split()
- #  print(res)
-   
-   usr_name = res[0]
-    #this is becasue the split function separates the name into two. so we have to add it again to fix this issue
-   fullname =res[1] + " " + res[2]
-   dept=res[3]
-   email =res[4]
-   ph_no = res[5]
-   DOC = res[6]
+   #get session token
+   obj = session.get('admin')
+   admin_id = obj['id']
+   admin_user_name = obj['username']
+   admin_dept = obj['dept']
 
-   return render_template('admin/admin_view_account.html',user_id=logged_in_usr_id,user_name=usr_name, reg_name=fullname,dept=dept,e_mail=email,ph_no=ph_no,DOC=DOC)
+   #logged_in_usr_id = request.cookies.get('admin_id')
+   res = conn.execute("SELECT fullname, email, ph_no, DOC FROM admin WHERE id = ?", (admin_id,))
+   res = res.fetchone()
+   print(res,obj)
+   fulllname = res[0]
+   email =res[1]
+   ph_no = res[2]
+   DOC = res[3]
+
+   return render_template('admin/admin_view_account.html',user_id=admin_id,user_name=admin_user_name, reg_name=fulllname,dept=admin_dept,e_mail=email,ph_no=ph_no,DOC=DOC)
 
 
 @app.route('/admin_logout',methods=['POST','GET'])
 def admin_logout():
-    session.pop('admin_username', None)
-    session.pop('admin_id',None)
+    session.pop('admin', None)
     response = redirect(url_for('admin_login'))
-    response.delete_cookie('admin_id')
-    response.delete_cookie('dept')
     return response
 
-#@app.route('/fetch_complaints_admin')
-#def fetch_complaints_admin():
+@app.route('/past_notifications')
+def past_notifications():
+    admin_id = session.get('admin')['id'] 
+    sql_query = """
+        SELECT m.msg_title, m.msg, m.priority, m.issue_date FROM messages m 
+        JOIN  admin a ON m.issued_by = a.id WHERE m.issued_by = ? ORDER BY m.issue_date DESC;
+    """
+    res = conn.execute(sql_query, (admin_id,)) 
+    result = res.fetchall() 
+    return render_template('admin/past_notifications.html', querry=result)
 
 @app.route('/admin_issue_notifications_page' )
 def admin_issue_notifications_page():
@@ -561,26 +1088,53 @@ def admin_issue_notifications_page():
 
 @app.route('/update_notifications_admin', methods=['POST'])
 def update_notifications_admin():
-    notification_info = request.form['message']
-    notification_title = request.form['notification_name']
-    notification_priority = request.form['priority']
+    try:
+        notification_info = request.form['message']
+        notification_title = request.form['notification_name']
+        notification_priority = request.form['priority']
+        notification_ward = request.form['ward']
+
+        to_day = get_formatted_date() 
+
+        # get data from session obj 
+        obj = session.get('admin')
+
+        if not obj:
+            
+            return jsonify({"status": "error", "message": "Admin session not found."}), 401
+
+        adm_id = obj['id']
+        adm_dept = obj['dept']
+        adm_name = obj['name']
+        
+        conn.execute("INSERT INTO messages (ward , msg , priority, msg_title, issue_date, issued_by, dept, adm_name) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+                     (notification_ward, notification_info, notification_priority, notification_title, to_day, adm_id, adm_dept, adm_name))
+        conn.commit()
+        
+        msg_obj = {'title':notification_title,
+                   'date':to_day,
+                   'priority':notification_priority,
+                   'body':notification_info,
+                   'ward':notification_ward,
+                   'dept':adm_dept,
+                   'adm_name':adm_name
+                   }
+        send_notfications_to_users(msg_obj)
+        
+        return jsonify({
+            "status": "success", 
+            "message": "Message sent successfully.",
+            'redirect': url_for('admin_dashboard') 
+        })
+
+    except Exception as e:
+        print(f"Database error: {e}")
+        return jsonify({"status": "error", "message": "Database insertion failed."}), 500
     
-    #print(notification_info,notification_title,notification_priority)
-
-    to_day = get_formatted_date()
-    adm_id = request.cookies.get('admin_id')
-    adm_dept = request.cookies.get('dept')
-
-    conn.execute("INSERT INTO messages (msg , priority, msg_title, issue_date, issued_by, dept) VALUES (?, ?, ?, ?, ?, ?)",(notification_info,notification_priority,notification_title,to_day,adm_id,adm_dept))
-    conn.commit()
-
-    
-    #flash("Message sent",'success')
-    return render_template('admin/admin_issue_notifications.html')
-
 @app.route('/get_notifications_all')
 def get_notifications_all():
-    res = conn.execute('SELECT m.msg_title, m.msg, m.priority, a.username, m.dept, m.issue_date FROM messages m JOIN admin a ON m.issued_by = a.id;')
+    ward = session.get('user')['ward']
+    res = conn.execute("SELECT m.msg_title, m.msg, m.priority, a.username, m.dept, m.issue_date FROM messages m JOIN admin a ON m.issued_by = a.id WHERE m.WARD = ? OR m.ward = ? ORDER BY m.issue_date DESC",(ward,'all'))
     result = res.fetchall() 
     #print(result)
     return render_template('notifications_user.html',querry=result)
@@ -588,10 +1142,16 @@ def get_notifications_all():
 @app.route('/admin_view_complaints/detail/<id>')
 def view_detailed_complaints(id):
 
-    res = conn.execute("""SELECT u.fullname, c.complaint, c.location, c.status, c.imgsrc AS src, c.dof, c.summary FROM user u JOIN complaints c ON u.id = c.id WHERE c.comp_id = ?;""",(id,))
+    # 1. Fetch Complaint Data
+    # Ensure the SQL query has all the fields (it looks correct now after the previous fix)
+    res = conn.execute("""SELECT u.fullname, c.complaint, c.location, c.status, c.imgsrc AS src, c.dof, c.summary, c.dept FROM user u JOIN complaints c ON u.id = c.id WHERE c.comp_id = ?;""",(id,))
 
     res = res.fetchone()
-    #print(res)
+    
+    if not res:
+        # Handle case where complaint ID is not found
+        return "Complaint not found", 404
+
     complainant = res[0]
     complaint = res[1]
     location = res[2]
@@ -599,9 +1159,19 @@ def view_detailed_complaints(id):
     src= res[4]
     DOF = res[5]
     summarized_one = res[6]
-   
-    return render_template('admin/detailed_complaint_admin.html',comp_id=id,name=complainant,location=location,status=status,src=src,DOF=DOF,complaint=complaint,summary = summarized_one)
-
+    dept_of_comp = res[7] 
+    all_departments_list = [
+        "Public Works Department",
+        "Sanitation Department",
+        "Health Department",
+        "Water Authority Department", 
+        "Electricity Department",
+        "Parks and Recreation Department", 
+        "Traffic Management"
+    ]
+    
+    # 3. Render Template with Correct Variables
+    return render_template('admin/detailed_complaint_admin.html', comp_id=id,name=complainant,location=location,status=status,src=src,DOF=DOF,complaint=complaint,summary = summarized_one,dept_of_comp=dept_of_comp,all_departments=all_departments_list)
 
 @app.route('/admin_view_complaints/show_image/<path:filename>')
 def admin_show_image(filename):
@@ -622,36 +1192,57 @@ def update_enquiry_status():
     if request.is_json:
         data = request.get_json()
         
-        # Extract the values from the received JSON data
         comp_id = data.get('comp_id')
         new_status = data.get('status')
         message = data.get('message')
+        new_dept = data.get('department')
         
-        #getting the Admin's ID so that we can use it as a reference for the SQL querry call
-        logged_in_adm_id = request.cookies.get('admin_id')
+        
+        obj = session.get('admin')
+        admin_name = obj['name']
+        admin_dept = obj['dept']
+        logged_in_adm_id = obj['id']
 
         #fetching the user's ID 
         res = conn.execute("SELECT id FROM complaints WHERE comp_id = ?",(int(comp_id),))
         res = res.fetchone()
         user_id = clean_tuple(res)
-        #print("ID of user: ",res," ID of Admin: ",logged_in_usr_id)
+        
         to_day =get_formatted_date()
 
-        # Print the received values to the terminal
-        #print(f"Received update for Complaint ID: {comp_id}")
-        #print(f"New Status: {new_status}")
-        #print(f"Message: '{message}'")
-
         #need to perform two update operations
-        # 1 Update the compalints page with the new status
-        cur = conn.execute("UPDATE complaints SET status = ? WHERE comp_id = ?",(new_status, comp_id))
+        # 1 Update the compalints page with the new status and dept
+        if(new_status == '2'):
+            cur = conn.execute("UPDATE complaints SET status = ?, dept = ? ,dor = ? WHERE comp_id = ?",(new_status, new_dept,get_formatted_date(),comp_id))
+        else:
+            cur = conn.execute("UPDATE complaints SET status = ?, dept = ? WHERE comp_id = ?",(new_status, new_dept, comp_id))
 
         # 2 Update the message page with the change. (insert operation)
-        cur = conn.execute("INSERT INTO resolution (comp_id, admin_id, user_id, status, msg, date_of_change) VALUES(?, ?, ?, ?, ?, ?)",(comp_id, logged_in_adm_id, user_id, new_status, message, to_day))
+        cur = conn.execute("INSERT INTO resolution (comp_id, admin_id, user_id, status, msg, date_of_change, adm_name, dept) VALUES(?, ?, ?, ?, ?, ?, ?, ?)",(comp_id, logged_in_adm_id, user_id, new_status, message, to_day,admin_name,admin_dept))
         conn.commit()
+        
+        #3 Send notificaiton to user about update :
+        user_phone_no= conn.execute("SELECT T2.ph_no  FROM complaints AS T1 INNER JOIN user AS T2 ON T1.id = T2.id WHERE T1.comp_id = ?", (comp_id,))
+        user_phone_no = user_phone_no.fetchone()
+        user_phone_no = user_phone_no[0]
 
+        user_phone_no = str(user_phone_no)
+        print('type of status : ',type(new_status))
+        if new_status == '0':
+            status = 'Pending'
+        elif new_status == '1':
+            status = 'In Progress'
+        elif new_status=='2':
+            status = 'Resolved'
+
+        if(len(message)>1):
+            msg_body = f"Update regarding complaint no: {comp_id}\n New status: {status} \n Message from admin: {message} \n {admin_name}, {admin_dept}"
+        else:
+            msg_body = f"Update regarding complaint no: {comp_id}\n New status: {status}\n {admin_name}, {admin_dept}"
+        send_message(format_indian_number(user_phone_no),msg_body)
+        
         # Return a success response
-        return jsonify({'message': 'Status and message received successfully', 'status_received': new_status}), 200
+        return jsonify({'message': 'Status and message received successfully', 'status_received': new_status,'redirect_url':url_for('admin_view_complaints')}), 200
     
     # Handle non-JSON requests
     return jsonify({'error': 'Request must be JSON'}), 400

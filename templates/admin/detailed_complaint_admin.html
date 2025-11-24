@@ -76,6 +76,7 @@
   .sel-header select
   {
     margin-left:20px;
+    margin-right: 20px;
   }
 
   textarea
@@ -129,6 +130,14 @@
           <select id="statusSelect">
               <!-- Options will be inserted dynamically -->
           </select>
+
+         <h2>Department</h2>
+          <select id="deptSelect">
+            <option value="" {% if not dept_of_comp %}selected{% endif %}>-- Select a Department --</option>
+                {% for dept in all_departments %}
+                <option value="{{ dept }}" {% if dept == dept_of_comp %}selected{% endif %}>{{ dept }}</option>
+                {% endfor %}
+          </select>
         </div>
 
         <h2>Message:</h2>
@@ -139,6 +148,7 @@
   
   const originalComplaint = {{ complaint | tojson }};
   const summaryComplaint  = {{ summary   | tojson }};
+  // ... (updade_complaint function remains the same) ...
 
   function updade_complaint(val) {
     var summaryBox = document.getElementById('complaintbox');
@@ -153,6 +163,9 @@
   const currentStatus = {{ status | tojson }};
   const complaintId = {{ comp_id | tojson }}; // Include comp_id
 
+  // --- Department Selection Setup ---
+  // The department dropdown is pre-populated by Jinja/Flask, so no JS setup is needed here.
+  // We can optionally pass the current department if needed, but we'll rely on the HTML 'selected' attribute.
   
   // Mapping of status codes to text
   const statusMap = {
@@ -165,19 +178,19 @@
 
   let validStatus = false;
 
-  // Build the <option> elements
+  // Build the <option> elements for Status
   for (const [value, label] of Object.entries(statusMap)) {
-  const option = document.createElement("option");
-  option.value = value;
-  option.textContent = label;
+    const option = document.createElement("option");
+    option.value = value;
+    option.textContent = label;
 
-  if (parseInt(value) === currentStatus) {
-    option.selected = true;
-    validStatus = true;
+    if (parseInt(value) === currentStatus) {
+      option.selected = true;
+      validStatus = true;
+    }
+
+    select.appendChild(option);
   }
-
-  select.appendChild(option);
-}
 
   // If the current status isn't in the map, add "Unknown"
   if (!validStatus) {
@@ -192,14 +205,22 @@
   function saveState()
   {
     const newStatus = document.getElementById("statusSelect").value;
+    const newDept = document.getElementById("deptSelect").value; // **NEW: Get selected department**
     const mesg = document.getElementById('messageToSend').value.trim(); // Trim whitespace
 
       // Prepare data to send
       const data = {
           'comp_id': complaintId,
           'status': newStatus,
+          'department': newDept, // **NEW: Include department in data**
           'message': mesg
       };
+      
+      // Add a basic validation for department (optional but recommended)
+      if (!newDept) {
+          alert("Please select a valid department.");
+          return; 
+      }
 
       // Send data to Flask route using fetch API
       fetch('/update_enquiry_status', {
@@ -209,16 +230,27 @@
           },
           body: JSON.stringify(data), // Convert JS object to JSON string
       })
-      .then(response => response.json()) // Assuming Flask returns JSON
+      .then(response => {
+          if (!response.ok) {
+              throw new Error(`HTTP error! status: ${response.status}`);
+          }
+          return response.json(); 
+      })
       .then(data => {
           // Handle response from server (e.g., show success message)
           console.log('Success:', data);
-          alert('Complaint status updated successfully!'); // Simple confirmation
+          alert('Complaint status and department updated successfully!'); // Update alert message
+          
+          // Check 'data' (the parsed JSON) for the redirect URL
+          if (data.redirect_url) {
+              setTimeout(() => {
+                  window.location.href = data.redirect_url;
+              }, 1500); // 1.5 seconds wait after the alert
+          }
       })
       .catch((error) => {
-          // Handle errors (e.g., network issues)
           console.error('Error:', error);
-          alert('Error updating complaint status.');
+          alert('Error updating complaint status/department.');
       });
   }
 </script>
